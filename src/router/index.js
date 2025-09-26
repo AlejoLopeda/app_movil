@@ -1,15 +1,15 @@
-import { createRouter, createWebHistory } from '@ionic/vue-router';
-/* import HomePage from '../views/HomePage.vue' */
+import { createRouter, createWebHistory } from '@ionic/vue-router'
+import AuthEmailPage from '../views/AuthEmailPage.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/registro'
   },
   {
-    path: '/home',
-    name: 'Home',
-    component: HomePage
+    path: '/registro',
+    name: 'Register',
+    component: AuthEmailPage
   }
 ]
 
