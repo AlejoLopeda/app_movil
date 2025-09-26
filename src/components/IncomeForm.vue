@@ -1,0 +1,181 @@
+<template>
+  <div>
+    <!-- Monto -->
+    <ion-item :class="{ 'item-error': amountError }">
+      <ion-label position="stacked">Monto</ion-label>
+      <ion-note slot="start" class="prefix">$</ion-note>
+      <ion-input
+        type="number"
+        inputmode="decimal"
+        placeholder="0.00"
+        v-model.number="monto"
+        @ionBlur="validateAmount"
+      />
+      <ion-icon slot="end" :icon="calculatorOutline"></ion-icon>
+    </ion-item>
+    <ion-note v-if="amountError" color="danger">{{ amountError }}</ion-note>
+
+    <!-- Categorías -->
+    <div class="section-label">Categorías</div>
+    <div class="categories">
+      <button
+        v-for="c in categories"
+        :key="c.key"
+        class="cat-btn"
+        :class="{ active: categoria === c.key }"
+        @click="categoria = c.key"
+      >
+        <ion-icon :icon="iconFor(c.key)" />
+        <span>{{ c.label }}</span>
+      </button>
+      <button class="cat-btn more" @click="openCategorias">
+        <ion-icon :icon="addCircleOutline" />
+        <span>Más</span>
+      </button>
+    </div>
+    <ion-note v-if="catError" color="danger">{{ catError }}</ion-note>
+
+    <!-- Fecha -->
+    <ion-item :class="{ 'item-error': dateError }">
+      <ion-label position="stacked">Fecha</ion-label>
+      <ion-input type="date" v-model="fecha" @ionBlur="validateDate" />
+    </ion-item>
+    <ion-note v-if="dateError" color="danger">{{ dateError }}</ion-note>
+
+    <!-- Descripción -->
+    <ion-item>
+      <ion-label position="stacked">Descripción</ion-label>
+      <ion-input placeholder="Opcional" v-model="descripcion" />
+    </ion-item>
+
+    <div class="actions">
+      <ion-button expand="block" color="success" :disabled="!isValid || loading" @click="emitSubmit">
+        ACEPTAR
+      </ion-button>
+    </div>
+  </div>
+  
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton } from '@ionic/vue'
+import { calculatorOutline, addCircleOutline, cashOutline, giftOutline, peopleOutline } from 'ionicons/icons'
+import { presetCategories } from '../lib/incomeService'
+
+const props = defineProps<{ loading?: boolean }>()
+const emit = defineEmits<{ (e: 'submit', payload: { monto: number; categoria: string | null; fecha: string; descripcion: string | null }): void }>()
+
+const router = useRouter()
+
+const monto = ref<number | null>(null)
+const categoria = ref<string | null>(null)
+const fecha = ref<string>('')
+const descripcion = ref<string>('')
+
+const amountError = ref<string>('')
+const dateError = ref<string>('')
+const catError = ref<string>('')
+
+const categories = presetCategories()
+
+function iconFor(key: string) {
+  switch (key) {
+    case 'salario':
+      return cashOutline
+    case 'regalos':
+      return giftOutline
+    case 'pension':
+      return peopleOutline
+    default:
+      return cashOutline
+  }
+}
+
+function validateAmount() {
+  if (monto.value == null || isNaN(Number(monto.value)) || Number(monto.value) <= 0) {
+    amountError.value = 'El monto debe ser mayor a 0'
+  } else {
+    amountError.value = ''
+  }
+}
+
+function validateDate() {
+  if (!fecha.value) {
+    dateError.value = 'Debes seleccionar una fecha válida'
+  } else {
+    dateError.value = ''
+  }
+}
+
+const isValid = computed(() => !amountError.value && !dateError.value && monto.value != null && Number(monto.value) > 0 && !!fecha.value)
+
+function openCategorias() {
+  try {
+    router.push({ name: 'Categorias' }).catch(() => {
+      catError.value = 'No se pudo abrir la gestión de categorías. Intenta de nuevo'
+      setTimeout(() => (catError.value = ''), 2500)
+    })
+  } catch {
+    catError.value = 'No se pudo abrir la gestión de categorías. Intenta de nuevo'
+    setTimeout(() => (catError.value = ''), 2500)
+  }
+}
+
+function emitSubmit() {
+  validateAmount()
+  validateDate()
+  if (!isValid.value) return
+  emit('submit', {
+    monto: Number(monto.value),
+    categoria: categoria.value,
+    fecha: fecha.value,
+    descripcion: descripcion.value || null,
+  })
+}
+
+defineExpose({ reset: () => { monto.value = null; categoria.value = null; fecha.value = ''; descripcion.value = '' } })
+
+</script>
+
+<style scoped>
+.section-label {
+  margin: 16px 0 8px;
+  font-weight: 600;
+}
+
+.categories {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 8px;
+  min-width: 72px;
+  background: white;
+}
+
+.cat-btn.active { border-color: var(--ion-color-primary); }
+.cat-btn.more { border-style: dashed; }
+
+.actions { margin-top: 20px; }
+
+.item-error {
+  --highlight-color-focused: var(--ion-color-danger);
+  --highlight-color-invalid: var(--ion-color-danger);
+  --border-color: var(--ion-color-danger);
+}
+
+.prefix { color: var(--ion-color-medium); font-weight: 600; margin-right: 6px; }
+ion-item ion-icon[slot="end"] { align-self: center; font-size: 20px; }
+</style>
+
