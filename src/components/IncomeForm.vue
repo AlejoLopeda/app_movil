@@ -1,15 +1,16 @@
 <template>
   <div>
     <!-- Monto -->
-    <ion-item :class="{ 'item-error': amountError }">
+    <ion-item :class="{ 'item-error': amountError }" class="with-prefix">
       <ion-label position="stacked">Monto</ion-label>
-      <ion-note slot="start" class="prefix">$</ion-note>
+      <div class="input-prefix">$</div>
       <ion-input
         type="number"
         inputmode="decimal"
         placeholder="0.00"
         v-model.number="monto"
         @ionBlur="validateAmount"
+        :style="{ '--padding-start': '22px' }"
       />
       <ion-icon slot="end" :icon="calculatorOutline"></ion-icon>
     </ion-item>
@@ -140,6 +141,17 @@ defineExpose({ reset: () => { monto.value = null; categoria.value = null; fecha.
 </script>
 
 <style scoped>
+.with-prefix { position: relative; }
+.input-prefix {
+  position: absolute;
+  left: 12px;
+  /* coloca el símbolo a la altura del input, no del label */
+  top: 44px;
+  z-index: 1;
+  color: var(--ion-color-medium);
+  font-weight: 600;
+}
+
 .section-label {
   margin: 16px 0 8px;
   font-weight: 600;
@@ -175,7 +187,8 @@ defineExpose({ reset: () => { monto.value = null; categoria.value = null; fecha.
   --border-color: var(--ion-color-danger);
 }
 
-.prefix { color: var(--ion-color-medium); font-weight: 600; margin-right: 6px; }
 ion-item ion-icon[slot="end"] { align-self: center; font-size: 20px; }
+.categories ion-icon { font-size: 22px; color: var(--ion-color-primary); }
+.cat-btn { background: var(--ion-color-light, #fff); }
+.actions ion-button { --border-radius: 14px; }
 </style>
-
