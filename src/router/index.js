@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import AuthEmailPage from '../views/AuthEmailPage.vue'
+import Inicialmonto from '../views/InicialMontoPage.vue'
 
 const routes = [
   {
@@ -10,6 +11,16 @@ const routes = [
     path: '/registro',
     name: 'Register',
     component: AuthEmailPage
+  },
+
+  {
+    path: '/',
+    redirect: '/monto'
+  },
+  {
+    path: '/monto',
+    name: 'Monto',
+    component: Inicialmonto
   }
 ]
 
