@@ -37,11 +37,12 @@ const routes = [
     },
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard,
-    meta: {
-      requiresAuth: true
+  path: '/dashboard',
+  name: 'Dashboard',
+  component: Dashboard,
+  meta: {
+    requiresAuth: true,
+    title: 'Inicio'  
     }
   }
 ]

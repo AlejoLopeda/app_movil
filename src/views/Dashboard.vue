@@ -1,10 +1,15 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Dashboard</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <!-- Navbar superior fija, con menú + título + usuario -->
+    <app-top-bar
+      :title="pageTitle"
+      @user="onUser"
+      :full-name="displayName"
+      :logout-fn="safeLogout"     
+      @logout="onLogout"          
+      @report="generateReport"
+      @edit="goEditProfile"
+    />
 
     <ion-content class="ion-padding">
       <h2>¡Bienvenido {{ displayName }}!</h2>
@@ -22,26 +27,26 @@
           <ion-button router-link="/monto" expand="block">Ingresar monto</ion-button>
         </ion-card-content>
       </ion-card>
-
-      <ion-button expand="block" color="danger" @click="onLogout">
-        Cerrar sesión
-      </ion-button>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonCard, IonCardContent, IonButton
+  IonPage, IonContent, IonCard, IonCardContent, IonButton
 } from '@ionic/vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { fetchInitialAmount } from '@/services/initialAmountService'
+import AppTopBar from '@/components/AppTopBar.vue'
 
 const { user, logout } = useAuth()
 const router = useRouter()
+const route = useRoute()
+
+// Título dinámico con fallback "Inicio"
+const pageTitle = computed(() => route.meta?.title || 'Inicio')
 
 const displayName = ref('Usuario')
 const amount = ref(null)
@@ -70,8 +75,25 @@ const formattedAmount = computed(() => {
   }).format(amount.value)
 })
 
-async function onLogout() {
-  await logout()
-  router.replace('/login')
+// 👇 Función pasada a la TopBar con manejo de error
+async function safeLogout () {
+  try {
+    await logout()
+    await nextTick()
+    router.replace('/login')
+  } catch (e) {
+    // avisa a la TopBar para mostrar el toast
+    window.dispatchEvent(new CustomEvent('logout-failed'))
+    // NO navegues; el usuario permanece en la app
+  }
 }
+
+// (opcional) handler legacy si alguien sigue emitiendo 'logout'
+async function onLogout() {
+  await safeLogout()
+}
+
+function onUser() {}
+function generateReport() { console.log('Generar reporte...') }
+function goEditProfile() { console.log('Editar perfil...') }
 </script>
