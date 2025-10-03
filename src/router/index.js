@@ -2,7 +2,10 @@ import { createRouter, createWebHistory } from '@ionic/vue-router'
 import AuthLoginPage from '@/views/AuthLoginPage.vue'
 import AuthEmailPage from '@/views/AuthEmailPage.vue'
 import Inicialmonto from '@/views/InicialMontoPage.vue'
+import Dashboard from '@/views/Dashboard.vue'
+import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
+
 
 const routes = [
   {
@@ -31,6 +34,14 @@ const routes = [
     component: Inicialmonto,
     meta: {
       requiresAuth: true
+    },
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: {
+      requiresAuth: true
     }
   }
 ]
@@ -47,6 +58,7 @@ router.beforeEach(async (to) => {
     await restoreSession()
   }
 
+  // Bloquear rutas privadas si no hay sesión
   if (to.meta?.requiresAuth && !isAuthenticated.value) {
     const redirect = to.fullPath && to.fullPath !== '/' ? to.fullPath : undefined
     return {
@@ -55,8 +67,22 @@ router.beforeEach(async (to) => {
     }
   }
 
+  // 👇 Usuario autenticado intentando ir a login/registro
   if (to.meta?.guestOnly && isAuthenticated.value) {
-    return { name: 'Monto' }
+    const d = await fetchInitialAmount().catch(() => null)
+    if (d?.initial_set_at) {
+      return { name: 'Dashboard' }  // ya tiene monto → Dashboard
+    } else {
+      return { name: 'Monto' }      // no tiene monto → Monto
+    }
+  }
+
+  // 👇 Usuario intenta ir manualmente a /monto pero ya tiene monto
+  if (to.name === 'Monto' && isAuthenticated.value) {
+    const d = await fetchInitialAmount().catch(() => null)
+    if (d?.initial_set_at) {
+      return { name: 'Dashboard' }
+    }
   }
 
   return true
