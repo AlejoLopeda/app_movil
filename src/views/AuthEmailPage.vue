@@ -17,6 +17,14 @@
           <ion-icon :icon="backIcon" class="auth-email__back-icon" />
         </ion-button>
         <app-account />
+        <ion-button
+          class="auth-email__link"
+          fill="clear"
+          size="small"
+          @click="goToLogin"
+        >
+          Ya tienes cuenta? Inicia sesion
+        </ion-button>
       </section>
     </ion-content>
   </ion-page>
@@ -41,6 +49,10 @@ const backIcon = chevronBackOutline
 
 const goBack = () => {
   router.back()
+}
+
+const goToLogin = () => {
+  router.push({ name: 'Login' })
 }
 </script>
 
@@ -86,5 +98,11 @@ const goBack = () => {
 .auth-email__back-icon {
   font-size: 2.4rem;
   color: #0d0d0d;
+}
+
+.auth-email__link {
+  margin-top: 1rem;
+  color: #0d3f48;
+  font-weight: 600;
 }
 </style>
