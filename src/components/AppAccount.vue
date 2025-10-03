@@ -35,7 +35,7 @@
               <ion-input
                 v-model="form.password"
                 autocomplete="new-password"
-                placeholder="Ingresa una contraseña"
+                placeholder="Ingresa una contrasena"
                 type="password"
                 minlength="6"
                 required
@@ -48,7 +48,7 @@
               <ion-input
                 v-model="form.passwordConfirmation"
                 autocomplete="new-password"
-                placeholder="Confirmar contraseña"
+                placeholder="Confirmar contrasena"
                 type="password"
                 minlength="6"
                 required
@@ -107,7 +107,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, onMounted } from 'vue'
 import {
   IonButton,
   IonCard,
@@ -148,6 +148,10 @@ const successMessage = computed(() => {
   }
 
   return 'Registro enviado correctamente.'
+})
+
+onMounted(() => {
+  authError.value = null
 })
 
 watch(registrationResult, (result) => {
