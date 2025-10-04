@@ -3,6 +3,7 @@ import AuthLoginPage from '@/views/AuthLoginPage.vue'
 import AuthEmailPage from '@/views/AuthEmailPage.vue'
 import Inicialmonto from '@/views/InicialMontoPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
+import AddIncomePage from '@/views/AddIncomePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -34,15 +35,25 @@ const routes = [
     component: Inicialmonto,
     meta: {
       requiresAuth: true
-    },
+    }
   },
   {
-  path: '/dashboard',
-  name: 'Dashboard',
-  component: Dashboard,
-  meta: {
-    requiresAuth: true,
-    title: 'Inicio'  
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: {
+      requiresAuth: true,
+      title: 'Inicio'
+    }
+  },
+  {
+    path: '/ingresos/nuevo',
+    name: 'AddIncome',
+    component: AddIncomePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Añadir ingreso'
     }
   }
 ]
@@ -54,6 +65,15 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const { isAuthenticated, restoreSession } = useAuth()
+  let initialAmountLoaded = false
+  let initialAmountData
+
+  const loadInitialAmount = async () => {
+    if (initialAmountLoaded) return initialAmountData
+    initialAmountLoaded = true
+    initialAmountData = await fetchInitialAmount().catch(() => null)
+    return initialAmountData
+  }
 
   if (!isAuthenticated.value) {
     await restoreSession()
@@ -70,7 +90,7 @@ router.beforeEach(async (to) => {
 
   // 👇 Usuario autenticado intentando ir a login/registro
   if (to.meta?.guestOnly && isAuthenticated.value) {
-    const d = await fetchInitialAmount().catch(() => null)
+    const d = await loadInitialAmount()
     if (d?.initial_set_at) {
       return { name: 'Dashboard' }  // ya tiene monto → Dashboard
     } else {
@@ -80,9 +100,20 @@ router.beforeEach(async (to) => {
 
   // 👇 Usuario intenta ir manualmente a /monto pero ya tiene monto
   if (to.name === 'Monto' && isAuthenticated.value) {
-    const d = await fetchInitialAmount().catch(() => null)
+    const d = await loadInitialAmount()
     if (d?.initial_set_at) {
       return { name: 'Dashboard' }
+    }
+  }
+
+  if (to.meta?.requiresInitialAmount) {
+    const d = await loadInitialAmount()
+    if (!d?.initial_set_at) {
+      const redirect = to.fullPath && to.fullPath !== '/' ? to.fullPath : undefined
+      return {
+        name: 'Monto',
+        query: redirect ? { redirect } : undefined
+      }
     }
   }
 

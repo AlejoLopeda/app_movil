@@ -1,0 +1,117 @@
+/* ====== Layout base ====== */
+.income-page {
+  --background: var(--ion-color-light, #f6f8fc);
+}
+
+.income-content {
+  --background: linear-gradient(160deg, rgba(13, 63, 72, 0.05), rgba(203, 220, 255, 0.35));
+}
+
+.income-shell {
+  min-height: 100%;
+  padding: clamp(24px, 5vw, 44px) clamp(20px, 6vw, 48px) clamp(32px, 8vw, 64px);
+  box-sizing: border-box;
+  display: grid;
+  gap: clamp(24px, 5vw, 36px);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.income-hero {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.income-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0d3f48;
+  background: rgba(13, 63, 72, 0.12);
+}
+
+.income-hero__title {
+  margin: 0;
+  font-size: clamp(26px, 3vw + 14px, 34px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0d3f48;
+}
+
+.income-hero__subtitle {
+  margin: 0;
+  max-width: 360px;
+  color: rgba(15, 23, 42, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* ====== Tarjeta ====== */
+.income-card {
+  --background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 20px 45px rgba(13, 63, 72, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.income-card__content {
+  padding: clamp(26px, 6vw, 36px) clamp(22px, 6vw, 34px) clamp(32px, 7vw, 44px);
+  display: grid;
+  gap: 22px;
+}
+
+.income-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.income-actions__button {
+  --background: #0d3f48;
+  --background-activated: #0a2f38;
+  --background-focused: #0b3540;
+  --color: #ffffff;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  border-radius: 16px;
+  padding: 0 20px;
+}
+
+/* ====== Toast ====== */
+.income-toast {
+  --border-radius: 14px;
+  font-weight: 600;
+}
+
+/* ====== Responsive ====== */
+@media (min-width: 768px) {
+  .income-shell {
+    max-width: 640px;
+    padding: 64px 64px 80px;
+    gap: 40px;
+  }
+
+  .income-card {
+    border-radius: 32px;
+    box-shadow: 0 26px 60px rgba(13, 63, 72, 0.18);
+  }
+
+  .income-card__content {
+    padding: 40px 48px 48px;
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .income-shell {
+    max-width: 720px;
+  }
+}
