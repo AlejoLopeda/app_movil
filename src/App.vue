@@ -17,6 +17,10 @@
           <ion-menu-toggle auto-hide="true">
             <ion-item button router-link="/monto">Monto inicial</ion-item>
           </ion-menu-toggle>
+
+          <ion-menu-toggle auto-hide="true">
+            <ion-item button router-link="/ingresos/nuevo">Añadir ingreso</ion-item>
+          </ion-menu-toggle>
         </ion-list>
       </ion-content>
     </ion-menu>
