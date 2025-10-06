@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient'
+﻿import { supabase } from '@/lib/supabaseClient'
 
 const DEFAULT_CATEGORIES = Object.freeze([
   { key: 'salario', label: 'Salario' },
@@ -17,16 +17,22 @@ export async function getCurrentUserId() {
   return data?.user?.id ?? null
 }
 
+function sanitizeAmount(amount) {
+  const numericValue = Number(amount)
+  return Number.isFinite(numericValue) ? numericValue : 0
+}
+
 export async function insertIncome(row) {
+  const amount = sanitizeAmount(row.amount)
   const payload = {
-    amount: row.amount,
-    category_key: row.category_key ?? null,
-    occurred_on: row.occurred_on,
-    description: row.description ?? null,
-    user_id: row.user_id
+    p_monto: amount,
+    p_categoria: row.category_key ?? null,
+    p_fecha: row.occurred_on,
+    p_descripcion: row.description ?? null
   }
 
-  const { error } = await supabase.from('incomes').insert(payload)
+  const { data, error } = await supabase.rpc('record_income', payload)
   if (error) throw error
-  return { ok: true }
+
+  return { ok: true, balance: data ?? amount }
 }
