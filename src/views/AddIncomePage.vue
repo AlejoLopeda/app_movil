@@ -1,26 +1,40 @@
 ﻿<template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
+  <ion-page class="income-page">
+    <ion-header class="income-header" translucent>
+      <ion-toolbar class="income-toolbar">
         <ion-buttons slot="start">
-          <ion-menu-button></ion-menu-button>
+          <ion-menu-button class="income-menu" />
         </ion-buttons>
-        <ion-title>INGRESOS</ion-title>
+        <ion-title class="income-toolbar__title">Ingresos</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="goPerfil">
-            <ion-icon :icon="personCircleOutline"></ion-icon>
+          <ion-button class="income-profile" @click="goPerfil">
+            <ion-icon :icon="personCircleOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
-      <h2 class="center-title">Añadir ingreso</h2>
-      <IncomeForm :loading="loading" @submit="handleSubmit" />
-      <ion-toast :is-open="toast.open" :message="toast.message" :color="toast.color" :duration="2200" @didDismiss="toast.open=false" />
+    <ion-content class="income-content ion-padding" fullscreen>
+      <section class="income-section">
+        <header class="income-hero">
+          <span class="income-badge">Nuevo registro</span>
+          <h2 class="income-heading">Añadir ingreso</h2>
+          <p class="income-copy">Registra los ingresos que recibes para mantener tu control financiero al día.</p>
+        </header>
+
+        <IncomeForm class="income-form" :loading="loading" @submit="handleSubmit" />
+      </section>
+
+      <ion-toast
+        class="income-toast"
+        :is-open="toast.open"
+        :message="toast.message"
+        :color="toast.color"
+        :duration="2200"
+        @didDismiss="toast.open=false"
+      />
     </ion-content>
   </ion-page>
-  
 </template>
 
 <script setup>
@@ -41,6 +55,7 @@ import { personCircleOutline } from 'ionicons/icons'
 import { useAddIncome } from '@/composables/useAddIncome'
 import IncomeForm from '@/components/IncomeForm.vue'
 import { getCurrentUserId } from '@/lib/incomeService'
+import '@/theme/IncomePage.css'
 
 const { loading, saveIncome } = useAddIncome()
 
@@ -67,17 +82,3 @@ function goPerfil() {
 }
 
 </script>
-
-<style scoped>
-.center-title {
-  text-align: center;
-  margin: 8px 0 16px;
-}
-</style>
-
-
-
-
-
-
-
