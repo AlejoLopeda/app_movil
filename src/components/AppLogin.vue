@@ -6,7 +6,7 @@
           <h2 class="app-login__title">BIENVENIDO</h2>
 
           <ion-list class="app-login__list" inset lines="none">
-            <ion-item class="app-login__item" lines="none" :style="itemStyles">
+            <ion-item class="app-login__item auth-field-item" lines="none">
               <ion-icon slot="start" :icon="mailIcon" class="app-login__item-icon" />
               <ion-input
                 v-model="form.email"
@@ -19,7 +19,7 @@
               />
             </ion-item>
 
-            <ion-item class="app-login__item" lines="none" :style="itemStyles">
+            <ion-item class="app-login__item auth-field-item" lines="none">
               <ion-icon slot="start" :icon="lockIcon" class="app-login__item-icon" />
               <ion-input
                 v-model="form.password"
@@ -72,6 +72,7 @@ import {
   IonText
 } from '@ionic/vue'
 import { mailOutline, lockClosedOutline } from 'ionicons/icons'
+import '@/theme/AuthPage.css'
 import { useAuth } from '../composables/useAuth.js'
 
 const emit = defineEmits(['success'])
@@ -80,17 +81,6 @@ const form = reactive({
   email: '',
   password: ''
 })
-
-const itemStyles = {
-  border: '2px solid #000',
-  borderRadius: '16px',
-  '--border-width': 0,
-  '--inner-border-width': 0,
-  '--highlight-height': 0,
-  '--highlight-color-focused': 'transparent',
-  '--padding-start': '12px',
-  '--inner-padding-end': '12px'
-}
 
 const mailIcon = mailOutline
 const lockIcon = lockClosedOutline
@@ -112,71 +102,3 @@ const onSubmit = async () => {
   }
 }
 </script>
-
-<style scoped>
-.app-login {
-  width: 100%;
-}
-
-.app-login__card {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  border-radius: 28px;
-  box-shadow: none;
-  --background: #ffffff;
-  padding: 1.75rem 1.5rem 2rem;
-}
-
-.app-login__title {
-  margin: 0;
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0d0d0d;
-}
-
-.app-login__form {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.app-login__list {
-  --background: transparent;
-  background-color: #ffffff;
-  padding: 0;
-}
-
-.app-login__item + .app-login__item {
-  margin-top: 0.75rem;
-}
-
-.app-login__item-icon {
-  font-size: 1.4rem;
-  color: #0d0d0d;
-}
-
-.app-login__input {
-  --placeholder-font-weight: 600;
-  font-weight: 600;
-  color: #0d0d0d;
-}
-
-.app-login__submit {
-  --background: #0d3f48;
-  --color: #ffffff;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.app-login__spinner {
-  margin-right: 0.5rem;
-}
-
-.app-login__feedback {
-  display: block;
-  margin-top: -0.5rem;
-  text-align: center;
-  font-weight: 600;
-}
-</style>
