@@ -1,15 +1,16 @@
 <template>
   <div class="amount-group">
     <div class="amount-row">
+      <!-- Icono + moneda en columna -->
       <div class="amount-coin">
         <ion-icon :icon="cashOutline" />
+        <small class="amount-currency">COP</small>
       </div>
 
       <ion-item class="amount-item" :class="{ 'is-invalid': showError }" lines="none">
         <ion-input
           class="amount-input"
-          prefix="$"
-          placeholder="................"
+          placeholder="$................"
           inputmode="decimal"
           type="text"
           :value="value"
@@ -36,13 +37,14 @@ const props = defineProps({
   value: { type: String, default: '' },
   showError: { type: Boolean, default: false },
   errorMsg: { type: String, default: '' },
+  // (ya no necesitamos prefix aquí)
 })
 const emit = defineEmits(['update:value', 'blur', 'dirty'])
 
 function onInput(ev) {
-  const v = ev?.detail?.value ?? ''  
+  const v = ev?.detail?.value ?? ''
   emit('update:value', v)
-  emit('dirty')                       
+  emit('dirty')
 }
 </script>
 

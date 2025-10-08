@@ -3,31 +3,35 @@
   <ion-content fullscreen class="initial-page">
   <div class="screen">
     <div class="card">
-      <h1 class="hero-title">INGRESE<br/>MONTO INICIAL</h1>
+          <div class="amount-container">
+            <h1 class="hero-title">INGRESE<br/>MONTO INICIAL</h1>
 
-      <AmountInput
-        v-model:value="raw"
-        :showError="showError"
-        :errorMsg="errorMsg"
-        @dirty="touched.value = true"
-        @blur="touched.value = true"
-      />
+            <AmountInput
+              v-model:value="raw"
+              :showError="showError"
+              :errorMsg="errorMsg"
+              @dirty="touched.value = true"
+              @blur="touched.value = true"
+            />
 
-      <ion-button class="initial-cta" expand="block" :disabled="!canSubmit || loading" @click="onAccept">
-        ACEPTAR
-      </ion-button>
+            <ion-button class="initial-cta" expand="block" :disabled="!canSubmit || loading" @click="onAccept">
+              ACEPTAR
+            </ion-button>
 
-      <ion-note v-if="err" color="danger" class="initial-backend">{{ err }}</ion-note>
+            <ion-note v-if="err" color="danger" class="initial-backend">{{ err }}</ion-note>
+          </div>
     </div>
   </div>
 
   <ion-toast
-        :is-open="showSuccess"
-        :message="successMsg"
-        duration="2000"
-        @didDismiss="goDashboard"
-        color="success"
-      />
+  :is-open="showSuccess"
+  :message="successMsg"
+  duration="2000"
+  @didDismiss="goDashboard"
+  color="success"
+  position="bottom"          
+  css-class="success-toast" 
+/>
       
 </ion-content>
 </ion-page>
@@ -35,7 +39,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonNote, IonToast } from '@ionic/vue'
+import { IonPage, IonContent, IonButton, IonNote, IonToast } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import AmountInput from '@/components/AmountInput.vue'
 import { useInitialAmount } from '@/composables/useInitialAmount'

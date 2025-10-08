@@ -11,7 +11,7 @@
       @edit="goEditProfile"
     />
 
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" style="--padding-top: var(--ion-safe-area-top);">
       <h2>¡Bienvenido {{ displayName }}!</h2>
 
       <ion-card v-if="loaded && hasInitial">
