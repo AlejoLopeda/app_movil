@@ -1,0 +1,224 @@
+.auth-login,
+.auth-email {
+  --background: #f7f9fc;
+}
+
+.auth-login__toolbar,
+.auth-email__toolbar {
+  --background: #0d3f48;
+  --color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.auth-page__title {
+  display: block;
+  text-align: center;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.auth-login__content,
+.auth-email__content {
+  --background: #f7f9fc;
+}
+
+.auth-login__wrapper,
+.auth-email__wrapper {
+  position: relative;
+  min-height: 100%;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  gap: 1rem;
+}
+
+.auth-email__back,
+.auth-login__back {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.auth-email__back {
+  margin-bottom: 1.5rem;
+}
+
+.auth-email__back-icon,
+.auth-login__back-icon {
+  font-size: 2.4rem;
+  color: #0d0d0d;
+}
+
+.auth-login__link,
+.auth-email__link {
+  color: #0d3f48;
+  font-weight: 600;
+  align-self: center;
+}
+
+.auth-email__link {
+  margin-top: 1rem;
+}
+
+.app-account,
+.app-login {
+  width: 100%;
+}
+
+.app-account__card,
+.app-login__card {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: 28px;
+  box-shadow: none;
+  --background: #ffffff;
+  padding: 1.75rem 1.5rem 2rem;
+}
+
+.app-account__title,
+.app-login__title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0d0d0d;
+}
+
+.app-account__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.app-login__form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.app-account__list,
+.app-login__list {
+  --background: transparent;
+  background-color: #ffffff;
+  padding: 0;
+}
+
+.app-account__item,
+.app-login__item {
+  align-items: center;
+}
+
+.app-account__item + .app-account__item,
+.app-login__item + .app-login__item {
+  margin-top: 0.75rem;
+}
+
+.app-account__item-icon,
+.app-login__item-icon {
+  font-size: 1.4rem;
+  color: #0d0d0d;
+}
+
+.app-account__input,
+.app-login__input {
+  --placeholder-font-weight: 600;
+  font-weight: 600;
+  color: #0d0d0d;
+}
+
+.app-account__terms {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #0d0d0d;
+}
+
+.app-account__checkbox {
+  --size: 22px;
+}
+
+.app-account__link {
+  justify-self: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0d3f48;
+}
+
+.app-account__submit,
+.app-login__submit {
+  --background: #cbdcff;
+  --background-activated: #bcd3ff;
+  --background-focused: #bcd3ff;
+  --background-hover: #d8e6ff;
+  --color: #0d0d0d;
+  --color-activated: #0d0d0d;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-account__spinner,
+.app-login__spinner {
+  margin-right: 0.5rem;
+}
+
+.app-account__feedback,
+.app-login__feedback {
+  display: block;
+  text-align: center;
+  font-weight: 600;
+}
+
+.app-account__feedback {
+  margin-top: 1rem;
+}
+
+.app-login__feedback {
+  margin-top: -0.5rem;
+}
+
+.auth-field-item {
+  border: 2px solid #000000;
+  border-radius: 16px;
+  --background: #ffffff;
+  --border-width: 0;
+  --inner-border-width: 0;
+  --highlight-height: 0;
+  --highlight-color-focused: transparent;
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+}
+.auth-field-toggle {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: transparent;
+  color: #0d0d0d;
+}
+
+.app-account__input::part(native),
+.app-login__input::part(native) {
+  font-size: 0.95rem;
+}
+
+.app-account__input::part(native)::placeholder,
+.app-login__input::part(native)::placeholder {
+  font-size: 0.85rem;
+}
+
+.auth-field-toggle ion-icon {
+  font-size: 1.2rem;
+}
+
+
+
