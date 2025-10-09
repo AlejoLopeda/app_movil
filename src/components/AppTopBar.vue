@@ -229,6 +229,7 @@ onUnmounted(() => {
   background: rgba(0,0,0,0);/* si en iOS no capta, usa 0.001 */
   /* background: rgba(0,0,0,0.001); */
   pointer-events: auto;
+  top: calc(var(--ion-safe-area-top) + 56px);
 }
 
 /* Dark mode */
@@ -236,6 +237,8 @@ onUnmounted(() => {
   .topbar__toolbar {
     --background: var(--app-topbar-bg-dark, #0b2e35);
     --color: #e6f1f3;
+    padding-top: var(--ion-safe-area-top);
+    min-height: calc(56px + var(--ion-safe-area-top));
   }
   .topbar__btn { --color: #e6f1f3; }
 
@@ -243,6 +246,7 @@ onUnmounted(() => {
   .user-speed__btn {
     --background: var(--app-topbar-bg-dark, #0b2e35);
     --color: #fff;
+    top: calc(var(--ion-safe-area-top) + 60px);
   }
   .user-speed__btn--danger {
     --background: #e53935;

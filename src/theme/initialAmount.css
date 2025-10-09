@@ -1,25 +1,25 @@
 /* ===== Layout general ===== */
 .initial-page{
-  --background: #ffffff;  /* fondo claro siempre */
+  --background: #f7f9fc;  /* fondo claro siempre */
 }
 
 /* ====== CONTENEDOR PANTALLA ====== */
 .screen {
-  min-height: 100%;
+  min-height: 100vh;     
   display: flex;
-  justify-content: flex-start;    /* alinea arriba */
-  align-items: center;            /* centrado horizontal */
-  padding: clamp(16px, 4vh, 32px);
+  justify-content: center; 
+  align-items: center;     
+  padding: 16px;
 }
 
 /* ====== CARD ====== */
 .card {
-  width: min(92vw, 360px);
+  width: min(92vw, 380px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: clamp(14px, 2.5vh, 20px);   /* menos aire entre elementos */
-  margin-top: 10vh;                /* baja el bloque un poco */
+  gap: 20px;
+  margin-top: 0;           /* 👈 quita el empuje hacia abajo */
 }
 
 /* ===== título con más separación ===== */
@@ -42,6 +42,19 @@
   gap: 8px;                             /* aire entre fila e hint */
 }
 
+.amount-container {
+  width: 100%;
+  background: #ffffff;             /* fondo suave */
+  border: 1.5px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  padding: 24px 20px;              /* más aire dentro */
+  box-shadow: 0 6px 18px rgba(0,0,0,.05);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;                       /* espacio uniforme entre hijos */
+}
+
+
 /* fila icono + input (ya la tenías, la dejo igual con ancho total) */
 .amount-row{
   width: 100%;
@@ -49,6 +62,22 @@
   align-items: center;
   gap: 16px;
 }
+
+/* Toast de éxito: flotante, centrado y un poco arriba del contenedor */
+.success-toast{
+  /* 🚩 clave 1: no full-width en Android (MD) */
+  --width: auto;             /* evita la barra completa */
+  --max-width: 360px;        /* límite razonable */
+  /* 🚩 clave 2: súbelo sin empujar layout */
+  --bottom: 120px;           /* ajusta 100–160px según veas */
+  /* Estética */
+  --border-radius: 12px;
+  --box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  --background: var(--ion-color-success);
+  --color: var(--ion-color-success-contrast);
+  text-align: center;
+}
+
 
 /* reserva de altura para que el botón NO salte al mostrar error */
 .amount-hint-slot{
@@ -154,3 +183,5 @@
     font-size: 15px;
   }
 }
+
+
