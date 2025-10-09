@@ -35,12 +35,23 @@
               <ion-input
                 v-model="form.password"
                 autocomplete="new-password"
-                placeholder="Ingresa una contrasena"
-                type="password"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                placeholder="Ingresar contraseña"
                 minlength="6"
                 required
                 class="app-account__input"
               />
+              <ion-button
+                slot="end"
+                fill="clear"
+                size="small"
+                type="button"
+                class="auth-field-toggle"
+                :aria-label="isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                @click="togglePasswordVisibility"
+              >
+                <ion-icon :icon="isPasswordVisible ? eyeOffIcon : eyeIcon" />
+              </ion-button>
             </ion-item>
 
           <ion-item class="app-account__item auth-field-item" lines="none">
@@ -48,12 +59,23 @@
               <ion-input
                 v-model="form.passwordConfirmation"
                 autocomplete="new-password"
-                placeholder="Confirmar contrasena"
-                type="password"
+                :type="isPasswordConfirmationVisible ? 'text' : 'password'"
+                placeholder="Confirmar contraseña"
                 minlength="6"
                 required
                 class="app-account__input"
               />
+              <ion-button
+                slot="end"
+                fill="clear"
+                size="small"
+                type="button"
+                class="auth-field-toggle"
+                :aria-label="isPasswordConfirmationVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                @click="togglePasswordConfirmationVisibility"
+              >
+                <ion-icon :icon="isPasswordConfirmationVisible ? eyeOffIcon : eyeIcon" />
+              </ion-button>
             </ion-item>
           </ion-list>
           <ion-text v-if="errorMessage" color="danger" class="app-account__feedback">
@@ -107,7 +129,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch, onMounted } from 'vue'
+import { computed, reactive, watch, onMounted, ref } from 'vue'
 import {
   IonButton,
   IonCard,
@@ -120,7 +142,7 @@ import {
   IonSpinner,
   IonText
 } from '@ionic/vue'
-import { personOutline, mailOutline, lockClosedOutline } from 'ionicons/icons'
+import { personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons'
 import '@/theme/AuthPage.css'
 import { useAuth } from '../composables/useAuth.js'
 
@@ -132,9 +154,14 @@ const form = reactive({
   acceptTerms: false
 })
 
+const isPasswordVisible = ref(false)
+const isPasswordConfirmationVisible = ref(false)
+
 const personIcon = personOutline
 const mailIcon = mailOutline
 const lockIcon = lockClosedOutline
+const eyeIcon = eyeOutline
+const eyeOffIcon = eyeOffOutline
 
 const { register, isLoading, authError, registrationResult } = useAuth()
 
@@ -151,6 +178,14 @@ const successMessage = computed(() => {
   return 'Registro enviado correctamente.'
 })
 
+const togglePasswordVisibility = () => {
+  isPasswordVisible.value = !isPasswordVisible.value
+}
+
+const togglePasswordConfirmationVisibility = () => {
+  isPasswordConfirmationVisible.value = !isPasswordConfirmationVisible.value
+}
+
 onMounted(() => {
   authError.value = null
 })
@@ -162,6 +197,8 @@ watch(registrationResult, (result) => {
     form.password = ''
     form.passwordConfirmation = ''
     form.acceptTerms = false
+    isPasswordVisible.value = false
+    isPasswordConfirmationVisible.value = false
   }
 })
 

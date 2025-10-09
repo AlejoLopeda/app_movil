@@ -21,11 +21,11 @@ const mapSignUpError = (error) => {
   }
 
   if (normalizedMessage.includes('password should be at least 6 characters')) {
-    return 'La contrasena debe tener al menos 6 caracteres.'
+    return 'La contraseña debe tener al menos 6 caracteres.'
   }
 
   if (normalizedMessage.includes('password should contain at least one character of each')) {
-    return 'La contrasena debe incluir al menos una minuscula, una mayuscula, un numero y un simbolo.'
+    return 'La contraseña debe incluir al menos una minuscula, una mayuscula, un numero y un simbolo.'
   }
 
   if (message === 'Database error saving new user') {
@@ -52,7 +52,7 @@ const mapSignInError = (error) => {
   const normalizedMessage = message.toLowerCase()
 
   if (normalizedMessage.includes('invalid login credentials')) {
-    return 'Contraseña o correo invalido. Verifica tu correo y contrasena.'
+    return 'Contraseña o correo invalido. Verifica tu correo y contraseña.'
   }
 
   if (normalizedMessage.includes('email not confirmed')) {

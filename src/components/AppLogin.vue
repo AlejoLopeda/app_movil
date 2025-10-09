@@ -24,12 +24,23 @@
               <ion-input
                 v-model="form.password"
                 autocomplete="current-password"
-                placeholder="Contrasena"
-                type="password"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                placeholder="Contraseña"
                 minlength="6"
                 required
                 class="app-login__input"
               />
+              <ion-button
+                slot="end"
+                fill="clear"
+                size="small"
+                type="button"
+                class="auth-field-toggle"
+                :aria-label="isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                @click="togglePasswordVisibility"
+              >
+                <ion-icon :icon="isPasswordVisible ? eyeOffIcon : eyeIcon" />
+              </ion-button>
             </ion-item>
           </ion-list>
 
@@ -59,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, onMounted } from 'vue'
+import { computed, reactive, onMounted, ref } from 'vue'
 import {
   IonButton,
   IonCard,
@@ -71,7 +82,7 @@ import {
   IonSpinner,
   IonText
 } from '@ionic/vue'
-import { mailOutline, lockClosedOutline } from 'ionicons/icons'
+import { mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons'
 import '@/theme/AuthPage.css'
 import { useAuth } from '../composables/useAuth.js'
 
@@ -82,12 +93,20 @@ const form = reactive({
   password: ''
 })
 
+const isPasswordVisible = ref(false)
+
 const mailIcon = mailOutline
 const lockIcon = lockClosedOutline
+const eyeIcon = eyeOutline
+const eyeOffIcon = eyeOffOutline
 
 const { login, isLoading, authError } = useAuth()
 
 const errorMessage = computed(() => authError.value)
+
+const togglePasswordVisibility = () => {
+  isPasswordVisible.value = !isPasswordVisible.value
+}
 
 onMounted(() => {
   authError.value = null
@@ -98,6 +117,7 @@ const onSubmit = async () => {
   if (!error) {
     form.email = ''
     form.password = ''
+    isPasswordVisible.value = false
     emit('success', data)
   }
 }
