@@ -1,0 +1,51 @@
+/* ====== Estilo del menú lateral (alineado a tu topbar) ====== */
+.side-menu {
+  --width: 84vw;
+  --max-width: 320px;
+}
+
+.side-menu__toolbar {
+  --background: var(--app-topbar-bg, #0d3f48);
+  --color: #fff;
+  --border-width: 0;
+  min-height: 56px;
+}
+.side-menu__title {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-weight: 800;
+}
+
+.side-menu__content {
+  --background: var(--ion-background-color, #0f0f0f);
+}
+.side-menu__list { padding: 8px 0; }
+
+.side-menu__item {
+  --background: transparent;
+  --color: var(--ion-text-color);
+  --border-radius: 12px;
+  margin: 6px 10px;
+  padding-inline-start: 14px;
+  padding-inline-end: 10px;
+  min-height: 46px;
+  font-weight: 600;
+}
+
+.side-menu__item:hover,
+.side-menu__item:focus {
+  background: rgba(255,255,255,.06);
+}
+
+/* Modo claro */
+@media (prefers-color-scheme: light) {
+  .side-menu__content { --background: #f7f9fc; }
+  .side-menu__item:hover,
+  .side-menu__item:focus { background: rgba(0,0,0,.06); }
+}
+
+/* Backdrop para cerrar al tocar fuera del menú */
+ion-menu::part(backdrop) {
+  background: rgba(0,0,0,.4);
+  opacity: 1;
+}
