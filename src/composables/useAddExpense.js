@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { getCurrentUserId, insertExpense } from '@/lib/expenseService'
+import { getCurrentUserId, insertExpense } from '@/services/expenseService'
 
 const BUSY_RESPONSE = Object.freeze({ ok: false, reason: 'busy' })
 

@@ -83,6 +83,7 @@ import {
   menuController
 } from '@ionic/vue'
 import { personCircleOutline, createOutline, documentTextOutline, logOutOutline } from 'ionicons/icons'
+import '@/theme/AppTopBar.css'
 
 const props = defineProps({
   title: { type: String, default: 'INGRESOS' },
@@ -156,101 +157,3 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.topbar__toolbar {
-  --background: var(--app-topbar-bg, #0d3f48);
-  --color: #ffffff;
-  --border-width: 0;
-  min-height: 56px;
-}
-.topbar__btn { --color: #ffffff; }
-.topbar__title {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 800;
-  text-align: center;
-}
-
-/* Siempre visible */
-.topbar__user-label {
-  margin-left: .25rem;
-  font-size: .75rem;
-  font-weight: 700;
-  display: inline;
-  white-space: nowrap;
-}
-
-/* Speed-dial flotante */
-.user-speed {
-  position: fixed;
-  z-index: 9999;
-  top: calc(env(safe-area-inset-top) + 60px);
-  right: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-.user-speed__btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  --border-radius: 50%;
-  --box-shadow: 0 6px 18px rgba(0,0,0,.18);
-  --color: #fff;                 /* icono blanco */
-  --background: var(--app-topbar-bg, #0d3f48); /* 👈 mismo color de navbar */
-  --padding-start: 0;
-  --padding-end: 0;
-  display: grid;
-  place-items: center;
-}
-
-/* Botón rojo (cerrar sesión) */
-.user-speed__btn--danger {
-  --background: #e53935; /* rojo danger */
-  --color: #fff;
-}
-
-/* Tamaño visible del icono */
-.user-speed__btn ion-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
-  color: #fff;
-}
-
-/* ✅ Overlay a pantalla completa (AÑADIDO) */
-.user-speed-overlay {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 56px); /* no cubre el botón del menú */
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9998;            /* justo debajo del .user-speed (9999) */
-  background: rgba(0,0,0,0);/* si en iOS no capta, usa 0.001 */
-  /* background: rgba(0,0,0,0.001); */
-  pointer-events: auto;
-  top: calc(var(--ion-safe-area-top) + 56px);
-}
-
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .topbar__toolbar {
-    --background: var(--app-topbar-bg-dark, #0b2e35);
-    --color: #e6f1f3;
-    padding-top: var(--ion-safe-area-top);
-    min-height: calc(56px + var(--ion-safe-area-top));
-  }
-  .topbar__btn { --color: #e6f1f3; }
-
-  /* En modo oscuro los botones heredan el color oscuro de navbar */
-  .user-speed__btn {
-    --background: var(--app-topbar-bg-dark, #0b2e35);
-    --color: #fff;
-    top: calc(var(--ion-safe-area-top) + 60px);
-  }
-  .user-speed__btn--danger {
-    --background: #e53935;
-    --color: #fff;
-  }
-}
-</style>

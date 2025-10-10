@@ -54,7 +54,7 @@ import {
 import { personCircleOutline } from 'ionicons/icons'
 import { useAddIncome } from '@/composables/useAddIncome'
 import IncomeForm from '@/components/IncomeForm.vue'
-import { getCurrentUserId } from '@/lib/incomeService'
+import { getCurrentUserId } from '@/services/incomeService'
 import '@/theme/IncomePage.css'
 
 const { loading, saveIncome } = useAddIncome()

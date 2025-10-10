@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 
-export { getCurrentUserId, presetCategories, additionalCategories, resolveCategory } from '@/lib/incomeService'
+export { getCurrentUserId, presetCategories, additionalCategories, resolveCategory } from '@/services/incomeService'
 
 function sanitizeAmount(amount) {
   const numericValue = Number(amount)

@@ -39,16 +39,6 @@ import {
   IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar, IonTitle,
   IonContent, IonList, IonItem, IonMenuToggle
 } from '@ionic/vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
-
-const router = useRouter()
-const { logout } = useAuth()
-
-const handleLogout = async () => {
-  await logout()
-  router.replace('/login')
-}
 
 /** 👇 se dispara cada vez que se va a abrir el menú lateral */
 const onSideMenuWillOpen = () => {

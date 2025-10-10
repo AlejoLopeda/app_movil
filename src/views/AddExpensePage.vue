@@ -54,7 +54,7 @@ import {
 import { personCircleOutline } from 'ionicons/icons'
 import { useAddExpense } from '@/composables/useAddExpense'
 import ExpenseForm from '@/components/ExpenseForm.vue'
-import { getCurrentUserId } from '@/lib/expenseService'
+import { getCurrentUserId } from '@/services/expenseService'
 import '@/theme/ExpensePage.css'
 
 const { loading, saveExpense } = useAddExpense()
