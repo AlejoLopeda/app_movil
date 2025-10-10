@@ -1,5 +1,5 @@
 ﻿<template>
-  <ion-page class="income-page">
+    <ion-page class="income-page">
     <ion-header class="income-header" translucent>
       <ion-toolbar class="income-toolbar">
         <ion-buttons slot="start">

@@ -6,7 +6,6 @@
       :class="{ 'income-form__item--error': amountError }"
     >
       <ion-label position="stacked" class="income-form__label">Monto</ion-label>
-      <div class="input-prefix">$</div>
       <ion-input
         class="income-form__input"
         type="number"
@@ -14,7 +13,7 @@
         placeholder="0.00"
         v-model.number="monto"
         @ionBlur="validateAmount"
-        :style="{ '--padding-start': '22px' }"
+        prefix="$"
       />
       <ion-icon slot="end" :icon="calculatorOutline" class="income-form__icon" />
     </ion-item>
@@ -276,18 +275,11 @@ defineExpose({
   color: #0d2c33;
 }
 
-.with-prefix {
-  position: relative;
-}
-
-.input-prefix {
-  position: absolute;
-  top: 44px;
-  left: 16px;
-  z-index: 1;
+.with-prefix ion-input::part(prefix) {
   color: #0d3f48;
   font-weight: 700;
   letter-spacing: 0.04em;
+  padding-right: 4px;
 }
 
 .income-form__input {
