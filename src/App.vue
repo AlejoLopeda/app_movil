@@ -19,7 +19,11 @@
           </ion-menu-toggle>
 
           <ion-menu-toggle auto-hide="true">
-            <ion-item button router-link="/ingresos/nuevo">Añadir ingreso</ion-item>
+            <ion-item button router-link="/ingresos/nuevo">Anadir ingreso</ion-item>
+          </ion-menu-toggle>
+
+          <ion-menu-toggle auto-hide="true">
+            <ion-item button router-link="/gastos/nuevo">Anadir gasto</ion-item>
           </ion-menu-toggle>
         </ion-list>
       </ion-content>
