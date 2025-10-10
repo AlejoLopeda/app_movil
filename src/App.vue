@@ -19,7 +19,11 @@
           </ion-menu-toggle>
 
           <ion-menu-toggle auto-hide="true">
-            <ion-item button router-link="/ingresos/nuevo">Añadir ingreso</ion-item>
+            <ion-item button router-link="/ingresos/nuevo">Anadir ingreso</ion-item>
+          </ion-menu-toggle>
+
+          <ion-menu-toggle auto-hide="true">
+            <ion-item button router-link="/gastos/nuevo">Anadir gasto</ion-item>
           </ion-menu-toggle>
         </ion-list>
       </ion-content>
@@ -35,16 +39,6 @@ import {
   IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar, IonTitle,
   IonContent, IonList, IonItem, IonMenuToggle
 } from '@ionic/vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
-
-const router = useRouter()
-const { logout } = useAuth()
-
-const handleLogout = async () => {
-  await logout()
-  router.replace('/login')
-}
 
 /** 👇 se dispara cada vez que se va a abrir el menú lateral */
 const onSideMenuWillOpen = () => {

@@ -1,0 +1,96 @@
+.expense-form__card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: clamp(18px, 5vw, 28px);
+  box-shadow: 0 24px 48px -28px rgba(13, 63, 72, 0.45);
+  display: grid;
+  gap: 14px;
+}
+
+.expense-form__item {
+  --background: #ffffff;
+  --inner-border-width: 0;
+  --border-width: 0;
+  --highlight-height: 0;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --padding-start: 16px;
+  --inner-padding-end: 14px;
+  border: 2px solid rgba(13, 63, 72, 0.14);
+  border-radius: 18px;
+  transition: border-color 0.2s ease;
+}
+
+.expense-form__item--error {
+  border-color: var(--ion-color-danger);
+  --highlight-color-focused: var(--ion-color-danger);
+  --highlight-color-invalid: var(--ion-color-danger);
+}
+
+.expense-form__label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: #0d2c33;
+}
+
+.with-prefix ion-input::part(prefix) {
+  color: #0d3f48;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-right: 4px;
+}
+
+.expense-form__input {
+  font-weight: 600;
+  color: #0d2c33;
+}
+
+.expense-form__icon {
+  align-self: center;
+  font-size: 22px;
+  color: #0d3f48;
+}
+
+.section-label {
+  margin: 22px 0 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #0d3f48;
+  font-size: 0.76rem;
+}
+
+.expense-form__note {
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.expense-form__actions {
+  margin-top: 26px;
+}
+
+.expense-form__submit {
+  --background: #cbdcff;
+  --background-activated: #bcd3ff;
+  --background-focused: #bcd3ff;
+  --background-hover: #d8e6ff;
+  --color: #0d2c33;
+  --border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  height: 48px;
+}
+
+@media (min-width: 640px) {
+  .expense-form__card {
+    gap: 18px;
+    padding: 28px 32px;
+  }
+
+  .section-label {
+    margin-top: 26px;
+  }
+}

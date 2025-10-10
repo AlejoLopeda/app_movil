@@ -1,13 +1,13 @@
-﻿<template>
-  <div class="income-form__card">
+<template>
+  <div class="expense-form__card">
     <!-- Monto -->
     <ion-item
-      class="income-form__item with-prefix"
-      :class="{ 'income-form__item--error': amountError }"
+      class="expense-form__item with-prefix"
+      :class="{ 'expense-form__item--error': amountError }"
     >
-      <ion-label position="stacked" class="income-form__label">Monto</ion-label>
+      <ion-label position="stacked" class="expense-form__label">Monto</ion-label>
       <ion-input
-        class="income-form__input"
+        class="expense-form__input"
         type="number"
         inputmode="decimal"
         placeholder="0.00"
@@ -15,9 +15,9 @@
         @ionBlur="validateAmount"
         prefix="$"
       />
-      <ion-icon slot="end" :icon="calculatorOutline" class="income-form__icon" />
+      <ion-icon slot="end" :icon="calculatorOutline" class="expense-form__icon" />
     </ion-item>
-    <ion-note v-if="amountError" color="danger" class="income-form__note">{{ amountError }}</ion-note>
+    <ion-note v-if="amountError" color="danger" class="expense-form__note">{{ amountError }}</ion-note>
 
     <!-- Categorias -->
     <div class="section-label">Categorias</div>
@@ -35,20 +35,20 @@
       </button>
       <button type="button" class="cat-btn more" @click="openCategorias">
         <ion-icon :icon="addCircleOutline" />
-        <span>Más</span>
+        <span>Mas</span>
       </button>
     </div>
-    <ion-note v-if="catError" color="danger" class="income-form__note">{{ catError }}</ion-note>
+    <ion-note v-if="catError" color="danger" class="expense-form__note">{{ catError }}</ion-note>
 
     <ion-modal
-      class="income-categories-modal"
+      class="expense-categories-modal"
       :is-open="showMoreCategories"
       @didDismiss="closeCategorias"
     >
-      <div class="income-categories-modal__content">
-        <header class="income-categories-modal__header">
-          <h2>Más categorías</h2>
-          <p>Selecciona una categoría adicional para este ingreso.</p>
+      <div class="expense-categories-modal__content">
+        <header class="expense-categories-modal__header">
+          <h2>Mas categorias</h2>
+          <p>Selecciona una categoria adicional para este gasto.</p>
         </header>
         <div class="categories categories--modal">
           <button
@@ -65,7 +65,7 @@
         </div>
         <ion-button
           expand="block"
-          class="income-categories-modal__close"
+          class="expense-categories-modal__close"
           fill="clear"
           @click="closeCategorias"
         >
@@ -76,24 +76,24 @@
 
     <!-- Fecha -->
     <ion-item
-      class="income-form__item"
-      :class="{ 'income-form__item--error': dateError }"
+      class="expense-form__item"
+      :class="{ 'expense-form__item--error': dateError }"
     >
-      <ion-label position="stacked" class="income-form__label">Fecha</ion-label>
-      <ion-input type="date" v-model="fecha" @ionBlur="validateDate" class="income-form__input" />
+      <ion-label position="stacked" class="expense-form__label">Fecha</ion-label>
+      <ion-input type="date" v-model="fecha" @ionBlur="validateDate" class="expense-form__input" />
     </ion-item>
-    <ion-note v-if="dateError" color="danger" class="income-form__note">{{ dateError }}</ion-note>
+    <ion-note v-if="dateError" color="danger" class="expense-form__note">{{ dateError }}</ion-note>
 
     <!-- Descripcion -->
-    <ion-item class="income-form__item">
-      <ion-label position="stacked" class="income-form__label">Descripcion</ion-label>
-      <ion-input placeholder="Opcional" v-model="descripcion" class="income-form__input" />
+    <ion-item class="expense-form__item">
+      <ion-label position="stacked" class="expense-form__label">Descripcion</ion-label>
+      <ion-input placeholder="Opcional" v-model="descripcion" class="expense-form__input" />
     </ion-item>
 
-    <div class="income-form__actions">
+    <div class="expense-form__actions">
       <ion-button
         expand="block"
-        class="income-form__submit"
+        class="expense-form__submit"
         :disabled="!isValid || loading"
         @click="emitSubmit"
       >
@@ -118,9 +118,9 @@ import {
   cartOutline,
   walletOutline,
 } from 'ionicons/icons'
-import { additionalCategories, presetCategories, resolveCategory } from '@/services/incomeService'
-import '@/theme/IncomeCategories.css'
-import '@/theme/IncomeForm.css'
+import { additionalCategories, presetCategories, resolveCategory } from '@/services/expenseService'
+import '@/theme/ExpenseCategories.css'
+import '@/theme/ExpenseForm.css'
 
 const props = defineProps({
   loading: {
