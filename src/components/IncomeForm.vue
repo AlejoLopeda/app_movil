@@ -36,10 +36,44 @@
       </button>
       <button type="button" class="cat-btn more" @click="openCategorias">
         <ion-icon :icon="addCircleOutline" />
-        <span>Mas</span>
+        <span>Más</span>
       </button>
     </div>
     <ion-note v-if="catError" color="danger" class="income-form__note">{{ catError }}</ion-note>
+
+    <ion-modal
+      class="income-categories-modal"
+      :is-open="showMoreCategories"
+      @didDismiss="closeCategorias"
+    >
+      <div class="income-categories-modal__content">
+        <header class="income-categories-modal__header">
+          <h2>Más categorías</h2>
+          <p>Selecciona una categoría adicional para este ingreso.</p>
+        </header>
+        <div class="categories categories--modal">
+          <button
+            v-for="c in extendedCategories"
+            :key="c.key"
+            type="button"
+            class="cat-btn"
+            :class="{ active: categoria === c.key }"
+            @click="selectAdditionalCategory(c.key)"
+          >
+            <ion-icon :icon="iconFor(c.key)" />
+            <span>{{ c.label }}</span>
+          </button>
+        </div>
+        <ion-button
+          expand="block"
+          class="income-categories-modal__close"
+          fill="clear"
+          @click="closeCategorias"
+        >
+          Cerrar
+        </ion-button>
+      </div>
+    </ion-modal>
 
     <!-- Fecha -->
     <ion-item
@@ -72,9 +106,21 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton } from '@ionic/vue'
-import { calculatorOutline, addCircleOutline, cashOutline, giftOutline, peopleOutline } from 'ionicons/icons'
-import { presetCategories } from '@/lib/incomeService'
+import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton, IonModal } from '@ionic/vue'
+import {
+  calculatorOutline,
+  addCircleOutline,
+  cashOutline,
+  giftOutline,
+  peopleOutline,
+  briefcaseOutline,
+  restaurantOutline,
+  refreshOutline,
+  cartOutline,
+  walletOutline,
+} from 'ionicons/icons'
+import { additionalCategories, presetCategories, resolveCategory } from '@/lib/incomeService'
+import '@/theme/IncomeCategories.css'
 
 const props = defineProps({
   loading: {
@@ -94,7 +140,20 @@ const amountError = ref('')
 const dateError = ref('')
 const catError = ref('')
 
-const categories = presetCategories()
+const baseCategories = presetCategories()
+const extendedCategories = additionalCategories()
+const showMoreCategories = ref(false)
+
+const categories = computed(() => {
+  const current = [...baseCategories]
+  if (!categoria.value) return current
+
+  const alreadyListed = current.some((item) => item.key === categoria.value)
+  if (alreadyListed) return current
+
+  const extra = resolveCategory(categoria.value)
+  return extra ? [...current, extra] : current
+})
 
 function iconFor(key) {
   switch (key) {
@@ -104,6 +163,16 @@ function iconFor(key) {
       return giftOutline
     case 'pension':
       return peopleOutline
+    case 'comisiones':
+      return briefcaseOutline
+    case 'propinas':
+      return restaurantOutline
+    case 'reembolsos':
+      return refreshOutline
+    case 'ventas':
+      return cartOutline
+    case 'mesada':
+      return walletOutline
     default:
       return cashOutline
   }
@@ -135,8 +204,16 @@ const isValid = computed(
 )
 
 function openCategorias() {
-  catError.value = 'La gestion de categorias aun no esta disponible'
-  setTimeout(() => (catError.value = ''), 2500)
+  showMoreCategories.value = true
+}
+
+function closeCategorias() {
+  showMoreCategories.value = false
+}
+
+function selectAdditionalCategory(key) {
+  categoria.value = key
+  showMoreCategories.value = false
 }
 
 function emitSubmit() {
@@ -233,45 +310,6 @@ defineExpose({
   font-size: 0.76rem;
 }
 
-.categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-start;
-}
-
-.cat-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 14px;
-  min-width: 76px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  background: #ecf3ff;
-  color: #0d3f48;
-  font-weight: 600;
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 12px 24px -24px rgba(13, 63, 72, 0.6);
-}
-
-.cat-btn ion-icon {
-  font-size: 22px;
-}
-
-.cat-btn.active {
-  background: #cbdcff;
-  border-color: rgba(13, 63, 72, 0.16);
-  box-shadow: 0 14px 26px -20px rgba(13, 63, 72, 0.55);
-}
-
-.cat-btn.more {
-  border: 1.5px dashed rgba(13, 63, 72, 0.4);
-  background: transparent;
-}
-
 .income-form__note {
   font-size: 0.78rem;
   font-weight: 600;
@@ -302,11 +340,6 @@ defineExpose({
 
   .section-label {
     margin-top: 26px;
-  }
-
-  .cat-btn {
-    min-width: 88px;
-    padding: 12px 16px;
   }
 }
 </style>
