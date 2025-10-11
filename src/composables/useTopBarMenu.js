@@ -14,7 +14,7 @@ export function useTopBarMenu (props) {
     }
   }
 
-  // ⬇️  try/catch + aviso global si falla
+  // try/catch + aviso global si falla
   const onMenuButtonClick = async () => {
     if (menuOpen.value) menuOpen.value = false
     try {

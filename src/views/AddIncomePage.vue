@@ -1,25 +1,20 @@
 ﻿<template>
-    <ion-page class="income-page">
-    <ion-header class="income-header" translucent>
-      <ion-toolbar class="income-toolbar">
-        <ion-buttons slot="start">
-          <ion-menu-button class="income-menu" />
-        </ion-buttons>
-        <ion-title class="income-toolbar__title">Ingresos</ion-title>
-        <ion-buttons slot="end">
-          <ion-button class="income-profile" @click="goPerfil">
-            <ion-icon :icon="personCircleOutline" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+  <ion-page class="income-page">
+    <!-- ✅ AÑADIDO: usa la misma topbar que el Dashboard -->
+    <app-top-bar :title="pageTitle" />
 
-    <ion-content class="income-content ion-padding" fullscreen>
+    <ion-content
+      class="income-content ion-padding"
+      fullscreen
+      style="--padding-top: var(--ion-safe-area-top);" 
+    >
       <section class="income-section">
         <header class="income-hero">
           <span class="income-badge">Nuevo registro</span>
           <h2 class="income-heading">Añadir ingreso</h2>
-          <p class="income-copy">Registra los ingresos que recibes para mantener tu control financiero al día.</p>
+          <p class="income-copy">
+            Registra los ingresos que recibes para mantener tu control financiero al día.
+          </p>
         </header>
 
         <IncomeForm class="income-form" :loading="loading" @submit="handleSubmit" />
@@ -38,7 +33,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+// ✅ AÑADIDOS: computed, useRoute y AppTopBar
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import AppTopBar from '@/components/AppTopBar.vue'
+
 import {
   IonPage,
   IonHeader,
@@ -56,6 +55,10 @@ import { useAddIncome } from '@/composables/useAddIncome'
 import IncomeForm from '@/components/IncomeForm.vue'
 import { getCurrentUserId } from '@/services/incomeService'
 import '@/theme/IncomePage.css'
+
+// ✅ AÑADIDO: título desde meta (o fijo si prefieres)
+const route = useRoute()
+const pageTitle = computed(() => route.meta?.title || 'INGRESOS')
 
 const { loading, saveIncome } = useAddIncome()
 
@@ -80,5 +83,4 @@ async function handleSubmit(payload) {
 function goPerfil() {
   showToast('Pantalla de perfil no disponible', 'medium')
 }
-
 </script>
