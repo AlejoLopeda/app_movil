@@ -4,6 +4,7 @@ import AuthEmailPage from '@/views/AuthEmailPage.vue'
 import Inicialmonto from '@/views/InicialMontoPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AddIncomePage from '@/views/AddIncomePage.vue'
+import AddExpensePage from '@/views/AddExpensePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -53,7 +54,17 @@ const routes = [
     meta: {
       requiresAuth: true,
       requiresInitialAmount: true,
-      title: 'Añadir ingreso'
+      title: 'Anadir ingreso'
+    }
+  },
+  {
+    path: '/gastos/nuevo',
+    name: 'AddExpense',
+    component: AddExpensePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Anadir gasto'
     }
   }
 ]

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 const MAX_AMOUNT = 9999999999.99
-const MIN_AMOUNT = 100000 // ⬅️ añadido: mínimo permitido
+const MIN_AMOUNT = 100000 
 const localeDecimal = (1.1).toLocaleString().includes(',') ? ',' : '.'
 
 function normalizeNumberString(input) {
@@ -45,7 +45,7 @@ export function useInitialAmount() {
     if (parsed.value === null || Number.isNaN(parsed.value)) return true
     if (parsed.value === 'BAD_LOCALE' || parsed.value === 'TOO_MANY_DECIMALS') return true
     const n = parsed.value
-    return n < 0 || n > MAX_AMOUNT || n < MIN_AMOUNT // ⬅️ añadido: validar mínimo
+    return n < 0 || n > MAX_AMOUNT || n < MIN_AMOUNT 
   })
 
   const showError = computed(() =>
@@ -62,7 +62,7 @@ export function useInitialAmount() {
     const n = parsed.value
     if (n > MAX_AMOUNT) return 'Monto fuera de rango.'
     if (n < 0) return 'El monto no puede ser negativo.'
-    if (n < MIN_AMOUNT) return 'El monto mínimo es 100.000.' // ⬅️ añadido: mensaje mínimo
+    if (n < MIN_AMOUNT) return 'El monto mínimo es 100.000.'
     return 'Ingresa un monto válido.'
   })
 

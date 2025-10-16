@@ -27,6 +27,23 @@
           <ion-button router-link="/monto" expand="block">Ingresar monto</ion-button>
         </ion-card-content>
       </ion-card>
+
+      <ion-button
+        class="initial-cta"
+        expand="block"
+        router-link="/ingresos/nuevo"
+      >
+        Crear ingresos
+      </ion-button>
+
+      <ion-button
+        class="initial-cta"
+        expand="block"
+        router-link="/gastos/nuevo"
+      >
+        Crear gasto
+      </ion-button>
+
     </ion-content>
   </ion-page>
 </template>

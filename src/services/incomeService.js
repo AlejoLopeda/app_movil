@@ -3,12 +3,31 @@
 const DEFAULT_CATEGORIES = Object.freeze([
   { key: 'salario', label: 'Salario' },
   { key: 'regalos', label: 'Regalos' },
-  { key: 'pension', label: 'Pension' },
-  { key: 'otros', label: 'Otros' }
+  { key: 'pension', label: 'Pension' }
+])
+
+const ADDITIONAL_CATEGORIES = Object.freeze([
+  { key: 'comisiones', label: 'Comisiones' },
+  { key: 'propinas', label: 'Propinas' },
+  { key: 'reembolsos', label: 'Reembolsos' },
+  { key: 'ventas', label: 'Ventas' },
+  { key: 'mesada', label: 'Mesada' }
 ])
 
 export function presetCategories() {
   return DEFAULT_CATEGORIES.map((item) => ({ ...item }))
+}
+
+export function additionalCategories() {
+  return ADDITIONAL_CATEGORIES.map((item) => ({ ...item }))
+}
+
+export function resolveCategory(key) {
+  return (
+    DEFAULT_CATEGORIES.find((item) => item.key === key) ??
+    ADDITIONAL_CATEGORIES.find((item) => item.key === key) ??
+    null
+  )
 }
 
 export async function getCurrentUserId() {
