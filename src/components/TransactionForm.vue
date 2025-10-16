@@ -1,13 +1,13 @@
-﻿<template>
-  <div class="income-form__card">
+<template>
+  <div class="expense-form__card">
     <!-- Monto -->
     <ion-item
-      class="income-form__item with-prefix"
-      :class="{ 'income-form__item--error': amountError }"
+      class="expense-form__item with-prefix"
+      :class="{ 'expense-form__item--error': amountError }"
     >
-      <ion-label position="stacked" class="income-form__label">Monto</ion-label>
+      <ion-label position="stacked" class="expense-form__label">Monto</ion-label>
       <ion-input
-        class="income-form__input"
+        class="expense-form__input"
         type="number"
         inputmode="decimal"
         placeholder="0.00"
@@ -15,9 +15,9 @@
         @ionBlur="validateAmount"
         prefix="$"
       />
-      <ion-icon slot="end" :icon="calculatorOutline" class="income-form__icon" />
+      <ion-icon slot="end" :icon="calculatorOutline" class="expense-form__icon" />
     </ion-item>
-    <ion-note v-if="amountError" color="danger" class="income-form__note">{{ amountError }}</ion-note>
+    <ion-note v-if="amountError" color="danger" class="expense-form__note">{{ amountError }}</ion-note>
 
     <!-- Categorias -->
     <div class="section-label">Categorias</div>
@@ -35,20 +35,20 @@
       </button>
       <button type="button" class="cat-btn more" @click="openCategorias">
         <ion-icon :icon="addCircleOutline" />
-        <span>Más</span>
+        <span>Mas</span>
       </button>
     </div>
-    <ion-note v-if="catError" color="danger" class="income-form__note">{{ catError }}</ion-note>
+    <ion-note v-if="catError" color="danger" class="expense-form__note">{{ catError }}</ion-note>
 
     <ion-modal
-      class="income-categories-modal"
+      class="expense-categories-modal"
       :is-open="showMoreCategories"
       @didDismiss="closeCategorias"
     >
-      <div class="income-categories-modal__content">
-        <header class="income-categories-modal__header">
-          <h2>Más categorías</h2>
-          <p>Selecciona una categoría adicional para este ingreso.</p>
+      <div class="expense-categories-modal__content">
+        <header class="expense-categories-modal__header">
+          <h2>Mas categorias</h2>
+          <p>Selecciona una categoria adicional para este {{ mode === 'income' ? 'ingreso' : 'gasto' }}.</p>
         </header>
         <div class="categories categories--modal">
           <button
@@ -65,7 +65,7 @@
         </div>
         <ion-button
           expand="block"
-          class="income-categories-modal__close"
+          class="expense-categories-modal__close"
           fill="clear"
           @click="closeCategorias"
         >
@@ -76,24 +76,24 @@
 
     <!-- Fecha -->
     <ion-item
-      class="income-form__item"
-      :class="{ 'income-form__item--error': dateError }"
+      class="expense-form__item"
+      :class="{ 'expense-form__item--error': dateError }"
     >
-      <ion-label position="stacked" class="income-form__label">Fecha</ion-label>
-      <ion-input type="date" v-model="fecha" @ionBlur="validateDate" class="income-form__input" />
+      <ion-label position="stacked" class="expense-form__label">Fecha</ion-label>
+      <ion-input type="date" v-model="fecha" @ionBlur="validateDate" class="expense-form__input" />
     </ion-item>
-    <ion-note v-if="dateError" color="danger" class="income-form__note">{{ dateError }}</ion-note>
+    <ion-note v-if="dateError" color="danger" class="expense-form__note">{{ dateError }}</ion-note>
 
     <!-- Descripcion -->
-    <ion-item class="income-form__item">
-      <ion-label position="stacked" class="income-form__label">Descripcion</ion-label>
-      <ion-input placeholder="Opcional" v-model="descripcion" class="income-form__input" />
+    <ion-item class="expense-form__item">
+      <ion-label position="stacked" class="expense-form__label">Descripcion</ion-label>
+      <ion-input placeholder="Opcional" v-model="descripcion" class="expense-form__input" />
     </ion-item>
 
-    <div class="income-form__actions">
+    <div class="expense-form__actions">
       <ion-button
         expand="block"
-        class="income-form__submit"
+        class="expense-form__submit"
         :disabled="!isValid || loading"
         @click="emitSubmit"
       >
@@ -101,7 +101,7 @@
       </ion-button>
     </div>
   </div>
-</template>
+  </template>
 
 <script setup>
 import { ref, computed } from 'vue'
@@ -109,26 +109,44 @@ import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton, IonModal } fr
 import {
   calculatorOutline,
   addCircleOutline,
+  // expense icons
   cashOutline,
+  homeOutline,
+  restaurantOutline,
+  carOutline,
+  schoolOutline,
+  filmOutline,
+  shirtOutline,
+  airplaneOutline,
+  pawOutline,
   giftOutline,
+  medkitOutline,
+  // income icons
   peopleOutline,
   briefcaseOutline,
-  restaurantOutline,
   refreshOutline,
   cartOutline,
   walletOutline,
 } from 'ionicons/icons'
-import { additionalCategories, presetCategories, resolveCategory } from '@/services/incomeService'
-import '@/theme/IncomeCategories.css'
-import '@/theme/IncomeForm.css'
+import {
+  additionalCategories as addExp,
+  presetCategories as preExp,
+  resolveCategory as resExp,
+} from '@/services/expenseService'
+import {
+  additionalCategories as addInc,
+  presetCategories as preInc,
+  resolveCategory as resInc,
+} from '@/services/incomeService'
+import '@/theme/ExpenseCategories.css'
+import '@/theme/ExpenseForm.css'
 
 const props = defineProps({
-  loading: {
-    type: Boolean,
-    default: false,
-  },
+  loading: { type: Boolean, default: false },
+  mode: { type: String, default: 'expense' }, // 'expense' | 'income'
 })
 const loading = computed(() => props.loading)
+const mode = computed(() => (props.mode === 'income' ? 'income' : 'expense'))
 const emit = defineEmits(['submit'])
 
 const monto = ref(null)
@@ -140,27 +158,49 @@ const amountError = ref('')
 const dateError = ref('')
 const catError = ref('')
 
-const baseCategories = presetCategories()
-const extendedCategories = additionalCategories()
+const baseCategories = mode.value === 'income' ? preInc() : preExp()
+const extendedCategories = mode.value === 'income' ? addInc() : addExp()
 const showMoreCategories = ref(false)
 
 const categories = computed(() => {
   const current = [...baseCategories]
   if (!categoria.value) return current
-
   const alreadyListed = current.some((item) => item.key === categoria.value)
   if (alreadyListed) return current
-
-  const extra = resolveCategory(categoria.value)
+  const extra = (mode.value === 'income' ? resInc : resExp)(categoria.value)
   return extra ? [...current, extra] : current
 })
 
 function iconFor(key) {
+  // expense keys
+  switch (key) {
+    case 'salud':
+      return medkitOutline
+    case 'hogar':
+      return homeOutline
+    case 'comida':
+      return restaurantOutline
+    case 'transporte':
+      return carOutline
+    case 'educacion':
+      return schoolOutline
+    case 'entretenimiento':
+      return filmOutline
+    case 'ropa':
+      return shirtOutline
+    case 'viajes':
+      return airplaneOutline
+    case 'mascotas':
+      return pawOutline
+    case 'regalos':
+      return giftOutline
+    case 'otros':
+      return cashOutline
+  }
+  // income keys
   switch (key) {
     case 'salario':
       return cashOutline
-    case 'regalos':
-      return giftOutline
     case 'pension':
       return peopleOutline
     case 'comisiones':
@@ -173,9 +213,8 @@ function iconFor(key) {
       return cartOutline
     case 'mesada':
       return walletOutline
-    default:
-      return cashOutline
   }
+  return cashOutline
 }
 
 function validateAmount() {

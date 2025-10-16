@@ -1,14 +1,14 @@
 ﻿<template>
-  <ion-page class="income-page">
+  <ion-page class="expense-page">
     <!-- ✅ AÑADIDO: usa la misma topbar que el Dashboard -->
     <app-top-bar :title="pageTitle" />
 
     <ion-content
-      class="income-content ion-padding"
+      class="expense-content ion-padding"
       fullscreen
       style="--padding-top: var(--ion-safe-area-top);" 
     >
-      <section class="income-section">
+      <section class="expense-section">
         <header class="income-hero">
           <span class="income-badge">Nuevo registro</span>
           <h2 class="income-heading">Añadir ingreso</h2>
@@ -17,11 +17,11 @@
           </p>
         </header>
 
-        <IncomeForm class="income-form" :loading="loading" @submit="handleSubmit" />
+        <TransactionForm class="expense-form" mode="income" :loading="loading" @submit="handleSubmit" />
       </section>
 
       <ion-toast
-        class="income-toast"
+        class="expense-toast"
         :is-open="toast.open"
         :message="toast.message"
         :color="toast.color"
@@ -52,9 +52,9 @@ import {
 } from '@ionic/vue'
 import { personCircleOutline } from 'ionicons/icons'
 import { useAddIncome } from '@/composables/useAddIncome'
-import IncomeForm from '@/components/IncomeForm.vue'
+import TransactionForm from '@/components/TransactionForm.vue'
 import { getCurrentUserId } from '@/services/incomeService'
-import '@/theme/IncomePage.css'
+import '@/theme/ExpensePage.css'
 
 // ✅ AÑADIDO: título desde meta (o fijo si prefieres)
 const route = useRoute()

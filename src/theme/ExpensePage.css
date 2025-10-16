@@ -56,7 +56,7 @@
   gap: clamp(24px, 6vw, 40px);
 }
 
-.expense-hero {
+.expense-hero, .income-hero {
   display: grid;
   gap: 14px;
   text-align: center;
@@ -68,7 +68,7 @@
   box-shadow: 0 36px 56px -42px rgba(13, 63, 72, 0.5);
 }
 
-.expense-badge {
+.expense-badge, .income-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -82,7 +82,7 @@
   background: rgba(13, 63, 72, 0.18);
 }
 
-.expense-heading {
+.expense-heading, .income-heading {
   margin: 0;
   font-size: clamp(26px, 3vw + 14px, 34px);
   font-weight: 800;
@@ -91,7 +91,7 @@
   color: #0d3f48;
 }
 
-.expense-copy {
+.expense-copy, .income-copy {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.6;

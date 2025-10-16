@@ -25,7 +25,7 @@
       style="--padding-top: var(--ion-safe-area-top);"
     >
       <section class="expense-section">
-                <ExpenseForm class="expense-form" :loading="loading" @submit="handleSubmit" />
+        <TransactionForm class="expense-form" mode="expense" :loading="loading" @submit="handleSubmit" />
       </section>
 
       <ion-toast
@@ -60,7 +60,7 @@ import {
 } from '@ionic/vue'
 import { personCircleOutline } from 'ionicons/icons'
 import { useAddExpense } from '@/composables/useAddExpense'
-import ExpenseForm from '@/components/ExpenseForm.vue'
+import TransactionForm from '@/components/TransactionForm.vue'
 import { getCurrentUserId } from '@/services/expenseService'
 import '@/theme/ExpensePage.css'
 
