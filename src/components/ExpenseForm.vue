@@ -110,13 +110,16 @@ import {
   calculatorOutline,
   addCircleOutline,
   cashOutline,
-  giftOutline,
-  peopleOutline,
-  briefcaseOutline,
+  homeOutline,
   restaurantOutline,
-  refreshOutline,
-  cartOutline,
-  walletOutline,
+  carOutline,
+  schoolOutline,
+  filmOutline,
+  shirtOutline,
+  airplaneOutline,
+  pawOutline,
+  giftOutline,
+  medkitOutline,
 } from 'ionicons/icons'
 import { additionalCategories, presetCategories, resolveCategory } from '@/services/expenseService'
 import '@/theme/ExpenseCategories.css'
@@ -157,22 +160,28 @@ const categories = computed(() => {
 
 function iconFor(key) {
   switch (key) {
-    case 'salario':
-      return cashOutline
+    case 'salud':
+      return medkitOutline
+    case 'hogar':
+      return homeOutline
+    case 'comida':
+      return restaurantOutline
+    case 'transporte':
+      return carOutline
+    case 'educacion':
+      return schoolOutline
+    case 'entretenimiento':
+      return filmOutline
+    case 'ropa':
+      return shirtOutline
+    case 'viajes':
+      return airplaneOutline
+    case 'mascotas':
+      return pawOutline
     case 'regalos':
       return giftOutline
-    case 'pension':
-      return peopleOutline
-    case 'comisiones':
-      return briefcaseOutline
-    case 'propinas':
-      return restaurantOutline
-    case 'reembolsos':
-      return refreshOutline
-    case 'ventas':
-      return cartOutline
-    case 'mesada':
-      return walletOutline
+    case 'otros':
+      return cashOutline
     default:
       return cashOutline
   }
