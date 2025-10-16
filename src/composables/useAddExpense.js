@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { getCurrentUserId, insertIncome } from '@/services/incomeService'
+import { getCurrentUserId, insertExpense } from '@/services/expenseService'
 
 const BUSY_RESPONSE = Object.freeze({ ok: false, reason: 'busy' })
 
@@ -30,10 +30,10 @@ function mapErrorReason(error) {
   return 'unknown'
 }
 
-export function useAddIncome() {
+export function useAddExpense() {
   const loading = ref(false)
 
-  const saveIncome = async ({ monto, categoria, fecha, descripcion }) => {
+  const saveExpense = async ({ monto, categoria, fecha, descripcion }) => {
     if (loading.value) return BUSY_RESPONSE
 
     loading.value = true
@@ -43,7 +43,7 @@ export function useAddIncome() {
         return { ok: false, reason: 'unauthorized' }
       }
 
-      await insertIncome({
+      await insertExpense({
         amount: Number(monto),
         category_key: categoria || null,
         occurred_on: fecha,
@@ -59,5 +59,5 @@ export function useAddIncome() {
     }
   }
 
-  return { loading, saveIncome }
+  return { loading, saveExpense }
 }
