@@ -16,6 +16,8 @@
   --padding-bottom: 12px;
   --padding-start: 16px;
   --inner-padding-end: 14px;
+  /* Ensure text/labels inside item use dark green */
+  --color: #0d3f48;
   border: 2px solid rgba(13, 63, 72, 0.14);
   border-radius: 18px;
   transition: border-color 0.2s ease;
@@ -32,7 +34,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.78rem;
-  color: #0d2c33;
+  color: #0d3f48;
 }
 
 .with-prefix ion-input::part(prefix) {
@@ -44,7 +46,21 @@
 
 .expense-form__input {
   font-weight: 600;
-  color: #0d2c33;
+  /* Text and placeholder in dark green like categories */
+  color: #0d3f48;
+  --color: #0d3f48;
+  --placeholder-color: #0d3f48;
+}
+
+/* Color calendar icon inside date inputs to dark green */
+.expense-form__input input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(18%) sepia(15%) saturate(1300%) hue-rotate(145deg) brightness(92%) contrast(95%);
+  opacity: 1;
+}
+
+/* Fallback targets for different renderers */
+.expense-form__item input[type="date"] {
+  color: #0d3f48;
 }
 
 .expense-form__icon {

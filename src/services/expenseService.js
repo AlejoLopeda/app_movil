@@ -1,6 +1,40 @@
 import { supabase } from '@/lib/supabaseClient'
+// Reuse only auth helper from income service
+export { getCurrentUserId } from '@/services/incomeService'
 
-export { getCurrentUserId, presetCategories, additionalCategories, resolveCategory } from '@/services/incomeService'
+// Expense categories (split between main view and modal)
+const DEFAULT_CATEGORIES = Object.freeze([
+  { key: 'salud', label: 'Salud' },
+  { key: 'hogar', label: 'Hogar' },
+  { key: 'comida', label: 'Comida' },
+  { key: 'transporte', label: 'Transporte' },
+])
+
+const ADDITIONAL_CATEGORIES = Object.freeze([
+  { key: 'educacion', label: 'Educación' },
+  { key: 'entretenimiento', label: 'Entretenimiento' },
+  { key: 'ropa', label: 'Ropa' },
+  { key: 'viajes', label: 'Viajes' },
+  { key: 'mascotas', label: 'Mascotas' },
+  { key: 'regalos', label: 'Regalos' },
+  { key: 'otros', label: 'Otros' },
+])
+
+export function presetCategories() {
+  return DEFAULT_CATEGORIES.map((item) => ({ ...item }))
+}
+
+export function additionalCategories() {
+  return ADDITIONAL_CATEGORIES.map((item) => ({ ...item }))
+}
+
+export function resolveCategory(key) {
+  return (
+    DEFAULT_CATEGORIES.find((item) => item.key === key) ??
+    ADDITIONAL_CATEGORIES.find((item) => item.key === key) ??
+    null
+  )
+}
 
 function sanitizeAmount(amount) {
   const numericValue = Number(amount)

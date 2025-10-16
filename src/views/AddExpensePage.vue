@@ -25,15 +25,7 @@
       style="--padding-top: var(--ion-safe-area-top);"
     >
       <section class="expense-section">
-        <header class="expense-hero">
-          <span class="expense-badge">Nuevo registro</span>
-          <h2 class="expense-heading">Anadir gasto</h2>
-          <p class="expense-copy">
-            Registra los gastos que realizas para mantener tu control financiero al dia.
-          </p>
-        </header>
-
-        <ExpenseForm class="expense-form" :loading="loading" @submit="handleSubmit" />
+        <TransactionForm class="expense-form" mode="expense" :loading="loading" @submit="handleSubmit" />
       </section>
 
       <ion-toast
@@ -68,7 +60,7 @@ import {
 } from '@ionic/vue'
 import { personCircleOutline } from 'ionicons/icons'
 import { useAddExpense } from '@/composables/useAddExpense'
-import ExpenseForm from '@/components/ExpenseForm.vue'
+import TransactionForm from '@/components/TransactionForm.vue'
 import { getCurrentUserId } from '@/services/expenseService'
 import '@/theme/ExpensePage.css'
 
