@@ -1,0 +1,47 @@
+.reminders-page {
+  --background: #ffffff;
+}
+
+.reminders-content {
+  --background: #ffffff;
+  background: #ffffff;
+}
+
+.reminders-content::part(background) {
+  background: #ffffff;
+}
+
+.reminders-title {
+  margin: 0 0 6px 0;
+  font-weight: 800;
+  color: #0d3f48; /* contraste sobre blanco */
+}
+
+ion-item ion-label p {
+  color: #334155; /* slate-700 */
+}
+
+.reminders-empty {
+  text-align: center;
+  color: #0d3f48;
+  padding: 48px 12px;
+}
+
+.reminders-empty h2 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.reminders-empty p {
+  margin: 0;
+  color: #475569; /* slate-600 */
+}
+
+/* FAB con color de la barra superior (#0d3f48) */
+.reminders-fab {
+  --background: #0d3f48;
+  --background-activated: #0a3239;
+  --background-hover: #0f4b55;
+  --color: #ffffff; /* icono */
+}
