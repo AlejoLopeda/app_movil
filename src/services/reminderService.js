@@ -21,3 +21,23 @@ export async function insertReminder(row) {
   return { ok: true }
 }
 
+export async function listActiveReminders() {
+  const { data, error } = await supabase
+    .from('recordatorios')
+    .select('id, user_id, name, frequency, interval_days, end_date, time_at, comment, active, created_at')
+    .eq('active', true)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return Array.isArray(data) ? data : []
+}
+
+export async function listReminders() {
+  const { data, error } = await supabase
+    .from('recordatorios')
+    .select('id, user_id, name, frequency, interval_days, end_date, time_at, comment, active, created_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return Array.isArray(data) ? data : []
+}
