@@ -5,6 +5,8 @@ import Inicialmonto from '@/views/InicialMontoPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
+import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
+import AddReminderPage from '@/views/AddReminderPage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -65,6 +67,24 @@ const routes = [
       requiresAuth: true,
       requiresInitialAmount: true,
       title: 'Anadir gasto'
+    }
+  },
+  {
+    path: '/recordatorios',
+    name: 'Recordatorios',
+    component: RecordatoriosPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Recordatorios'
+    }
+  },
+  {
+    path: '/recordatorios/nuevo',
+    name: 'AddReminder',
+    component: AddReminderPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Añadir Recordatorio'
     }
   }
 ]
