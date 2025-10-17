@@ -7,6 +7,9 @@ import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
 import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
 import AddReminderPage from '@/views/AddReminderPage.vue'
+import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
+import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
+import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -50,6 +53,16 @@ const routes = [
     }
   },
   {
+    path: '/ingresos',
+    name: 'MonthlyIncomes',
+    component: MonthlyIncomesPage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Ingresos'
+    }
+  },
+  {
     path: '/ingresos/nuevo',
     name: 'AddIncome',
     component: AddIncomePage,
@@ -57,6 +70,16 @@ const routes = [
       requiresAuth: true,
       requiresInitialAmount: true,
       title: 'Anadir ingreso'
+    }
+  },
+  {
+    path: '/gastos',
+    name: 'MonthlyExpenses',
+    component: MonthlyExpensesPage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Gastos'
     }
   },
   {
@@ -76,6 +99,16 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Recordatorios'
+    }
+  },
+  {
+    path: '/historico',
+    name: 'MonthlyBalance',
+    component: MonthlyBalancePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Balance'
     }
   },
   {
