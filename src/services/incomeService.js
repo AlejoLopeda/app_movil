@@ -11,7 +11,8 @@ const ADDITIONAL_CATEGORIES = Object.freeze([
   { key: 'propinas', label: 'Propinas' },
   { key: 'reembolsos', label: 'Reembolsos' },
   { key: 'ventas', label: 'Ventas' },
-  { key: 'mesada', label: 'Mesada' }
+  { key: 'mesada', label: 'Mesada' },
+  { key: 'otros', label: 'Otros' }
 ])
 
 export function presetCategories() {

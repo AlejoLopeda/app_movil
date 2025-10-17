@@ -4,10 +4,9 @@ export { getCurrentUserId } from '@/services/incomeService'
 
 // Expense categories (split between main view and modal)
 const DEFAULT_CATEGORIES = Object.freeze([
-  { key: 'salud', label: 'Salud' },
+  { key: 'transporte', label: 'Transporte' },
   { key: 'hogar', label: 'Hogar' },
   { key: 'comida', label: 'Comida' },
-  { key: 'transporte', label: 'Transporte' },
 ])
 
 const ADDITIONAL_CATEGORIES = Object.freeze([
@@ -16,7 +15,7 @@ const ADDITIONAL_CATEGORIES = Object.freeze([
   { key: 'ropa', label: 'Ropa' },
   { key: 'viajes', label: 'Viajes' },
   { key: 'mascotas', label: 'Mascotas' },
-  { key: 'regalos', label: 'Regalos' },
+  { key: 'salud', label: 'Salud' },
   { key: 'otros', label: 'Otros' },
 ])
 

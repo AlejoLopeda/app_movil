@@ -25,7 +25,13 @@
       style="--padding-top: var(--ion-safe-area-top);"
     >
       <section class="expense-section">
-        <TransactionForm class="expense-form" mode="expense" :loading="loading" @submit="handleSubmit" />
+        <TransactionForm
+          ref="formRef"
+          class="expense-form"
+          mode="expense"
+          :loading="loading"
+          @submit="handleSubmit"
+        />
       </section>
 
       <ion-toast
@@ -69,6 +75,7 @@ const route = useRoute()
 const pageTitle = computed(() => route.meta?.title || 'GASTOS')
 
 const { loading, saveExpense } = useAddExpense()
+const formRef = ref(null)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -79,6 +86,8 @@ async function handleSubmit(payload) {
   const res = await saveExpense(payload)
   if (res.ok) {
     showToast('Gasto guardado', 'success')
+    // Resetear el formulario tras guardar correctamente
+    formRef.value?.reset?.()
     return
   }
   const userId = await getCurrentUserId()

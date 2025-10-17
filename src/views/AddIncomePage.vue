@@ -9,15 +9,13 @@
       style="--padding-top: var(--ion-safe-area-top);" 
     >
       <section class="expense-section">
-        <header class="income-hero">
-          <span class="income-badge">Nuevo registro</span>
-          <h2 class="income-heading">Añadir ingreso</h2>
-          <p class="income-copy">
-            Registra los ingresos que recibes para mantener tu control financiero al día.
-          </p>
-        </header>
-
-        <TransactionForm class="expense-form" mode="income" :loading="loading" @submit="handleSubmit" />
+               <TransactionForm
+          ref="formRef"
+          class="expense-form"
+          mode="income"
+          :loading="loading"
+          @submit="handleSubmit"
+        />
       </section>
 
       <ion-toast
@@ -61,6 +59,7 @@ const route = useRoute()
 const pageTitle = computed(() => route.meta?.title || 'INGRESOS')
 
 const { loading, saveIncome } = useAddIncome()
+const formRef = ref(null)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -71,6 +70,8 @@ async function handleSubmit(payload) {
   const res = await saveIncome(payload)
   if (res.ok) {
     showToast('Ingreso guardado', 'success')
+    // Resetear el formulario tras guardar correctamente
+    formRef.value?.reset?.()
     return
   }
   const userId = await getCurrentUserId()

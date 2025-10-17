@@ -273,6 +273,9 @@ defineExpose({
     categoria.value = null
     fecha.value = ''
     descripcion.value = ''
+    amountError.value = ''
+    dateError.value = ''
+    catError.value = ''
   },
 })
 </script>
