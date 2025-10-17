@@ -90,7 +90,8 @@
       <ion-input placeholder="Opcional" v-model="descripcion" class="expense-form__input" />
     </ion-item>
 
-    <div class="expense-form__actions">
+    <!-- ✅ Botón ACEPTAR controlable desde fuera -->
+    <div class="expense-form__actions" v-if="showSubmit">
       <ion-button
         expand="block"
         class="expense-form__submit"
@@ -101,7 +102,7 @@
       </ion-button>
     </div>
   </div>
-  </template>
+</template>
 
 <script setup>
 import { ref, computed } from 'vue'
@@ -144,9 +145,12 @@ import '@/theme/ExpenseForm.css'
 const props = defineProps({
   loading: { type: Boolean, default: false },
   mode: { type: String, default: 'expense' }, // 'expense' | 'income'
+  /** ✅ NUEVO: muestra/oculta el botón interno de ACEPTAR */
+  showSubmit: { type: Boolean, default: true },
 })
 const loading = computed(() => props.loading)
 const mode = computed(() => (props.mode === 'income' ? 'income' : 'expense'))
+const showSubmit = computed(() => props.showSubmit)
 const emit = defineEmits(['submit'])
 
 const monto = ref(null)
@@ -158,12 +162,14 @@ const amountError = ref('')
 const dateError = ref('')
 const catError = ref('')
 
-const baseCategories = mode.value === 'income' ? preInc() : preExp()
-const extendedCategories = mode.value === 'income' ? addInc() : addExp()
+/** ✅ Pasan a computed para reaccionar si cambia `mode` */
+const baseCategories = computed(() => (mode.value === 'income' ? preInc() : preExp()))
+const extendedCategories = computed(() => (mode.value === 'income' ? addInc() : addExp()))
+
 const showMoreCategories = ref(false)
 
 const categories = computed(() => {
-  const current = [...baseCategories]
+  const current = [...baseCategories.value]
   if (!categoria.value) return current
   const alreadyListed = current.some((item) => item.key === categoria.value)
   if (alreadyListed) return current
@@ -174,45 +180,27 @@ const categories = computed(() => {
 function iconFor(key) {
   // expense keys
   switch (key) {
-    case 'salud':
-      return medkitOutline
-    case 'hogar':
-      return homeOutline
-    case 'comida':
-      return restaurantOutline
-    case 'transporte':
-      return carOutline
-    case 'educacion':
-      return schoolOutline
-    case 'entretenimiento':
-      return filmOutline
-    case 'ropa':
-      return shirtOutline
-    case 'viajes':
-      return airplaneOutline
-    case 'mascotas':
-      return pawOutline
-    case 'regalos':
-      return giftOutline
-    case 'otros':
-      return cashOutline
+    case 'salud': return medkitOutline
+    case 'hogar': return homeOutline
+    case 'comida': return restaurantOutline
+    case 'transporte': return carOutline
+    case 'educacion': return schoolOutline
+    case 'entretenimiento': return filmOutline
+    case 'ropa': return shirtOutline
+    case 'viajes': return airplaneOutline
+    case 'mascotas': return pawOutline
+    case 'regalos': return giftOutline
+    case 'otros': return cashOutline
   }
   // income keys
   switch (key) {
-    case 'salario':
-      return cashOutline
-    case 'pension':
-      return peopleOutline
-    case 'comisiones':
-      return briefcaseOutline
-    case 'propinas':
-      return restaurantOutline
-    case 'reembolsos':
-      return refreshOutline
-    case 'ventas':
-      return cartOutline
-    case 'mesada':
-      return walletOutline
+    case 'salario': return cashOutline
+    case 'pension': return peopleOutline
+    case 'comisiones': return briefcaseOutline
+    case 'propinas': return restaurantOutline
+    case 'reembolsos': return refreshOutline
+    case 'ventas': return cartOutline
+    case 'mesada': return walletOutline
   }
   return cashOutline
 }
@@ -242,13 +230,8 @@ const isValid = computed(
     !!fecha.value
 )
 
-function openCategorias() {
-  showMoreCategories.value = true
-}
-
-function closeCategorias() {
-  showMoreCategories.value = false
-}
+function openCategorias() { showMoreCategories.value = true }
+function closeCategorias() { showMoreCategories.value = false }
 
 function selectAdditionalCategory(key) {
   categoria.value = key
@@ -267,7 +250,9 @@ function emitSubmit() {
   })
 }
 
+/** ✅ Exponer submit() y reset() para que la navbar pueda usarlos */
 defineExpose({
+  submit: emitSubmit,
   reset: () => {
     monto.value = null
     categoria.value = null
@@ -279,4 +264,3 @@ defineExpose({
   },
 })
 </script>
-
