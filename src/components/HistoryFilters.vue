@@ -1,6 +1,6 @@
 <template>
   <section class="history-filters ion-padding">
-    <!-- Fecha: icono solo -->
+    <!-- Fecha -->
     <button
       class="filter-btn icon-only"
       @click="$emit('open-date', $event)"
@@ -10,7 +10,7 @@
       <span>{{ dateLabel }}</span>
     </button>
 
-    <!-- Categorías -->
+    <!-- Categorias -->
     <button class="filter-btn" @click="$emit('open-cat')" aria-label="Elegir categorías">
       <ion-icon :icon="gridIcon" />
       <span>{{ categoriesLabel }}</span>
@@ -21,12 +21,12 @@
     <span v-for="c in chips" :key="c" class="chip">{{ c }}</span>
   </section>
 
-  <!-- Popover: Fecha (anclado al click, look compacto) -->
+  <!-- Popover: Fecha -->
   <ion-popover
     :is-open="dateOpen"
     :event="dateEvent"
     reference="event"
-    side="bottom"                           <!-- ✅ asegura el anclaje hacia abajo -->
+    side="bottom"
     alignment="start"
     :keep-contents-mounted="true"
     @didDismiss="$emit('close-date')"
@@ -74,13 +74,13 @@
     </div>
   </ion-popover>
 
-  <!-- Modal: Categorías -->
+  <!-- Modal: Categorias -->
   <ion-modal
     :is-open="catOpen"
     @didDismiss="$emit('close-cat')"
     :breakpoints="[0, 0.6, 1]"
     :initial-breakpoint="0.6"
-    :keep-contents-mounted="true"          <!-- ✅ evita flicker y respeta estilos -->
+    :keep-contents-mounted="true"
     style="
       --width: min(560px, 94vw);
       --max-width: 94vw;
@@ -89,7 +89,6 @@
       --border-radius: 16px;
     "
   >
-    <!-- ✅ clase extra para estilos globales de categorías -->
     <div class="modal cat-modal">
       <header>
         <h3>Categorías</h3>
@@ -128,7 +127,7 @@ defineProps({
   from: String,
   to: String,
   dateOpen: Boolean,
-  dateEvent: Object,                 // evento para anclar el popover
+  dateEvent: Object,
   catOpen: Boolean,
   dateError: String,
   dateLabel: String,
@@ -153,3 +152,4 @@ const gridIcon = gridOutline
 </script>
 
 <style src="../theme/history.css"></style>
+
