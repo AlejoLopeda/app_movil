@@ -16,11 +16,11 @@ export function useSideMenu () {
   // Opciones requeridas (siempre visibles)
   const requiredItems = [
     { label: 'Inicio',        path: '/dashboard'     },
-    { label: 'Categorías',    path: '/categorias'    },
-    { label: 'Metas',         path: '/metas'         },
+    { label: 'Ingresos',      path: '/ingresos'      },
+    { label: 'Gastos',        path: '/gastos'        },
+    { label: 'Balance',       path: '/historico'     },
     { label: 'Recordatorios', path: '/recordatorios' },
   ]
-
   const menuItems = computed(() => {
     const items = requiredItems.filter(Boolean)
     if (items.length !== requiredItems.length) {

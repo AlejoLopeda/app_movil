@@ -107,7 +107,6 @@ const historyTab = computed(() => {
 const activeTab = computed(() => {
   if (route.path.startsWith('/ingresos')) return 'ingresos'
   if (route.path.startsWith('/gastos'))   return 'gastos'
-  if (route.path.startsWith('/historico'))return 'historico'
   return ''
 })
 
@@ -121,6 +120,11 @@ async function go(path){
 
 function emitAccept(){
   window.dispatchEvent(new CustomEvent('bottom-accept'))
+}
+
+function notifyUnavailable(){
+  toastMsg.value = 'Accede al historial desde el menú lateral.'
+  toastOpen.value = true
 }
 
 async function goDashboard(){
