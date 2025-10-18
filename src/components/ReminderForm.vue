@@ -117,7 +117,7 @@ function validateInterval() {
   if (frecuencia.value === 'custom') {
     const n = Number(intervaloDias.value)
     if (!Number.isFinite(n) || n < 1) {
-      intervalError.value = 'Ingresa un intervalo válido (>= 1)'
+      intervalError.value = 'Ingresa un intervalo válido mayor a 0'
       return
     }
   }
