@@ -82,11 +82,7 @@ import {
   swapHorizontalOutline
 } from 'ionicons/icons'
 
-/* ✅ Incluye las nuevas rutas de histórico por tipo */
-const MAIN_ROUTES = [
-  '/ingresos','/gastos','/historico','/historico/ingresos','/historico/gastos',
-  '/dashboard','/monto'
-]
+const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios','/historico/ingresos','/historico/gastos']
 
 const route = useRoute()
 const router = useRouter()
