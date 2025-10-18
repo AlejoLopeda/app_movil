@@ -4,7 +4,7 @@
 
     <ion-content class="expense-content ion-padding" fullscreen style="--padding-top: var(--ion-safe-area-top);">
       <section class="expense-section">
-        <ReminderForm ref="formRef" class="expense-form" :loading="loading" @submit="handleSubmit" />
+        <ReminderForm ref="formRef" class="expense-form" :loading="loading" :show-submit="false" @submit="handleSubmit" />
       </section>
 
       <ion-toast
@@ -19,7 +19,7 @@
   </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
@@ -49,4 +49,21 @@ async function handleSubmit(payload) {
   else if (res.reason === 'rls') showToast('Tu usuario no tiene permiso para guardar recordatorios', 'danger')
   else showToast('No se pudo crear el recordatorio. Intenta de nuevo', 'danger')
 }
+
+// Bottom bar events (special mode): back and accept
+function onBottomAccept() {
+  formRef.value?.submit?.()
+}
+function onBottomBack() {
+  formRef.value?.reset?.()
+}
+
+onMounted(() => {
+  window.addEventListener('bottom-accept', onBottomAccept)
+  window.addEventListener('bottom-back', onBottomBack)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('bottom-accept', onBottomAccept)
+  window.removeEventListener('bottom-back', onBottomBack)
+})
 </script>
