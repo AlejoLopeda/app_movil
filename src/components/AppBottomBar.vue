@@ -42,7 +42,7 @@ import {
   chevronBackOutline, checkmarkOutline
 } from 'ionicons/icons'
 
-const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto']
+const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios']
 
 const route = useRoute()
 const router = useRouter()

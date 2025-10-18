@@ -34,7 +34,7 @@
         </div>
       </section>
 
-      <ion-fab horizontal="end" vertical="bottom" slot="fixed">
+      <ion-fab horizontal="end" vertical="bottom" slot="fixed" style="bottom: calc(var(--bottom-bar-offset, 76px) + 10px);">
         <ion-fab-button class="reminders-fab" @click="goAdd">
           <ion-icon :icon="add" />
         </ion-fab-button>
