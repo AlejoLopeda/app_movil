@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { listReminders } from '@/services/reminderService'
+import { listActiveReminders } from '@/services/reminderService'
 
 export function useReminders() {
   const loading = ref(false)
@@ -11,7 +11,7 @@ export function useReminders() {
     loading.value = true
     error.value = ''
     try {
-      items.value = await listReminders()
+      items.value = await listActiveReminders()
     } catch (e) {
       error.value = 'No se pudieron cargar los recordatorios'
       items.value = []

@@ -41,3 +41,13 @@ export async function listReminders() {
   if (error) throw error
   return Array.isArray(data) ? data : []
 }
+
+export async function deactivateReminder(id) {
+  const { error } = await supabase
+    .from('recordatorios')
+    .update({ active: false })
+    .eq('id', id)
+
+  if (error) throw error
+  return { ok: true }
+}

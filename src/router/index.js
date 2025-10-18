@@ -10,6 +10,8 @@ import AddReminderPage from '@/views/AddReminderPage.vue'
 import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
 import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
 import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
+import HistoryIncomePage from '../views/HistoryIncomePage.vue'
+import HistoryExpensePage from '../views/HistoryExpensePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -90,6 +92,26 @@ const routes = [
       requiresAuth: true,
       requiresInitialAmount: true,
       title: 'Anadir gasto'
+    }
+  },
+  {
+    path: '/historico/ingresos',
+    name: 'HistoryIncome',
+    component: HistoryIncomePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Historial Ingresos'
+    }
+  },
+  {
+    path: '/historico/gastos',
+    name: 'HistoryExpense',
+    component: HistoryExpensePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Historial Gastos'
     }
   },
   {

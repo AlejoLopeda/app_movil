@@ -1,7 +1,7 @@
 <template>
   <div v-show="isMainRoute" class="bottom-fixed">
     <ion-toolbar class="bottombar">
-      <!-- modo especial: Añadir Ingreso o Añadir Gasto -->
+      <!-- Modo especial: Añadir Ingreso o Añadir Gasto -->
       <div v-if="isAddPage" class="nav-cta">
         <button class="cta-btn" @click="goDashboard">
           <ion-icon :icon="chevronBackOutline" />
@@ -12,7 +12,40 @@
         </button>
       </div>
 
-      <!-- modo normal: 3 pestañas (ahora con estilo de botones CTA) -->
+      <!-- Modo especial: Histórico (Dashboard, Ingreso, Gasto, Ambos) -->
+      <div v-else-if="isHistoryPage" class="nav-history">
+        <button class="cta-btn" @click="goDashboard">
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          class="cta-btn"
+          :class="{ active: historyTab==='income' }"
+          @click="setHistoryTab('income')"
+        >
+          <ion-icon :icon="cashOutline" />
+          <span>INGRESO</span>
+        </button>
+
+        <button
+          class="cta-btn"
+          :class="{ active: historyTab==='expense' }"
+          @click="setHistoryTab('expense')"
+        >
+          <ion-icon :icon="cardOutline" />
+          <span>GASTO</span>
+        </button>
+
+        <button
+          class="cta-btn"
+          :class="{ active: historyTab==='both' }"
+          @click="setHistoryTab('both')"
+        >
+          <ion-icon :icon="swapHorizontalOutline" />
+        </button>
+      </div>
+
+      <!-- Modo normal: 3 pestañas (con estilo de botones CTA) -->
       <nav v-else class="nav nav--cta">
         <button class="nav-btn" :class="{ active: activeTab==='ingresos' }" @click="go('/ingresos')">
           <ion-icon :icon="cashOutline" />
@@ -22,14 +55,20 @@
           <ion-icon :icon="cardOutline" />
           <span>GASTO</span>
         </button>
-        <button class="nav-btn" :class="{ active: activeTab==='historico' }" @click="notifyUnavailable">
+        <button class="nav-btn" :class="{ active: activeTab==='historico' }" @click="goHistory()">
           <ion-icon :icon="timeOutline" />
           <span>HISTORIAL</span>
         </button>
       </nav>
     </ion-toolbar>
 
-    <ion-toast :is-open="toastOpen" :message="toastMsg" :duration="2200" color="danger" @didDismiss="toastOpen=false" />
+    <ion-toast
+      :is-open="toastOpen"
+      :message="toastMsg"
+      :duration="2200"
+      color="danger"
+      @didDismiss="toastOpen=false"
+    />
   </div>
 </template>
 
@@ -39,10 +78,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
-  chevronBackOutline, checkmarkOutline
+  chevronBackOutline, checkmarkOutline,
+  swapHorizontalOutline
 } from 'ionicons/icons'
 
-const MAIN_ROUTES = ['/ingresos','/gastos','/dashboard','/monto']
+const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios','/historico/ingresos','/historico/gastos']
 
 const route = useRoute()
 const router = useRouter()
@@ -51,6 +91,18 @@ const isMainRoute = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p
 const isAddIncomePage  = computed(() => route.path === '/ingresos/nuevo')
 const isAddExpensePage = computed(() => route.path === '/gastos/nuevo')
 const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value)
+
+/* ===== Histórico ===== */
+const isHistoryPage = computed(() => route.path.startsWith('/historico'))
+
+/* ✅ pestaña activa desde la ruta actual */
+const historyTab = computed(() => {
+  if (route.path.startsWith('/historico/ingresos')) return 'income'
+  if (route.path.startsWith('/historico/gastos'))   return 'expense'
+  // legacy /historico (evítalo, pero lo soportamos)
+  const q = String(route.query.tab || 'income')
+  return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
+})
 
 const activeTab = computed(() => {
   if (route.path.startsWith('/ingresos')) return 'ingresos'
@@ -82,6 +134,33 @@ async function goDashboard(){
   }catch{}
 }
 
+/* 🔹 Por defecto siempre abrir /historico/ingresos (skin blanco) */
+async function goHistory(){
+  try{
+    const target = '/historico/ingresos'   // ✅ forzamos vista nueva
+    if (route.path !== target) await router.push(target)
+  }catch{
+    fail()
+  }
+}
+
+/* ✅ Tabs del histórico:
+   - Siempre navegamos a las vistas nuevas (ingresos/gastos).
+   - Para "both" mantenemos compat a /historico (si aún existe). */
+async function setHistoryTab(mode){
+  try{
+    const target =
+      mode === 'income' ? '/historico/ingresos' :
+      mode === 'expense' ? '/historico/gastos' :
+      '/historico' // ambos (sólo si conservas la vista legacy)
+    if (route.path !== target || route.fullPath !== target){
+      await router.replace(target)
+    }
+  }catch{
+    fail()
+  }
+}
+
 function fail(){
   toastMsg.value='No se pudo abrir la sección. Intenta de nuevo.'
   toastOpen.value=true
@@ -92,7 +171,6 @@ function fail(){
 /* --- Contenedor fijo inferior --- */
 .bottom-fixed{
   position:fixed; left:0; right:0; bottom:0; z-index:9999;
-  /* más alto para que no “corte” nada en móvil */
   height:calc(var(--bottom-bar-height) + env(safe-area-inset-bottom) + 12px);
   background:var(--app-topbar-bg,#0d3f48);
   pointer-events:none;
@@ -100,13 +178,12 @@ function fail(){
 .bottombar{
   pointer-events:auto;
   height:var(--bottom-bar-height);
-  /* + aire lateral y bottom con safe-area */
   padding:8px 14px calc(8px + env(safe-area-inset-bottom)) 14px;
   --background:transparent;
   display:grid; align-items:center;
 }
 
-/* ====== Modo CTA (pantallas de añadir) ====== */
+/* ====== Modo CTA (añadir) ====== */
 .nav-cta{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -114,17 +191,31 @@ function fail(){
 }
 .cta-btn{
   height:48px; border-radius:12px;
-  /* ⬇️ Flex para centrar icono + texto como los otros botones */
   display:flex; align-items:center; justify-content:center; gap:6px;
   padding:0 12px;
   background:rgba(255,255,255,.12);
-  color:#ffffff; font-weight:600; font-size:12.5px; /* ↓ un poco */
+  color:#ffffff; font-weight:600; font-size:12.5px;
   text-transform:uppercase; letter-spacing:.05em;
   transition:background .2s;
   text-align:center;
 }
-.cta-btn ion-icon{ font-size:19px; } /* ↓ un poco */
+.cta-btn ion-icon{ font-size:19px; }
 .cta-btn:hover{ background:rgba(255,255,255,.22); }
+
+/* ====== Modo HISTÓRICO (4 botones) ====== */
+.nav-history{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
+}
+.nav-history .cta-btn{
+  height:44px;
+}
+.nav-history .cta-btn.active{
+  background:#ffffff;
+  color:var(--app-topbar-bg,#0d3f48);
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+}
 
 /* ====== Modo normal (ícono arriba, texto abajo) ====== */
 .nav{
@@ -135,7 +226,6 @@ function fail(){
   border-radius:16px;
   padding:10px;
 }
-
 .nav-btn{
   display:flex;
   flex-direction:column;
@@ -146,27 +236,22 @@ function fail(){
   border-radius:12px;
   background:transparent;
   color:#fff;
-  font-size:12px;            /* ↓ apenas para que no se coma “HISTORIAL” */
+  font-size:12px;
   line-height:1.1;
   letter-spacing:.3px;
   text-transform:uppercase;
   white-space:nowrap;
   transition:background .2s, color .2s, box-shadow .2s;
 }
-.nav-btn ion-icon{
-  font-size:19px;            /* ↓ un poco */
-  margin-bottom:2px;
-}
-.nav-btn:hover{
-  background:rgba(255,255,255,.15);
-}
+.nav-btn ion-icon{ font-size:19px; margin-bottom:2px; }
+.nav-btn:hover{ background:rgba(255,255,255,.15); }
 .nav-btn.active{
   background:#fff;
   color:var(--app-topbar-bg,#0d3f48);
   box-shadow:0 2px 6px rgba(0,0,0,.18);
 }
 
-/* ====== Look CTA opcional en modo normal (si usas .nav--cta) ====== */
+/* Look CTA en modo normal (si usas .nav--cta) */
 .nav--cta{
   background:transparent;
   padding:0;
@@ -174,11 +259,10 @@ function fail(){
 }
 .nav--cta .nav-btn{
   height:48px; border-radius:12px;
-  /* ⬇️ Igual que .cta-btn para centrar icono + texto */
   display:flex; align-items:center; justify-content:center; gap:6px;
   padding:0 12px;
   background:rgba(255,255,255,.12);
-  color:#ffffff; font-weight:600; font-size:12.5px; /* ↓ igual que CTA */
+  color:#ffffff; font-weight:600; font-size:12.5px;
   text-transform:uppercase; letter-spacing:.05em;
 }
 .nav--cta .nav-btn ion-icon{ font-size:19px; margin:0; }
@@ -204,9 +288,3 @@ function fail(){
   .nav--cta .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
 }
 </style>
-
-
-
-
-
-

@@ -45,3 +45,80 @@ ion-item ion-label p {
   --background-hover: #0f4b55;
   --color: #ffffff; /* icono */
 }
+
+/* Contenedor tipo tarjeta reutilizando el estilo del formulario */
+.reminders-card {
+  padding: clamp(18px, 5vw, 28px);
+}
+
+/* Tabla de recordatorios */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.reminders-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #0d3f48;
+}
+
+.reminders-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  border-bottom: 2px solid rgba(13, 63, 72, 0.14);
+}
+
+.reminders-table tbody td {
+  padding: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(13, 63, 72, 0.12);
+}
+
+.reminders-table tbody tr:hover {
+  background: rgba(203, 220, 255, 0.22);
+}
+
+/* Lista de cards */
+.reminders-list {
+  display: grid;
+  gap: 14px;
+}
+
+.reminder-card {
+  padding: clamp(16px, 4vw, 22px);
+}
+
+.reminder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reminder-actions ion-button {
+  --padding-start: 6px;
+  --padding-end: 6px;
+}
+
+.reminder-meta {
+  margin-top: 8px;
+  color: #334155;
+}
+
+.reminder-meta .meta-row {
+  margin-top: 4px;
+}
+
+.reminder-modal {
+  padding: 18px 16px 24px;
+}
+
+.reminder-modal .modal-line {
+  margin: 8px 0;
+  color: #334155;
+}
