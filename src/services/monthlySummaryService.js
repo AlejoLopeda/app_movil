@@ -3,12 +3,14 @@ import { supabase } from '@/lib/supabaseClient'
 const TABLE_CONFIG = {
   income: {
     table: 'ingresos',
+    includeUser: true,
     amountField: 'monto',
     categoryField: 'categoria',
     dateField: 'fecha'
   },
   expense: {
     table: 'gastos',
+    includeUser: true,
     amountField: 'monto',
     categoryField: 'categoria',
     dateField: 'fecha'
@@ -37,14 +39,17 @@ async function fetchByType(type, userId, monthDate = new Date()) {
   if (!config) return []
 
   const { start, end } = resolveMonthRange(monthDate)
-  const { table, amountField, categoryField, dateField } = config
+  const { table, amountField, categoryField, dateField, includeUser } = config
 
-  const { data, error } = await supabase
+  let query = supabase
     .from(table)
     .select(`id, ${amountField}, ${categoryField}, ${dateField}`)
-    .eq('user_id', userId)
     .gte(dateField, start)
     .lte(dateField, end)
+  if (includeUser) {
+    query = query.eq('user_id', userId)
+  }
+  const { data, error } = await query
 
   if (error) throw error
 

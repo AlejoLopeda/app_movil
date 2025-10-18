@@ -15,6 +15,10 @@ const ADDITIONAL_CATEGORIES = Object.freeze([
   { key: 'otros', label: 'Otros' }
 ])
 
+const SPECIAL_CATEGORIES = Object.freeze({
+  saldo_inicial: { key: 'saldo_inicial', label: 'Saldo inicial' }
+})
+
 export function presetCategories() {
   return DEFAULT_CATEGORIES.map((item) => ({ ...item }))
 }
@@ -25,6 +29,7 @@ export function additionalCategories() {
 
 export function resolveCategory(key) {
   return (
+    SPECIAL_CATEGORIES[key] ??
     DEFAULT_CATEGORIES.find((item) => item.key === key) ??
     ADDITIONAL_CATEGORIES.find((item) => item.key === key) ??
     null
@@ -42,17 +47,62 @@ function sanitizeAmount(amount) {
   return Number.isFinite(numericValue) ? numericValue : 0
 }
 
+async function increaseInitialAmount(userId, amount) {
+  if (!userId) return null
+
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('initial_amount')
+    .eq('id', userId)
+    .single()
+
+  if (fetchError) throw fetchError
+
+  const current = Number(profile?.initial_amount ?? 0)
+  const delta = Number.isFinite(amount) ? amount : 0
+  const next = Number.isFinite(current + delta) ? current + delta : current
+
+  const { data: updated, error: updateError } = await supabase
+    .from('profiles')
+    .update({ initial_amount: next })
+    .eq('id', userId)
+    .select('initial_amount')
+    .single()
+
+  if (!updateError) {
+    return Number(updated?.initial_amount ?? next)
+  }
+
+  const { data: rpcData, error: rpcError } = await supabase.rpc('set_initial_amount', {
+    p_amount: next,
+    p_currency: 'COP'
+  })
+
+  if (rpcError) throw rpcError
+  if (rpcData && rpcData.ok === false) {
+    throw new Error(rpcData?.message || 'Failed to actualizar el monto inicial')
+  }
+
+  return next
+}
+
 export async function insertIncome(row) {
   const amount = sanitizeAmount(row.amount)
   const payload = {
-    p_monto: amount,
-    p_categoria: row.category_key ?? null,
-    p_fecha: row.occurred_on,
-    p_descripcion: row.description ?? null
+    monto: amount,
+    categoria: row.category_key ?? null,
+    fecha: row.occurred_on,
+    descripcion: row.description ?? null,
+    user_id: row.user_id
   }
 
-  const { data, error } = await supabase.rpc('record_income', payload)
+  const { error } = await supabase
+    .from('ingresos')
+    .insert(payload)
+
   if (error) throw error
 
-  return { ok: true, balance: data ?? amount }
+  const balance = await increaseInitialAmount(row.user_id, amount)
+
+  return { ok: true, balance }
 }
