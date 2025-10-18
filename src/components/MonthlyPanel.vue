@@ -82,7 +82,7 @@
     <div v-if="categories.length" class="monthly-filters">
       <button
         type="button"
-        class="monthly-filter-btn"
+        class="monthly-filter-btn monthly-filter-btn--all"
         :class="{ active: !hasSelection }"
         @click="clearFilters"
       >
@@ -94,7 +94,7 @@
         type="button"
         class="monthly-filter-btn"
         :class="{ active: selectedCategories.includes(category.key) }"
-        :style="{ borderColor: category.color }"
+        :style="{ '--monthly-filter-border': category.color }"
         @click="toggleCategory(category.key)"
       >
         {{ category.label }}
@@ -262,6 +262,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.monthly-header__title {
+  color: #000000ff;
+}
+
 .monthly-spinner {
   display: grid;
   place-items: center;
@@ -280,10 +284,14 @@ onMounted(() => {
   margin-top: 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(13, 63, 72, 0.72);
+  color: #041c21;
 }
 
 @media (prefers-color-scheme: dark) {
+  .monthly-header__title {
+    color: rgba(224, 242, 249, 0.96);
+  }
+
   .monthly-header__subtitle {
     color: rgba(224, 242, 249, 0.72);
   }

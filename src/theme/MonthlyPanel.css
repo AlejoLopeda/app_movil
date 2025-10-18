@@ -1,6 +1,11 @@
 .monthly-page {
+  --monthly-background: #f7f9fc;
+  --background: var(--monthly-background);
+  --ion-background-color: var(--monthly-background);
+  background: var(--monthly-background);
   --monthly-accent: #0d3f48;
   --monthly-accent-contrast: #ffffff;
+  color: #0b2c33;
 }
 
 .monthly-content {
@@ -24,6 +29,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: #000000;
 }
 
 .monthly-header__controls {
@@ -31,9 +37,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(13, 63, 72, 0.08);
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(13, 63, 72, 0.12);
+  box-shadow: 0 16px 34px -28px rgba(13, 63, 72, 0.55);
 }
 
 .monthly-header__toggle {
@@ -41,6 +49,14 @@
   align-items: center;
   gap: 10px;
   font-weight: 600;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.monthly-header__subtitle {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #041c21;
 }
 
 .monthly-summary-grid {
@@ -91,21 +107,35 @@
 }
 
 .monthly-filter-btn {
+  --monthly-filter-border: rgba(13, 63, 72, 0.28);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 10px 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  border: 2px solid transparent;
-  background: rgba(13, 63, 72, 0.08);
-  color: inherit;
-  transition: transform 0.2s ease, background 0.2s ease, border 0.2s ease;
+  border: 2px solid var(--monthly-filter-border);
+  background: rgba(255, 255, 255, 0.9);
+  color: #0b2c33;
+  box-shadow: 0 12px 26px -22px rgba(13, 63, 72, 0.7);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.monthly-filter-btn:hover,
+.monthly-filter-btn:focus-visible {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 18px 32px -26px rgba(13, 63, 72, 0.6);
 }
 
 .monthly-filter-btn.active {
   background: var(--monthly-accent);
   color: var(--monthly-accent-contrast);
-  border-color: transparent;
-  transform: translateY(-1px);
+  border-color: var(--monthly-filter-border);
+  box-shadow: 0 20px 36px -26px rgba(13, 63, 72, 0.65);
+}
+
+.monthly-filter-btn--all {
+  --monthly-filter-border: rgba(13, 63, 72, 0.38);
 }
 
 .monthly-empty {
@@ -164,16 +194,42 @@
 
 @media (prefers-color-scheme: dark) {
   .monthly-header__controls {
-    background: rgba(224, 242, 249, 0.12);
+    background: rgba(4, 19, 24, 0.82);
+    border-color: rgba(224, 242, 249, 0.2);
+    box-shadow: 0 20px 38px -30px rgba(0, 0, 0, 0.72);
+  }
+
+  .monthly-header__toggle {
+    color: rgba(224, 242, 249, 0.9);
+  }
+
+  .monthly-header__title {
+    color: rgba(224, 242, 249, 0.96);
+  }
+
+  .monthly-header__subtitle {
+    color: rgba(224, 242, 249, 0.72);
   }
 
   .monthly-filter-btn {
-    background: rgba(224, 242, 249, 0.12);
+    --monthly-filter-border: rgba(224, 242, 249, 0.28);
+    background: rgba(4, 19, 24, 0.75);
+    color: rgba(224, 242, 249, 0.92);
+    box-shadow: 0 14px 30px -24px rgba(0, 0, 0, 0.7);
+  }
+
+  .monthly-filter-btn:hover,
+  .monthly-filter-btn:focus-visible {
+    background: rgba(4, 19, 24, 0.9);
   }
 
   .monthly-filter-btn.active {
     background: rgba(224, 242, 249, 0.92);
     color: #0d3f48;
+  }
+
+  .monthly-filter-btn--all {
+    --monthly-filter-border: rgba(224, 242, 249, 0.45);
   }
 
   .monthly-empty {

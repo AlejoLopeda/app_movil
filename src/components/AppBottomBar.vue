@@ -22,7 +22,7 @@
           <ion-icon :icon="cardOutline" />
           <span>GASTO</span>
         </button>
-        <button class="nav-btn" :class="{ active: activeTab==='historico' }" @click="go('/historico')">
+        <button class="nav-btn" :class="{ active: activeTab==='historico' }" @click="notifyUnavailable">
           <ion-icon :icon="timeOutline" />
           <span>HISTORIAL</span>
         </button>
@@ -42,7 +42,7 @@ import {
   chevronBackOutline, checkmarkOutline
 } from 'ionicons/icons'
 
-const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto']
+const MAIN_ROUTES = ['/ingresos','/gastos','/dashboard','/monto']
 
 const route = useRoute()
 const router = useRouter()
@@ -55,7 +55,6 @@ const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value
 const activeTab = computed(() => {
   if (route.path.startsWith('/ingresos')) return 'ingresos'
   if (route.path.startsWith('/gastos'))   return 'gastos'
-  if (route.path.startsWith('/historico'))return 'historico'
   return ''
 })
 
@@ -69,6 +68,11 @@ async function go(path){
 
 function emitAccept(){
   window.dispatchEvent(new CustomEvent('bottom-accept'))
+}
+
+function notifyUnavailable(){
+  toastMsg.value = 'Accede al historial desde el menú lateral.'
+  toastOpen.value = true
 }
 
 async function goDashboard(){

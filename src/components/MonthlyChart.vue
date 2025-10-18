@@ -15,6 +15,7 @@
         type="button"
         class="monthly-chart__bar"
         :class="{ active: item.key === activeKey }"
+        :style="{ '--chart-border': item.color }"
         @click="select(item.key)"
       >
         <span class="monthly-chart__bar-label">
@@ -42,6 +43,7 @@
           class="monthly-chart__legend-item"
           :class="{ active: item.key === activeKey }"
           @click="select(item.key)"
+          :style="{ '--legend-border': item.color }"
         >
           <span
             class="monthly-chart__legend-color"
@@ -141,16 +143,27 @@ function select(key) {
 }
 
 .monthly-chart__bar {
+  --chart-border: rgba(13, 63, 72, 0.24);
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(13, 63, 72, 0.08);
-  color: inherit;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 2px solid var(--chart-border);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b2c33;
+  box-shadow: 0 14px 32px -26px rgba(13, 63, 72, 0.6);
   text-align: left;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease,
+    transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.monthly-chart__bar:hover,
+.monthly-chart__bar:focus-visible {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 20px 36px -24px rgba(13, 63, 72, 0.6);
 }
 
 .monthly-chart__bar-label {
@@ -163,7 +176,7 @@ function select(key) {
   grid-column: 1 / -1;
   height: 8px;
   border-radius: 999px;
-  background: rgba(13, 63, 72, 0.12);
+  background: rgba(13, 63, 72, 0.1);
   overflow: hidden;
 }
 
@@ -176,11 +189,23 @@ function select(key) {
 .monthly-chart__bar-value {
   justify-self: end;
   font-weight: 600;
+  color: rgba(13, 63, 72, 0.76);
 }
 
 .monthly-chart__bar.active {
-  background: rgba(13, 63, 72, 0.16);
-  box-shadow: 0 6px 14px rgba(13, 63, 72, 0.18);
+  background: rgba(13, 63, 72, 0.08);
+  border-color: var(--chart-border);
+  color: #0b2c33;
+  box-shadow: 0 26px 42px -28px rgba(13, 63, 72, 0.6);
+  transform: translateY(-2px);
+}
+
+.monthly-chart__bar.active .monthly-chart__bar-value {
+  color: #0b2c33;
+}
+
+.monthly-chart__bar.active .monthly-chart__bar-track {
+  background: rgba(13, 63, 72, 0.14);
 }
 
 .monthly-chart__legend {
@@ -197,15 +222,27 @@ function select(key) {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(13, 63, 72, 0.04);
-  color: inherit;
+  border-radius: 14px;
+  border: 2px solid var(--legend-border, rgba(13, 63, 72, 0.24));
+  background: rgba(255, 255, 255, 0.92);
+  color: #0b2c33;
+  box-shadow: 0 10px 26px -22px rgba(13, 63, 72, 0.55);
   text-align: left;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.monthly-chart__legend-item:hover,
+.monthly-chart__legend-item:focus-visible {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px -24px rgba(13, 63, 72, 0.55);
 }
 
 .monthly-chart__legend-item.active {
-  background: rgba(13, 63, 72, 0.16);
+  background: var(--monthly-accent, #0d3f48);
+  color: var(--monthly-accent-contrast, #ffffff);
+  box-shadow: 0 20px 36px -26px rgba(13, 63, 72, 0.7);
 }
 
 .monthly-chart__legend-color {
@@ -216,12 +253,17 @@ function select(key) {
 
 .monthly-chart__legend-text {
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .monthly-chart__legend-value {
   font-size: 0.82rem;
   font-weight: 600;
   color: rgba(13, 63, 72, 0.72);
+}
+
+.monthly-chart__legend-item.active .monthly-chart__legend-value {
+  color: currentColor;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -235,19 +277,65 @@ function select(key) {
   }
 
   .monthly-chart__bar {
-    background: rgba(224, 242, 249, 0.1);
+    background: rgba(4, 19, 24, 0.82);
+    border-color: rgba(224, 242, 249, 0.22);
+    color: rgba(224, 242, 249, 0.9);
+    box-shadow: 0 18px 34px -26px rgba(0, 0, 0, 0.72);
+  }
+
+  .monthly-chart__bar:hover,
+  .monthly-chart__bar:focus-visible {
+    background: rgba(4, 19, 24, 0.92);
+    box-shadow: 0 24px 40px -26px rgba(0, 0, 0, 0.74);
   }
 
   .monthly-chart__bar-track {
     background: rgba(224, 242, 249, 0.18);
   }
 
+  .monthly-chart__bar-value {
+    color: rgba(224, 242, 249, 0.82);
+  }
+
+  .monthly-chart__bar.active {
+    background: rgba(4, 19, 24, 0.62);
+    border-color: rgba(224, 242, 249, 0.35);
+    color: rgba(224, 242, 249, 0.96);
+    box-shadow: 0 24px 40px -26px rgba(0, 0, 0, 0.7);
+  }
+
+  .monthly-chart__bar.active .monthly-chart__bar-value {
+    color: rgba(224, 242, 249, 0.96);
+  }
+
+  .monthly-chart__bar.active .monthly-chart__bar-track {
+    background: rgba(224, 242, 249, 0.28);
+  }
+
   .monthly-chart__legend-item {
-    background: rgba(224, 242, 249, 0.08);
+    background: rgba(4, 19, 24, 0.78);
+    color: rgba(224, 242, 249, 0.92);
+    border-color: rgba(224, 242, 249, 0.32);
+    box-shadow: 0 14px 30px -26px rgba(0, 0, 0, 0.65);
+  }
+
+  .monthly-chart__legend-item:hover,
+  .monthly-chart__legend-item:focus-visible {
+    background: rgba(4, 19, 24, 0.92);
   }
 
   .monthly-chart__legend-value {
     color: rgba(224, 242, 249, 0.72);
+  }
+
+  .monthly-chart__legend-item.active {
+    background: rgba(224, 242, 249, 0.92);
+    color: #0d3f48;
+    border-color: rgba(224, 242, 249, 0.92);
+  }
+
+  .monthly-chart__legend-item.active .monthly-chart__legend-value {
+    color: currentColor;
   }
 }
 </style>
