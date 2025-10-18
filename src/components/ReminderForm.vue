@@ -58,7 +58,7 @@
       <ion-input placeholder="Opcional" v-model="comentario" class="expense-form__input" />
     </ion-item>
 
-    <div class="expense-form__actions">
+    <div v-if="showSubmit" class="expense-form__actions">
       <ion-button
         expand="block"
         class="expense-form__submit"
@@ -80,6 +80,7 @@ import '@/theme/ExpenseForm.css'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
+  showSubmit: { type: Boolean, default: true },
 })
 const loading = computed(() => props.loading)
 const emit = defineEmits(['submit'])
@@ -177,6 +178,7 @@ function emitSubmit() {
 }
 
 defineExpose({
+  submit: () => { emitSubmit() },
   reset: () => {
     nombre.value = ''
     frecuencia.value = 'daily'

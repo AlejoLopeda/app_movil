@@ -88,9 +88,10 @@ const route = useRoute()
 const router = useRouter()
 
 const isMainRoute = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p)))
-const isAddIncomePage  = computed(() => route.path === '/ingresos/nuevo')
-const isAddExpensePage = computed(() => route.path === '/gastos/nuevo')
-const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value)
+const isAddIncomePage   = computed(() => route.path === '/ingresos/nuevo')
+const isAddExpensePage  = computed(() => route.path === '/gastos/nuevo')
+const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
+const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value)
 
 /* ===== Histórico ===== */
 const isHistoryPage = computed(() => route.path.startsWith('/historico'))
@@ -130,7 +131,8 @@ function notifyUnavailable(){
 async function goDashboard(){
   try{
     window.dispatchEvent(new CustomEvent('bottom-back'))
-    await router.replace('/dashboard')
+    const target = isAddReminderPage.value ? '/recordatorios' : '/dashboard'
+    await router.replace(target)
   }catch{}
 }
 
