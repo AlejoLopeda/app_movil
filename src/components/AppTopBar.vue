@@ -6,8 +6,8 @@
         <ion-menu-button class="topbar__btn" @click="onMenuButtonClick" />
       </ion-buttons>
 
-      <!-- Título centrado -->
-      <ion-title class="topbar__title">{{ title }}</ion-title>
+      <!-- Título centrado (ahora reactivo al meta.title de la ruta) -->
+      <ion-title class="topbar__title">{{ routeTitle }}</ion-title>
 
       <!-- Usuario -->
       <ion-buttons slot="end">
@@ -39,7 +39,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'   // ✅ importa hooks
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'                // ✅ NUEVO
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton, IonButton, IonIcon, IonToast
 } from '@ionic/vue'
@@ -64,6 +65,10 @@ const {
   unwireGlobalEvents
 } = useTopBarMenu(props)
 
+const route = useRoute()                               // ✅ NUEVO
+// ✅ Título que se actualiza con la ruta actual; si no hay meta.title usa el prop
+const routeTitle = computed(() => route.meta?.title || props.title)
+
 const firstNameUpper = computed(() => {
   const raw = (props.fullName || '').trim()
   const first = raw ? (raw.split(/\s+/)[0] || 'USUARIO') : 'USUARIO'
@@ -77,7 +82,6 @@ async function onLogout(){
   await handleLogout(() => emit('logout'))
 }
 
-// ✅ registra/limpia eventos globales correctamente
 onMounted(() => { wireGlobalEvents() })
 onUnmounted(() => { unwireGlobalEvents() })
 </script>

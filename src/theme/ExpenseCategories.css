@@ -22,8 +22,8 @@
   min-width: 76px;
   border-radius: 14px;
   border: 1px solid transparent;
-  background: #ecf3ff;
-  color: #0d3f48;
+  background: #0d3f48;
+  color: #ffffff;
   font-weight: 600;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 12px 24px -24px rgba(13, 63, 72, 0.6);
@@ -36,7 +36,7 @@
 
 .expense-form__card .cat-btn.active,
 .expense-categories-modal__content .cat-btn.active {
-  background: #cbdcff;
+  background: #001c22;
   border-color: rgba(13, 63, 72, 0.16);
   box-shadow: 0 14px 26px -20px rgba(13, 63, 72, 0.55);
 }
@@ -45,6 +45,7 @@
 .expense-categories-modal__content .cat-btn.more {
   border: 1.5px dashed rgba(13, 63, 72, 0.4);
   background: transparent;
+  color: #0d3f48;
 }
 
 .expense-categories-modal {
