@@ -15,6 +15,10 @@ import HistoryIncomePage from '../views/HistoryIncomePage.vue'
 import HistoryExpensePage from '../views/HistoryExpensePage.vue'
 import HistoryBothPage from '../views/HistoryBothPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
+import GoalsPage from '@/views/GoalsPage.vue'
+import GoalCreatePage from '@/views/GoalCreatePage.vue'
+import GoalEditPage from '@/views/GoalEditPage.vue'
+import GoalDeleteConfirmPage from '@/views/GoalDeleteConfirmPage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -23,6 +27,30 @@ const routes = [
   {
     path: '/',
     redirect: '/login'
+  },
+  {
+    path: '/metas',
+    name: 'Goals',
+    component: GoalsPage,
+    meta: { requiresAuth: true, title: 'Metas' }
+  },
+  {
+    path: '/metas/nueva',
+    name: 'GoalCreate',
+    component: GoalCreatePage,
+    meta: { requiresAuth: true, title: 'Crear Meta' }
+  },
+  {
+    path: '/metas/:id/editar',
+    name: 'GoalEdit',
+    component: GoalEditPage,
+    meta: { requiresAuth: true, title: 'Editar Meta' }
+  },
+  {
+    path: '/metas/:id/eliminar',
+    name: 'GoalDelete',
+    component: GoalDeleteConfirmPage,
+    meta: { requiresAuth: true, title: 'Eliminar Meta' }
   },
   {
     path: '/login',
