@@ -91,7 +91,8 @@ const isMainRoute = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p
 const isAddIncomePage   = computed(() => route.path === '/ingresos/nuevo')
 const isAddExpensePage  = computed(() => route.path === '/gastos/nuevo')
 const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
-const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value)
+const isEditReminderPage = computed(() => route.name === 'EditReminder')
+const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value)
 
 /* ===== Histórico ===== */
 const isHistoryPage = computed(() => route.path.startsWith('/historico'))
@@ -132,7 +133,7 @@ function notifyUnavailable(){
 async function goDashboard(){
   try{
     window.dispatchEvent(new CustomEvent('bottom-back'))
-    const target = isAddReminderPage.value ? '/recordatorios' : '/dashboard'
+    const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/dashboard'
     await router.replace(target)
   }catch{}
 }
