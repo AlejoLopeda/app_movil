@@ -5,8 +5,8 @@
         <form @submit.prevent="onSubmit" class="app-login__form">
           <h2 class="app-login__title">BIENVENIDO</h2>
 
-          <ion-list class="app-login__list" inset lines="none">
-            <ion-item class="app-login__item auth-field-item" lines="none">
+          <ion-list class="app-login__list" inset lines="none" mode="ios">
+            <ion-item class="app-login__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="mailIcon" class="app-login__item-icon" />
               <ion-input
                 v-model="form.email"
@@ -19,7 +19,7 @@
               />
             </ion-item>
 
-            <ion-item class="app-login__item auth-field-item" lines="none">
+            <ion-item class="app-login__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="lockIcon" class="app-login__item-icon" />
               <ion-input
                 v-model="form.password"

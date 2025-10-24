@@ -4,8 +4,8 @@
       <ion-card-content>
         <form @submit.prevent="onSubmit" class="app-account__form">
           <h2 class="app-account__title">CREA TU CUENTA</h2 >
-          <ion-list class="app-account__list" inset lines="none">
-          <ion-item class="app-account__item auth-field-item" lines="none">
+          <ion-list class="app-account__list" inset lines="none" mode="ios">
+          <ion-item class="app-account__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="personIcon" class="app-account__item-icon" />
               <ion-input
                 v-model="form.name"
@@ -17,7 +17,7 @@
               />
             </ion-item>
 
-          <ion-item class="app-account__item auth-field-item" lines="none">
+          <ion-item class="app-account__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="mailIcon" class="app-account__item-icon" />
               <ion-input
                 v-model="form.email"
@@ -30,7 +30,7 @@
               />
             </ion-item>
 
-          <ion-item class="app-account__item auth-field-item" lines="none">
+          <ion-item class="app-account__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="lockIcon" class="app-account__item-icon" />
               <ion-input
                 v-model="form.password"
@@ -54,7 +54,7 @@
               </ion-button>
             </ion-item>
 
-          <ion-item class="app-account__item auth-field-item" lines="none">
+          <ion-item class="app-account__item auth-field-item" lines="none" mode="ios">
               <ion-icon slot="start" :icon="lockIcon" class="app-account__item-icon" />
               <ion-input
                 v-model="form.passwordConfirmation"
