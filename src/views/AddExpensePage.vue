@@ -1,39 +1,22 @@
 <template>
   <ion-page class="expense-page">
-    <!-- ✅ NUEVO: misma topbar reutilizable que en Dashboard -->
+    <!-- ✅ usa la misma topbar que el Dashboard -->
     <app-top-bar :title="pageTitle" />
 
-    <!-- (tu header original queda intacto pero oculto) -->
-    <ion-header class="expense-header" translucent v-if="false">
-      <ion-toolbar class="expense-toolbar">
-        <ion-buttons slot="start">
-          <ion-menu-button class="expense-menu" />
-        </ion-buttons>
-        <ion-title class="expense-toolbar__title">Gastos</ion-title>
-        <ion-buttons slot="end">
-          <ion-button class="expense-profile" @click="goPerfil">
-            <ion-icon :icon="personCircleOutline" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <!-- ✅ NUEVO: padding-top para no quedar debajo de la topbar -->
     <ion-content
       class="expense-content ion-padding"
       fullscreen
       style="--padding-top: var(--ion-safe-area-top);"
     >
       <section class="expense-section">
-        <header class="expense-hero">
-          <span class="expense-badge">Nuevo registro</span>
-          <h2 class="expense-heading">Anadir gasto</h2>
-          <p class="expense-copy">
-            Registra los gastos que realizas para mantener tu control financiero al dia.
-          </p>
-        </header>
-
-        <ExpenseForm class="expense-form" :loading="loading" @submit="handleSubmit" />
+        <TransactionForm
+          ref="formRef"
+          class="expense-form"
+          mode="expense"          
+          :loading="loading"
+          :show-submit="false"    
+          @submit="handleSubmit"
+        />
       </section>
 
       <ion-toast
@@ -49,31 +32,17 @@
 </template>
 
 <script setup>
-// ✅ NUEVO: imports para usar la topbar y el título desde meta
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
-  IonTitle,
-  IonContent,
-  IonToast,
-  IonButton,
-  IonIcon,
-} from '@ionic/vue'
-import { personCircleOutline } from 'ionicons/icons'
+import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import { useAddExpense } from '@/composables/useAddExpense'
-import ExpenseForm from '@/components/ExpenseForm.vue'
+import TransactionForm from '@/components/TransactionForm.vue'
 import { getCurrentUserId } from '@/services/expenseService'
 import '@/theme/ExpensePage.css'
 
-// ✅ NUEVO: título tomado de meta.title o fallback "GASTOS"
 const route = useRoute()
+const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || 'GASTOS')
 
 const { loading, saveExpense } = useAddExpense()
@@ -83,20 +52,37 @@ function showToast(message, color = 'primary') {
   toast.value = { open: true, message, color }
 }
 
+const formRef = ref(null)
+
+/* ✅ eventos desde la navbar inferior, igual que en ingresos */
+function onBottomAccept() {
+  formRef.value?.submit?.()
+}
+function onBottomBack() {
+  formRef.value?.reset?.()
+}
+
+onMounted(() => {
+  window.addEventListener('bottom-accept', onBottomAccept)
+  window.addEventListener('bottom-back', onBottomBack)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('bottom-accept', onBottomAccept)
+  window.removeEventListener('bottom-back', onBottomBack)
+})
+
 async function handleSubmit(payload) {
   const res = await saveExpense(payload)
   if (res.ok) {
     showToast('Gasto guardado', 'success')
+    formRef.value?.reset?.()
+    setTimeout(() => router.replace('/dashboard'), 450) // 👈 igual que ingresos
     return
   }
   const userId = await getCurrentUserId()
   console.error('[Guardar gasto][error]', { userId, timestamp: new Date().toISOString(), error: res })
-  if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesion e intentalo de nuevo', 'danger')
+  if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesión e inténtalo de nuevo', 'danger')
   else if (res.reason === 'rls') showToast('Tu usuario no tiene permiso para guardar en gastos', 'danger')
   else showToast('No se pudo guardar el gasto. Intenta de nuevo', 'danger')
-}
-
-function goPerfil() {
-  showToast('Pantalla de perfil no disponible', 'medium')
 }
 </script>

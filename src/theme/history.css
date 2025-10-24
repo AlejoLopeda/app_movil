@@ -1,0 +1,446 @@
+/* =========================================================
+   HISTÓRICO – Look blanco como "Añadir ingreso"
+   Ámbito: .history-page
+========================================================= */
+
+/* ---- Variables sólo dentro del contexto de History ---- */
+.history-page{
+  /* Layout */
+  --app-topbar-height: 64px;
+  --bottom-bar-height: 84px;
+
+  /* Paleta light */
+  --h-bg: #f2f5f7;
+  --h-surface: #ffffff;
+  --h-surface-2: #ffffff;
+  --h-surface-3: #f0f4f6;
+  --h-border: rgba(0,0,0,.08);
+  --h-text: #10252a;
+  --h-text-dim: #4a6168;
+
+  --h-green: #16a34a;
+  --h-green-bg: rgba(22,163,74,.12);
+  --h-red: #e11d48;
+  --h-red-bg: rgba(225,29,72,.10);
+
+  --h-radius-lg: 14px;
+  --h-radius-md: 12px;
+  --h-radius-sm: 10px;
+
+  --h-shadow: 0 10px 30px rgba(16,28,33,.08);
+}
+
+/* Fondo claro garantizado */
+ion-page.history-page,
+.history-page{
+  background: var(--h-bg) !important;
+  --background: var(--h-bg) !important;
+  color: var(--h-text);
+}
+
+/* Padding para dejar espacio a la topbar fija y barra inferior */
+.history-page .history-content{
+  --background: var(--h-bg) !important;
+  --padding-top: calc(var(--app-topbar-height) + 8px);
+  --padding-bottom: var(--bottom-bar-height);
+}
+.history-page ion-content.history-content::part(scroll){
+  background: var(--h-bg) !important;
+  padding-top: calc(var(--app-topbar-height) + 8px);
+}
+
+/* ====== FILTROS ====== */
+.history-page .history-filters{
+  display:grid;
+  grid-template-columns: 48px 1fr;
+  gap:12px;
+  padding:12px 16px;
+  margin-top:4px;
+}
+.history-page .filter-btn{
+  height:48px;
+  border-radius: var(--h-radius-lg);
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:#ffffff !important;
+  color:#10333a !important;
+  border:1px solid var(--h-border) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,.06);
+  font-weight:700; font-size:13px; letter-spacing:.04em;
+  transition: transform .08s ease, background .2s ease, box-shadow .2s ease;
+}
+.history-page .filter-btn:hover{ background:#f7fafb !important; box-shadow:0 10px 26px rgba(0,0,0,.10); }
+.history-page .filter-btn:active{ transform: translateY(1px); }
+.history-page .filter-btn ion-icon{ font-size:18px; color:#10333a !important; }
+.history-page .filter-btn.icon-only{ width:48px; min-width:48px; padding:0; }
+.history-page .filter-btn.icon-only > span{ display:none; }
+
+.history-page .history-chips{
+  display:flex; flex-wrap:wrap; gap:10px;
+  padding:6px 16px 0;
+}
+.history-page .chip{
+  background:#eef4f6;
+  color:var(--h-text);
+  border:1px solid var(--h-border);
+  border-radius:var(--h-radius-sm);
+  padding:6px 10px;
+  font-size:12px; font-weight:600;
+}
+
+/* ====== LISTA ====== */
+.history-page .history-list{ padding-top:8px; padding-bottom:18px; }
+.history-page .state-card{
+  --background: var(--h-surface);
+  background: var(--h-surface);
+  border-radius: var(--h-radius-lg);
+  color: var(--h-text-dim);
+  border: 1px solid var(--h-border);
+  margin: 8px 16px;
+  box-shadow: var(--h-shadow);
+}
+.history-page .state-card.error{ background:#fff1f1; color:#a12020; }
+
+.history-page .history-row{
+  --background: transparent;
+  padding:14px;
+  margin:10px 16px;
+  border-radius:var(--h-radius-lg);
+  background:var(--h-surface-2);
+  border:1px solid var(--h-border);
+  box-shadow:var(--h-shadow);
+  transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+}
+.history-page .history-row:hover{ box-shadow:0 14px 34px rgba(16,28,33,.12); background:#ffffff; }
+.history-page .history-row:active{ transform: translateY(1px); }
+
+.history-page .row-icon .ic{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; }
+.history-page .row-icon .ic ion-icon{ font-size:22px; }
+.history-page .row-icon .ic.income{ background:var(--h-green-bg); color:var(--h-green); }
+.history-page .row-icon .ic.expense{ background:var(--h-red-bg); color:var(--h-red); }
+.history-page .row-title{ font-weight:800; color:var(--h-text); letter-spacing:.02em; }
+.history-page .row-sub{ color:var(--h-text-dim); margin-top:2px; font-weight:600; }
+.history-page .row-amount{ font-weight:900; letter-spacing:.02em; font-size:14.5px; }
+.history-page .row-amount.income{ color:var(--h-green); }
+.history-page .row-amount.expense{ color:var(--h-red); }
+
+/* ====== MODALES ====== */
+.history-page ion-modal{
+  z-index: 20000 !important;
+}
+.history-page .modal{
+  padding:16px;
+  background:var(--h-surface);
+  color:var(--h-text);
+  border-radius: var(--h-radius-lg);
+}
+.history-page .modal header h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; letter-spacing:.02em; }
+.history-page .modal p{ color:var(--h-text-dim); margin:0; }
+
+.history-page .modal-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:12px 0 14px;
+}
+.history-page .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
+.history-page .modal-note{ margin:6px 2px 0; }
+
+/* Ion inputs dentro del modal */
+.history-page ion-item{
+  --background: var(--h-surface-3);
+  --color: var(--h-text);
+  border-radius: var(--h-radius-md);
+  border:1px solid var(--h-border);
+  padding:6px;
+}
+
+/* ====== CATEGORÍAS (modal) ====== */
+.history-page .cat-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:10px;
+  margin:12px 0 10px;
+}
+@media (min-width: 390px){
+  .history-page .cat-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+@media (min-width: 560px){
+  .history-page .cat-grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+.history-page .cat-chip{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  height:40px; padding:0 10px;
+  border-radius:var(--h-radius-md);
+  background:#f0f6f7; color:var(--h-text);
+  font-weight:700; font-size:12.5px;
+  border:1px solid var(--h-border);
+  transition: background .2s ease, color .2s ease, transform .08s ease;
+}
+.history-page .cat-chip ion-icon{ font-size:18px; }
+.history-page .cat-chip.active{ background:#0b3a43; color:#ffffff; }
+.history-page .cat-chip:active{ transform: translateY(1px); }
+
+/* ===== Responsivo ===== */
+@media (min-width: 768px){
+  .history-page .history-filters{ grid-template-columns:56px 1fr; gap:16px; }
+  .history-page .row-title{ font-size:15px; }
+  .history-page .row-amount{ font-size:16px; }
+}
+
+/* ====== MODAL GENÉRICO ====== */
+ion-modal::part(content){
+  background: #ffffff;
+  color: #10252a;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 14px 34px rgba(16,28,33,.18);
+  max-height: 72vh;
+  overflow: auto;
+}
+
+/* ====== MODAL CATEGORÍAS ====== */
+.cat-modal{
+  background: #ffffff;
+  color: #10252a;
+  padding: 16px;
+}
+.cat-modal header h3{
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.cat-modal header p{
+  margin: 0 0 8px 0;
+  color: #4a6168;
+  font-weight: 600;
+}
+
+/* Grid de chips */
+.cat-modal .cat-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+@media (min-width: 390px){
+  .cat-modal .cat-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+@media (min-width: 560px){
+  .cat-modal .cat-grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+
+/* Chip de categoría */
+.cat-modal .cat-chip{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #f0f6f7;
+  color: #10252a;
+  font-weight: 700;
+  font-size: 12.5px;
+  border: 1px solid rgba(0,0,0,.08);
+  transition: background .2s ease, color .2s ease, transform .08s ease;
+  white-space: nowrap;
+}
+.cat-modal .cat-chip ion-icon{ font-size: 18px; }
+.cat-modal .cat-chip.active{
+  background: #0b3a43;
+  color: #ffffff;
+}
+.cat-modal .cat-chip:active{ transform: translateY(1px); }
+
+/* ====== ACCIONES CATEGORÍAS – Ajuste perfecto para móvil ====== */
+
+/* Fila Restablecer / Aplicar en 2 columnas (desktop/tablet) */
+.cat-modal .actions-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;   /* dos botones del mismo ancho */
+  gap:12px;
+  margin-top:12px;
+  padding: 0 8px;
+}
+
+/* Botón Cerrar centrado debajo */
+.cat-modal .close-row{
+  display:flex;
+  justify-content:center;
+  margin-top:10px;
+  padding: 0 8px;
+}
+
+/* Estilo unificado de TODOS los botones (Restablecer, Aplicar, Cerrar) */
+.cat-modal .actions-row ion-button,
+.cat-modal .close-row ion-button,
+.cat-modal .btn-primary,
+.cat-modal .btn-link{
+  width:100%;                        /* ocupan toda su celda */
+  --background:#0b3a43;
+  --color:#fff;
+  --border-radius:14px;
+  --box-shadow:0 6px 20px rgba(11,58,67,.25);
+  height:40px;
+  padding:0 18px;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  margin:0;                           /* quita márgenes raros de Ionic */
+}
+
+/* Hover/active */
+.cat-modal .actions-row ion-button:hover,
+.cat-modal .close-row ion-button:hover{ filter:brightness(1.06); }
+.cat-modal .actions-row ion-button:active,
+.cat-modal .close-row ion-button:active{ transform:translateY(1px); filter:brightness(.96); }
+
+/* —— Vista muy pequeña (móvil): apila los 3 botones en columna —— */
+@media (max-width: 420px){
+  .cat-modal .actions-row{
+    grid-template-columns: 1fr;       /* Restablecer arriba, Aplicar abajo */
+    gap:10px;
+  }
+  .cat-modal .close-row{
+    margin-top:10px;
+  }
+}
+
+/* Pequeño “padding-bottom” para que los botones no toquen el borde del modal */
+.cat-modal{ padding-bottom: 18px; }
+
+/* ====== MODAL FECHAS (mismo look que categorías) ====== */
+.date-modal{
+  background:#ffffff;
+  color:#10252a;
+  padding:16px;
+}
+.date-modal header h3{
+  margin:0 0 6px 0;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.date-modal header p{
+  margin:0 0 8px 0;
+  color:#4a6168;
+  font-weight:600;
+}
+
+/* grid 2 columnas en pantallas medianas, 1 en móvil */
+.date-modal .date-grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  margin:12px 0 10px;
+}
+@media (min-width: 480px){
+  .date-modal .date-grid{ grid-template-columns: 1fr 1fr; }
+}
+
+/* ion-item dentro del modal de fechas */
+.date-modal ion-item{
+  --background:#ffffff;
+  --color:#10252a;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.08);
+  padding:6px;
+}
+
+/* Nota de error */
+.date-modal .modal-note{
+  margin:6px 2px 0;
+}
+
+/* ====== Botones unificados (Restablecer / Aplicar / Cerrar) ====== */
+.date-modal .actions-row,
+.cat-modal  .actions-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;  /* dos botones iguales */
+  gap:12px;
+  margin-top:12px;
+  padding:0 8px;
+}
+.date-modal .close-row,
+.cat-modal  .close-row{
+  display:flex;
+  justify-content:center;
+  margin-top:10px;
+  padding:0 8px;
+}
+
+/* Mismo estilo en todos los ion-button de acciones y close */
+.date-modal .actions-row ion-button,
+.date-modal .close-row  ion-button,
+.cat-modal  .actions-row ion-button,
+.cat-modal  .close-row  ion-button,
+.date-modal .btn-primary,
+.cat-modal  .btn-primary{
+  width:100%;
+  --background:#0b3a43;
+  --color:#ffffff;
+  --border-radius:14px;
+  --box-shadow:0 6px 20px rgba(11,58,67,.25);
+  height:40px;
+  padding:0 18px;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  margin:0;
+}
+
+/* Hover/active */
+.date-modal .actions-row ion-button:hover,
+.date-modal .close-row  ion-button:hover,
+.cat-modal  .actions-row ion-button:hover,
+.cat-modal  .close-row  ion-button:hover{
+  filter:brightness(1.06);
+}
+.date-modal .actions-row ion-button:active,
+.date-modal .close-row  ion-button:active,
+.cat-modal  .actions-row ion-button:active,
+.cat-modal  .close-row  ion-button:active{
+  transform:translateY(1px);
+  filter:brightness(.96);
+}
+
+/* En móviles chicos, apila Restablecer/Aplicar y deja Cerrar abajo */
+@media (max-width:420px){
+  .date-modal .actions-row,
+  .cat-modal  .actions-row{
+    grid-template-columns: 1fr;
+    gap:10px;
+  }
+}
+
+/* Evita que los botones peguen al borde inferior */
+.date-modal{ padding-bottom:18px; }
+
+/* ==== Quitar el "marco" extra del ion-item para que no se vea doble card ==== */
+.history-page ion-item.history-row::part(container){
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;   /* elimina el colchón externo */
+}
+
+/* El "inner" también debe ser transparente para no duplicar bordes */
+.history-page ion-item.history-row::part(inner){
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* Compactar separación entre filas: el card es solo el native */
+.history-page ion-item.history-row{ 
+  margin: 10px 0 !important;        /* separa las filas entre sí */
+}
+
+/* El listado no debe aportar fondos ni padding exagerado */
+.history-page ion-list,
+.history-page ion-list::part(native){
+  background: transparent !important;
+  padding: 0 12px !important;       /* lateral sutil y sin marco extra */
+}
+

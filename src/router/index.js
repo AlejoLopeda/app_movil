@@ -5,6 +5,13 @@ import Inicialmonto from '@/views/InicialMontoPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
+import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
+import AddReminderPage from '@/views/AddReminderPage.vue'
+import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
+import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
+import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
+import HistoryIncomePage from '../views/HistoryIncomePage.vue'
+import HistoryExpensePage from '../views/HistoryExpensePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -48,6 +55,16 @@ const routes = [
     }
   },
   {
+    path: '/ingresos',
+    name: 'MonthlyIncomes',
+    component: MonthlyIncomesPage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Ingresos'
+    }
+  },
+  {
     path: '/ingresos/nuevo',
     name: 'AddIncome',
     component: AddIncomePage,
@@ -58,6 +75,16 @@ const routes = [
     }
   },
   {
+    path: '/gastos',
+    name: 'MonthlyExpenses',
+    component: MonthlyExpensesPage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Gastos'
+    }
+  },
+  {
     path: '/gastos/nuevo',
     name: 'AddExpense',
     component: AddExpensePage,
@@ -65,6 +92,54 @@ const routes = [
       requiresAuth: true,
       requiresInitialAmount: true,
       title: 'Anadir gasto'
+    }
+  },
+  {
+    path: '/historico/ingresos',
+    name: 'HistoryIncome',
+    component: HistoryIncomePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Historial Ingresos'
+    }
+  },
+  {
+    path: '/historico/gastos',
+    name: 'HistoryExpense',
+    component: HistoryExpensePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Historial Gastos'
+    }
+  },
+  {
+    path: '/recordatorios',
+    name: 'Recordatorios',
+    component: RecordatoriosPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Recordatorios'
+    }
+  },
+  {
+    path: '/historico',
+    name: 'MonthlyBalance',
+    component: MonthlyBalancePage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Balance'
+    }
+  },
+  {
+    path: '/recordatorios/nuevo',
+    name: 'AddReminder',
+    component: AddReminderPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Añadir Recordatorio'
     }
   }
 ]
