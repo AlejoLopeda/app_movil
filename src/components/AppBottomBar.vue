@@ -82,7 +82,7 @@ import {
   swapHorizontalOutline
 } from 'ionicons/icons'
 
-const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios','/historico/ingresos','/historico/gastos']
+const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios','/historico/ingresos','/historico/gastos','/historico/ambos']
 
 const route = useRoute()
 const router = useRouter()
@@ -100,6 +100,7 @@ const isHistoryPage = computed(() => route.path.startsWith('/historico'))
 const historyTab = computed(() => {
   if (route.path.startsWith('/historico/ingresos')) return 'income'
   if (route.path.startsWith('/historico/gastos'))   return 'expense'
+  if (route.path.startsWith('/historico/ambos'))    return 'both'
   // legacy /historico (evítalo, pero lo soportamos)
   const q = String(route.query.tab || 'income')
   return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
@@ -147,14 +148,13 @@ async function goHistory(){
 }
 
 /* ✅ Tabs del histórico:
-   - Siempre navegamos a las vistas nuevas (ingresos/gastos).
-   - Para "both" mantenemos compat a /historico (si aún existe). */
+   - Siempre navegamos a las vistas nuevas (ingresos/gastos/ambos). */
 async function setHistoryTab(mode){
   try{
     const target =
       mode === 'income' ? '/historico/ingresos' :
       mode === 'expense' ? '/historico/gastos' :
-      '/historico' // ambos (sólo si conservas la vista legacy)
+      '/historico/ambos' // 👉 ambos ahora apunta aquí
     if (route.path !== target || route.fullPath !== target){
       await router.replace(target)
     }

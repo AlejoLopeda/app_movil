@@ -12,6 +12,7 @@ import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
 import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
 import HistoryIncomePage from '../views/HistoryIncomePage.vue'
 import HistoryExpensePage from '../views/HistoryExpensePage.vue'
+import HistoryBothPage from '../views/HistoryBothPage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -112,6 +113,16 @@ const routes = [
       requiresAuth: true,
       requiresInitialAmount: true,
       title: 'Historial Gastos'
+    }
+  },
+  {
+    path: '/historico/ambos',
+    name: 'HistoryBoth',
+    component: HistoryBothPage,
+    meta: {
+      requiresAuth: true,
+      requiresInitialAmount: true,
+      title: 'Historial Ambos'
     }
   },
   {
