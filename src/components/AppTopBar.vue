@@ -40,7 +40,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'                // ✅ NUEVO
+import { useRoute, useRouter } from 'vue-router'   // ⬅️ se agrega useRouter
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton, IonButton, IonIcon, IonToast
 } from '@ionic/vue'
@@ -65,7 +65,9 @@ const {
   unwireGlobalEvents
 } = useTopBarMenu(props)
 
-const route = useRoute()                               // ✅ NUEVO
+const route = useRoute()
+const router = useRouter()                         // ⬅️ router
+
 // ✅ Título que se actualiza con la ruta actual; si no hay meta.title usa el prop
 const routeTitle = computed(() => route.meta?.title || props.title)
 
@@ -75,8 +77,14 @@ const firstNameUpper = computed(() => {
   return first.toUpperCase()
 })
 
-function onEdit ()  { menuOpen.value = false; emit('edit') }
+// ⬇️ Ahora "Editar" actúa como "Perfil": SOLO redirige a /perfil
+async function onEdit ()  {
+  menuOpen.value = false
+  try { await router.push('/perfil') } catch {}
+}
+
 function onReport(){ menuOpen.value = false; emit('report') }
+
 async function onLogout(){
   menuOpen.value = false
   await handleLogout(() => emit('logout'))

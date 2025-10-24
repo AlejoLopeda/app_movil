@@ -13,6 +13,7 @@ import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
 import HistoryIncomePage from '../views/HistoryIncomePage.vue'
 import HistoryExpensePage from '../views/HistoryExpensePage.vue'
 import HistoryBothPage from '../views/HistoryBothPage.vue'
+import ProfilePage from '../views/ProfilePage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -151,6 +152,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Añadir Recordatorio'
+    }
+  },
+  {
+    path: '/perfil',
+    name: 'Profile',
+    component: ProfilePage,
+    meta: {
+      requiresAuth: true,
+      title: 'Perfil'
     }
   }
 ]
