@@ -74,6 +74,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonAlert, IonToast } from '@ionic/vue'
@@ -89,6 +90,7 @@ const pageTitle = computed(() => route.meta?.title || 'Recordatorios')
 
 const { items, load } = useReminders()
 onMounted(load)
+onIonViewWillEnter(load)
 
 function labelFrecuencia(r) {
   switch (r.frequency) {
@@ -114,8 +116,7 @@ function showToast(message, color = 'primary') {
 }
 
 function onEdit(item) {
-  // Placeholder: navegación a la página de creación. Edición completa se puede añadir luego.
-  showToast('Edición próximamente')
+  router.push({ name: 'EditReminder', params: { id: item.id } })
 }
 
 const confirm = ref({ open: false, item: null })

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="expense-form__card">
     <!-- Nombre -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': nameError }">
@@ -25,13 +25,13 @@
     <ion-note v-if="freqError" color="danger" class="expense-form__note">{{ freqError }}</ion-note>
 
     <ion-item v-if="frecuencia==='custom'" class="expense-form__item" :class="{ 'expense-form__item--error': intervalError }">
-      <ion-label position="stacked" class="expense-form__label">Intervalo (días)</ion-label>
+      <ion-label position="stacked" class="expense-form__label">Intervalo (dÃ­as)</ion-label>
       <ion-input
         class="expense-form__input"
         type="number"
         inputmode="numeric"
         min="1"
-        placeholder="Cada cuántos días"
+        placeholder="Cada cuÃ¡ntos dÃ­as"
         v-model.number="intervaloDias"
         @ionBlur="validateInterval"
       />
@@ -48,7 +48,7 @@
     <!-- Hora -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': timeError }">
       <ion-label position="stacked" class="expense-form__label">Hora</ion-label>
-      <ion-input type="time" v-model="hora" @ionBlur="validateTime" class="expense-form__input" />
+      <ion-input type="time" v-model="hora" @ionBlur="validateTimeFlexible" class="expense-form__input" />
     </ion-item>
     <ion-note v-if="timeError" color="danger" class="expense-form__note">{{ timeError }}</ion-note>
 
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption
 } from '@ionic/vue'
@@ -81,6 +81,8 @@ import '@/theme/ExpenseForm.css'
 const props = defineProps({
   loading: { type: Boolean, default: false },
   showSubmit: { type: Boolean, default: true },
+  // Valores iniciales para ediciÃ³n
+  initial: { type: Object, default: null },
 })
 const loading = computed(() => props.loading)
 const emit = defineEmits(['submit'])
@@ -118,7 +120,7 @@ function validateInterval() {
   if (frecuencia.value === 'custom') {
     const n = Number(intervaloDias.value)
     if (!Number.isFinite(n) || n < 1) {
-      intervalError.value = 'Ingresa un intervalo válido mayor a 0'
+      intervalError.value = 'Ingresa un intervalo vÃ¡lido mayor a 0'
       return
     }
   }
@@ -133,7 +135,7 @@ function isValidDateString(s) {
 
 function validateEndDate() {
   if (!isValidDateString(fechaFin.value)) {
-    endDateError.value = 'Debes seleccionar una fecha válida'
+    endDateError.value = 'Debes seleccionar una fecha vÃ¡lida'
   } else {
     endDateError.value = ''
   }
@@ -165,17 +167,34 @@ function emitSubmit() {
   validateFrequency()
   validateInterval()
   validateEndDate()
-  validateTime()
+  validateTimeFlexible()
   if (!isValid.value) return
   emit('submit', {
     nombre: String(nombre.value).trim(),
     frecuencia: frecuencia.value,
     intervaloDias: frecuencia.value === 'custom' ? Number(intervaloDias.value) : null,
     fechaFin: fechaFin.value,
-    hora: hora.value || null,
+    hora: normalizeTimeString((hora.value || '').toString().trim()),
     comentario: comentario.value || null,
   })
 }
+
+// Rellenar el formulario cuando hay valores iniciales (modo ediciÃ³n)
+watch(() => props.initial, (val) => {
+  if (!val) return
+  nombre.value = val.nombre ?? ''
+  frecuencia.value = val.frecuencia ?? 'daily'
+  intervaloDias.value = val.intervaloDias ?? 1
+  fechaFin.value = val.fechaFin ?? ''
+  // Normalizar hora entrante para que el input `type=time` reciba "HH:MM"
+  hora.value = normalizeTimeString(val.hora ?? '') || ''
+  comentario.value = val.comentario ?? ''
+  nameError.value = ''
+  freqError.value = ''
+  intervalError.value = ''
+  endDateError.value = ''
+  timeError.value = ''
+}, { immediate: true })
 
 defineExpose({
   submit: () => { emitSubmit() },
@@ -193,5 +212,37 @@ defineExpose({
     timeError.value = ''
   },
 })
+
+// Acepta "HH:MM" (24h) o 12h con am/pm (incluye "a. m."/"p. m.")
+function validateTimeFlexible() {
+  const raw = (hora.value || '').toString().trim()
+  if (!raw) { timeError.value = ''; return }
+  const ok = normalizeTimeString(raw) !== null
+  timeError.value = ok ? '' : 'Hora inválida'
+}
+
+// Normaliza hora a formato 24h "HH:MM". Devuelve null si invÃ¡lida o vacÃ­a.
+function normalizeTimeString(input) {
+  if (!input) return null
+  const s = String(input).trim()
+  const m = s.match(/^\s*(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm))?\s*$/i)
+  if (!m) return null
+  let hh = parseInt(m[1], 10)
+  const mm = parseInt(m[2], 10)
+  // si hay segundos, el sufijo pasa a grupo 4
+  const suf = (m[4] || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, '')
+  if (mm < 0 || mm > 59) return null
+  if (suf) {
+    if (hh < 1 || hh > 12) return null
+    const isPM = suf === 'pm'
+    if (hh === 12) hh = isPM ? 12 : 0
+    else if (isPM) hh += 12
+  } else {
+    if (hh < 0 || hh > 23) return null
+  }
+  const HH = hh.toString().padStart(2, '0')
+  const MM = mm.toString().padStart(2, '0')
+  return `${HH}:${MM}`
+}
 </script>
 
