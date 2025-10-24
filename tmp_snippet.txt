@@ -1,0 +1,9 @@
+function validateEndDate() {\r\n  if (!isValidDateString(fechaFin.value)) {\r
+    endDateError.value = 'Debes seleccionar una fecha válida'\r
+  } else {\r
+    endDateError.value = ''\r
+  }\r
+}\r
+\r
+function openDatePicker() {\r
+  fechaFinTemp.value = fechaFin.value || new Date().toISOString().slice(
