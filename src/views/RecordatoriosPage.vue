@@ -7,7 +7,10 @@
         <div v-if="items.length" class="reminders-list">
           <div v-for="r in items" :key="r.id" class="expense-form__card reminder-card">
             <div class="reminder-header">
-              <h3 class="reminders-title">{{ r.name }}</h3>
+              <div class="reminder-title-wrap">
+                <h3 class="reminders-title">{{ r.name }}</h3>
+                <span class="reminder-chip">{{ labelFrecuencia(r) }}</span>
+              </div>
               <div class="reminder-actions">
                 <ion-button fill="clear" size="small" @click="onDetails(r)" aria-label="Ver detalles">
                   <ion-icon :icon="informationCircleOutline" />
@@ -21,9 +24,21 @@
               </div>
             </div>
             <div class="reminder-meta">
-              <div class="meta-row"><strong>Frecuencia:</strong> {{ labelFrecuencia(r) }}</div>
-              <div class="meta-row" v-if="r.time_at"><strong>Hora:</strong> {{ r.time_at }}</div>
-              <div class="meta-row"><strong>Fin:</strong> {{ r.end_date }}</div>
+              <div class="meta-row">
+                <ion-icon :icon="repeatOutline" class="meta-icon" />
+                <strong>Frecuencia:</strong>
+                <span class="meta-text">{{ labelFrecuencia(r) }}</span>
+              </div>
+              <div class="meta-row" v-if="r.time_at">
+                <ion-icon :icon="timeOutline" class="meta-icon" />
+                <strong>Hora:</strong>
+                <span class="meta-text">{{ r.time_at }}</span>
+              </div>
+              <div class="meta-row">
+                <ion-icon :icon="calendarOutline" class="meta-icon" />
+                <strong>Fin:</strong>
+                <span class="meta-text">{{ r.end_date }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -40,23 +55,54 @@
         </ion-fab-button>
       </ion-fab>
 
-      <ion-modal :is-open="details.open" @didDismiss="details.open=false">
+      <ion-modal :is-open="details.open" @didDismiss="details.open=false" css-class="reminder-details-modal">
         <div class="reminder-modal">
-          <h3 class="reminders-title" style="margin-bottom:8px;">{{ details.item?.name }}</h3>
-          <p class="modal-line"><strong>Frecuencia:</strong> {{ details.item ? labelFrecuencia(details.item) : '' }}</p>
-          <p v-if="details.item?.time_at" class="modal-line"><strong>Hora:</strong> {{ details.item?.time_at }}</p>
-          <p class="modal-line"><strong>Fin:</strong> {{ details.item?.end_date }}</p>
-          <p v-if="details.item?.comment" class="modal-line"><strong>Comentario:</strong> {{ details.item?.comment }}</p>
+          <div class="modal-header">
+            <div class="modal-title">
+              <ion-icon :icon="informationCircleOutline" class="modal-icon" />
+              <div class="modal-title-text">
+                <h3 class="reminders-title">{{ details.item?.name }}</h3>
+                <span v-if="details.item" class="reminder-chip">{{ labelFrecuencia(details.item) }}</span>
+              </div>
+            </div>
+            <ion-button fill="clear" size="small" class="modal-close" @click="details.open=false" aria-label="Cerrar">
+              <ion-icon :icon="closeOutline" />
+            </ion-button>
+          </div>
+
+          <div class="modal-body">
+            <p class="modal-line">
+              <ion-icon :icon="repeatOutline" class="meta-icon" />
+              <strong>Frecuencia:</strong>
+              <span class="meta-text">{{ details.item ? labelFrecuencia(details.item) : '' }}</span>
+            </p>
+            <p v-if="details.item?.time_at" class="modal-line">
+              <ion-icon :icon="timeOutline" class="meta-icon" />
+              <strong>Hora:</strong>
+              <span class="meta-text">{{ details.item?.time_at }}</span>
+            </p>
+            <p class="modal-line">
+              <ion-icon :icon="calendarOutline" class="meta-icon" />
+              <strong>Fin:</strong>
+              <span class="meta-text">{{ details.item?.end_date }}</span>
+            </p>
+            <p v-if="details.item?.comment" class="modal-line">
+              <ion-icon :icon="chatbubbleOutline" class="meta-icon" />
+              <strong>Comentario:</strong>
+              <span class="meta-text">{{ details.item?.comment }}</span>
+            </p>
+          </div>
         </div>
       </ion-modal>
 
       <ion-alert
         :is-open="confirm.open"
         header="Eliminar recordatorio"
+        css-class="reminders-alert"
         message="¿Seguro que deseas eliminarlo?"
         :buttons="[
           { text: 'Cancelar', role: 'cancel', handler: () => confirm.open=false },
-          { text: 'Eliminar', role: 'destructive', handler: onDeleteDo }
+          { text: 'Eliminar', role: 'destructive', handler: onDeleteDo, cssClass: 'alert-btn--danger' }
         ]"
         @didDismiss="confirm.open=false"
       />
@@ -78,7 +124,7 @@ import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonAlert, IonToast } from '@ionic/vue'
-import { add, createOutline, trashOutline, informationCircleOutline } from 'ionicons/icons'
+import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
 import '@/theme/ExpenseForm.css'
