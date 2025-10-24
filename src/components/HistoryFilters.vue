@@ -10,7 +10,7 @@
       <span>{{ dateLabel }}</span>
     </button>
 
-    <!-- Categorias -->
+    <!-- Categorías -->
     <button class="filter-btn" @click="$emit('open-cat')" aria-label="Elegir categorías">
       <ion-icon :icon="gridIcon" />
       <span>{{ categoriesLabel }}</span>
@@ -21,72 +21,79 @@
     <span v-for="c in chips" :key="c" class="chip">{{ c }}</span>
   </section>
 
-  <!-- Popover: Fecha -->
-  <ion-popover
+  <!-- ⤵️ Fecha: ahora como MODAL (mismo look & feel que categorías) -->
+  <ion-modal
     :is-open="dateOpen"
-    :event="dateEvent"
-    reference="event"
-    side="bottom"
-    alignment="start"
-    :keep-contents-mounted="true"
     @didDismiss="$emit('close-date')"
-    style="--width: min(360px, 92vw); --max-width: 92vw;"
+    :keep-contents-mounted="true"
+    backdrop-dismiss="true"
+    style="
+      --width: min(620px, 92vw);
+      --height: auto;
+      --max-height: 80vh;
+      --border-radius: 20px;
+    "
   >
-    <div class="modal modal--dates">
-      <header><h3>Rango de fechas</h3></header>
+    <div class="modal date-modal">
+      <header>
+        <h3>Rango de fechas</h3>
+        <p>Elige una fecha de inicio y una de fin.</p>
+      </header>
 
-      <div class="modal-row">
+      <div class="date-grid">
         <ion-item>
           <ion-label position="stacked">Desde</ion-label>
-          <div class="dt-wrap">
-            <ion-datetime
-              presentation="date"
-              :value="from || undefined"
-              locale="es-ES"
-              first-day-of-week="1"
-              :show-default-buttons="false"
-              @ionChange="$emit('update:from', $event.detail.value)"
-            />
-          </div>
+          <ion-input
+            type="date"
+            style="--color:#0b3a43; --placeholder-color:#0b3a43; color-scheme:light;"
+            :value="from ? from.slice(0,10) : ''"
+            @ionChange="$emit('update:from', $event.detail.value || null)"
+          />
         </ion-item>
 
         <ion-item>
           <ion-label position="stacked">Hasta</ion-label>
-          <div class="dt-wrap">
-            <ion-datetime
-              presentation="date"
-              :value="to || undefined"
-              locale="es-ES"
-              first-day-of-week="1"
-              :show-default-buttons="false"
-              @ionChange="$emit('update:to', $event.detail.value)"
-            />
-          </div>
+          <ion-input
+            type="date"
+            style="--color:#0b3a43; --placeholder-color:#0b3a43; color-scheme:light;"
+            :value="to ? to.slice(0,10) : ''"
+            @ionChange="$emit('update:to', $event.detail.value || null)"
+          />
         </ion-item>
       </div>
 
-      <div class="modal-actions">
-        <ion-button fill="clear" @click="$emit('clear-dates')">Limpiar</ion-button>
-        <ion-button @click="$emit('apply-dates')">Aplicar</ion-button>
+      <ion-note v-if="dateError" color="danger" class="modal-note">{{ dateError }}</ion-note>
+
+      <!-- Acciones: Restablecer / Aplicar -->
+      <div class="modal-actions actions-row">
+        <ion-button class="btn-primary" @click="$emit('clear-dates')">
+          RESTABLECER
+        </ion-button>
+        <ion-button class="btn-primary" @click="$emit('apply-dates')">
+          APLICAR
+        </ion-button>
       </div>
 
-      <ion-note v-if="dateError" color="danger" class="modal-note">{{ dateError }}</ion-note>
+      <!-- Cerrar centrado -->
+      <div class="close-row">
+        <ion-button class="btn-primary" @click="$emit('close-date')">
+          CERRAR
+        </ion-button>
+      </div>
     </div>
-  </ion-popover>
+  </ion-modal>
 
-  <!-- Modal: Categorias -->
+  <!-- Modal: Categorías (centrado, con Cerrar/Restablecer/Aplicar) -->
   <ion-modal
     :is-open="catOpen"
     @didDismiss="$emit('close-cat')"
-    :breakpoints="[0, 0.6, 1]"
-    :initial-breakpoint="0.6"
     :keep-contents-mounted="true"
+    backdrop-dismiss="true"
     style="
-      --width: min(560px, 94vw);
-      --max-width: 94vw;
+      --width: min(620px, 92vw);
       --height: auto;
-      --max-height: 72vh;
-      --border-radius: 16px;
+      --max-height: 80vh;
+      --border-radius: 20px;
     "
   >
     <div class="modal cat-modal">
@@ -109,9 +116,21 @@
         </button>
       </div>
 
-      <div class="modal-actions">
-        <ion-button fill="clear" @click="$emit('reset-cats')">Restablecer</ion-button>
-        <ion-button @click="$emit('apply-cats')">Aplicar</ion-button>
+      <!-- Fila de acciones: Restablecer / Aplicar -->
+      <div class="modal-actions actions-row">
+        <ion-button class="btn-primary" @click="$emit('reset-cats')">
+          RESTABLECER
+        </ion-button>
+        <ion-button class="btn-primary" @click="$emit('apply-cats')">
+          APLICAR
+        </ion-button>
+      </div>
+
+      <!-- Botón Cerrar centrado abajo -->
+      <div class="close-row">
+        <ion-button class="btn-primary" @click="$emit('close-cat')">
+          CERRAR
+        </ion-button>
       </div>
     </div>
   </ion-modal>
@@ -119,7 +138,7 @@
 
 <script setup>
 import {
-  IonPopover, IonModal, IonButton, IonDatetime, IonItem, IonLabel, IonIcon, IonNote
+  IonPopover, IonModal, IonButton, IonItem, IonLabel, IonIcon, IonNote, IonInput
 } from '@ionic/vue'
 import { calendarOutline, gridOutline } from 'ionicons/icons'
 
@@ -152,4 +171,3 @@ const gridIcon = gridOutline
 </script>
 
 <style src="../theme/history.css"></style>
-
