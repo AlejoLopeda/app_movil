@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-show="isMainRoute" class="bottom-fixed">
     <ion-toolbar class="bottombar">
       <!-- Modo especial: Añadir Ingreso o Añadir Gasto -->
@@ -12,8 +12,18 @@
         </button>
       </div>
 
-      <!-- Modo especial: Histórico (Dashboard, Ingreso, Gasto, Ambos) -->
-      <div v-else-if="isHistoryPage" class="nav-history">
+      <!-- Modo especial: Historial (Dashboard, Ingreso, Gasto, Ambos) -->
+            <!-- Modo especial: Recordatorios (volver y crear) -->
+      <div v-else-if="isRemindersPage" class="nav-cta">
+        <button class="cta-btn" @click="goDashboard">
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+        <button class="cta-btn" @click="goAddReminder">
+          <ion-icon :icon="add" />
+          <span>CREAR</span>
+        </button>
+      </div>
+<div v-else-if="isHistoryPage" class="nav-history">
         <button class="cta-btn" @click="goDashboard">
           <ion-icon :icon="chevronBackOutline" />
         </button>
@@ -79,7 +89,7 @@ import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
   chevronBackOutline, checkmarkOutline,
-  swapHorizontalOutline
+  swapHorizontalOutline, add
 } from 'ionicons/icons'
 
 const MAIN_ROUTES = ['/ingresos','/gastos','/historico','/dashboard','/monto','/recordatorios','/historico/ingresos','/historico/gastos','/historico/ambos']
@@ -91,18 +101,20 @@ const isMainRoute = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p
 const isAddIncomePage   = computed(() => route.path === '/ingresos/nuevo')
 const isAddExpensePage  = computed(() => route.path === '/gastos/nuevo')
 const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
+const isRemindersPage   = computed(() => route.path === '/recordatorios')
+const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value)
 const isEditReminderPage = computed(() => route.name === 'EditReminder')
 const isAddPage = computed(() => isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value)
 
-/* ===== Histórico ===== */
+/* ===== HistÃ³rico ===== */
 const isHistoryPage = computed(() => route.path.startsWith('/historico'))
 
-/* ✅ pestaña activa desde la ruta actual */
+/* … pestaña activa desde la ruta actual */
 const historyTab = computed(() => {
   if (route.path.startsWith('/historico/ingresos')) return 'income'
   if (route.path.startsWith('/historico/gastos'))   return 'expense'
   if (route.path.startsWith('/historico/ambos'))    return 'both'
-  // legacy /historico (evítalo, pero lo soportamos)
+  // legacy /historico (evita, pero lo soportamos)
   const q = String(route.query.tab || 'income')
   return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
 })
@@ -138,24 +150,32 @@ async function goDashboard(){
   }catch{}
 }
 
-/* 🔹 Por defecto siempre abrir /historico/ingresos (skin blanco) */
+/* ¹ Por defecto siempre abrir /historico/ingresos (skin blanco) */
+
+async function goAddReminder(){
+  try{
+    if (route.path !== '/recordatorios/nuevo') await router.push('/recordatorios/nuevo')
+  }catch{
+    fail()
+  }
+}
 async function goHistory(){
   try{
-    const target = '/historico/ingresos'   // ✅ forzamos vista nueva
+    const target = '/historico/ingresos'   // … forzamos vista nueva
     if (route.path !== target) await router.push(target)
   }catch{
     fail()
   }
 }
 
-/* ✅ Tabs del histórico:
+/* … Tabs del histórico:
    - Siempre navegamos a las vistas nuevas (ingresos/gastos/ambos). */
 async function setHistoryTab(mode){
   try{
     const target =
       mode === 'income' ? '/historico/ingresos' :
       mode === 'expense' ? '/historico/gastos' :
-      '/historico/ambos' // 👉 ambos ahora apunta aquí
+      '/historico/ambos' // ‰ ambos ahora apunta aquí
     if (route.path !== target || route.fullPath !== target){
       await router.replace(target)
     }
@@ -291,3 +311,7 @@ function fail(){
   .nav--cta .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
 }
 </style>
+
+
+
+
