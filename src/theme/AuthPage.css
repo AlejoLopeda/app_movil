@@ -1,6 +1,7 @@
 .auth-login,
 .auth-email {
   --background: #f7f9fc;
+  color-scheme: light;
 }
 
 .auth-login__toolbar,
@@ -107,7 +108,10 @@
 
 .app-account__list,
 .app-login__list {
-  --background: transparent;
+  /* Fuerza fondo blanco en WebView Android (md) */
+  --background: #ffffff;
+  --ion-item-background: #ffffff;
+  --ion-item-border-color: transparent;
   background-color: #ffffff;
   padding: 0;
 }
@@ -145,6 +149,10 @@
 
 .app-account__checkbox {
   --size: 22px;
+  --background: #ffffff;
+  --background-checked: #0d3f48;
+  --border-color: #0d3f48;
+  --checkmark-color: #ffffff;
 }
 
 .app-account__link {
@@ -189,13 +197,19 @@
 .auth-field-item {
   border: 2px solid #000000;
   border-radius: 16px;
+  /* Asegura blanco en todas las variantes/estados */
   --background: #ffffff;
+  --background-activated: #ffffff;
+  --background-focused: #ffffff;
+  --background-hover: #ffffff;
+  --ion-item-background: #ffffff;
   --border-width: 0;
   --inner-border-width: 0;
   --highlight-height: 0;
   --highlight-color-focused: transparent;
   --padding-start: 12px;
   --inner-padding-end: 12px;
+  --ripple-color: transparent;
 }
 .auth-field-toggle {
   --padding-start: 4px;
@@ -204,6 +218,21 @@
   --padding-bottom: 0;
   --background: transparent;
   color: #0d0d0d;
+}
+
+/* Forzar los parts internos a blanco en md (Android WebView) */
+.app-account__list::part(native),
+.auth-field-item::part(native),
+.auth-field-item::part(container),
+.auth-field-item::part(inner),
+.auth-field-item::part(background) {
+  background: #ffffff !important;
+}
+
+/* Quita efecto de activación que oscurece en Android */
+.auth-field-item:active::part(native),
+.auth-field-item.ion-activated::part(native) {
+  background: #ffffff !important;
 }
 
 .app-account__input::part(native),
