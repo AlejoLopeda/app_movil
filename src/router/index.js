@@ -7,6 +7,7 @@ import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
 import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
 import AddReminderPage from '@/views/AddReminderPage.vue'
+import EditReminderPage from '@/views/EditReminderPage.vue'
 import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
 import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
 import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
@@ -161,6 +162,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Perfil'
+          }
+  },
+  {
+    path: '/recordatorios/:id/editar',
+    name: 'EditReminder',
+    component: EditReminderPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Editar Recordatorio'
     }
   }
 ]
