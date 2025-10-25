@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <ion-page class="reminders-page">
     <app-top-bar :title="pageTitle" />
 
@@ -45,7 +45,7 @@
 
         <div v-else class="reminders-empty">
           <h2>Sin recordatorios</h2>
-          <p>Usa el botón CREAR en la barra inferior.</p>
+          <p>Usa el bot�n CREAR en la barra inferior.</p>
         </div>
       </section>
 <ion-modal :is-open="details.open" @didDismiss="details.open=false" css-class="reminder-details-modal">
@@ -92,7 +92,7 @@
         :is-open="confirm.open"
         header="Eliminar recordatorio"
         css-class="reminders-alert"
-        message="Â¿Seguro que deseas eliminarlo?"
+        message="¿Seguro que deseas eliminarlo?"
         :buttons="[
           { text: 'Cancelar', role: 'cancel', handler: () => confirm.open=false },
           { text: 'Eliminar', role: 'destructive', handler: onDeleteDo, cssClass: 'alert-btn--danger' }
@@ -111,70 +111,72 @@
   </ion-page>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from "vue"
-import { useRoute, useRouter } from "vue-router"
-import AppTopBar from "@/components/AppTopBar.vue"
-import { IonPage, IonContent, IonIcon, IonButton, IonModal, IonAlert, IonToast } from "@ionic/vue"
-import { createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from "ionicons/icons"
-import { useReminders } from "@/composables/useReminders"
-import { deactivateReminder } from "@/services/reminderService"
-import "@/theme/ExpenseForm.css"
-import "@/theme/RemindersPage.css"
-
-const route = useRoute()
-const router = useRouter()
-const pageTitle = computed(() => route.meta?.title || "Recordatorios")
-
-const { items, load } = useReminders()
-onMounted(load)
-
-function labelFrecuencia(r) {
-  switch (r.frequency) {
-    case "daily": return "Diario"
-    case "weekly": return "Semanal"
-    case "monthly": return "Mensual"
-    case "custom": return `Cada ${r.interval_days} días`
-    default: return r.frequency
-  }
-}
-
-const details = ref({ open: false, item: null })
-function onDetails(item) {
-  details.value = { open: true, item }
-}
-
-function showToast(message, color = "primary") {
-  toast.value = { open: true, message, color }
-}
-
-function onEdit(item) {
-  showToast("Edición próximamente")
-}
-
-const confirm = ref({ open: false, item: null })
-function onDeleteAsk(item) {
-  confirm.value = { open: true, item }
-}
-
-async function onDeleteDo() {
-  const item = confirm.value.item
-  confirm.value.open = false
-  if (!item) return
-  try {
-    await deactivateReminder(item.id)
-    await load()
-    showToast("Recordatorio eliminado", "success")
-  } catch (e) {
-    showToast("No se pudo eliminar", "danger")
-  }
-}
-
-const toast = ref({ open: false, message: "", color: "primary" })
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import AppTopBar from '@/components/AppTopBar.vue'
+import { IonPage, IonContent, IonIcon, IonButton, IonModal, IonAlert, IonToast } from '@ionic/vue'
+import { createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
+import { useReminders } from '@/composables/useReminders'
+import { deactivateReminder } from '@/services/reminderService'
+import '@/theme/ExpenseForm.css'
+import '@/theme/RemindersPage.css'
+
+const route = useRoute()
+const router = useRouter()
+const pageTitle = computed(() => route.meta?.title || 'Recordatorios')
+
+const { items, load } = useReminders()
+onMounted(load)
+
+function labelFrecuencia(r) {
+  switch (r.frequency) {
+    case 'daily': return 'Diario'
+    case 'weekly': return 'Semanal'
+    case 'monthly': return 'Mensual'
+    case 'custom': return `Cada ${r.interval_days} días`
+    default: return r.frequency
+  }
+}
+
+)
+}
+
+const details = ref({ open: false, item: null })
+function onDetails(item) {
+  details.value = { open: true, item }
+}
+
+function showToast(message, color = 'primary') {
+  toast.value = { open: true, message, color }
+}
+
+function onEdit(item) {
+  // Placeholder: navegación a la página de creación. Edición completa se puede añadir luego.
+  showToast('Edición próximamente')
+}
+
+const confirm = ref({ open: false, item: null })
+function onDeleteAsk(item) {
+  confirm.value = { open: true, item }
+}
+
+async function onDeleteDo() {
+  const item = confirm.value.item
+  confirm.value.open = false
+  if (!item) return
+  try {
+    await deactivateReminder(item.id)
+    await load()
+    showToast('Recordatorio eliminado', 'success')
+  } catch (e) {
+    showToast('No se pudo eliminar', 'danger')
+  }
+}
+
+const toast = ref({ open: false, message: '', color: 'primary' })
 </script>
 
-
-
 
 
 
