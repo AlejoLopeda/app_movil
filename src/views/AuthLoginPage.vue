@@ -1,12 +1,12 @@
 <template>
-  <ion-page class="auth-login">
+  <ion-page class="auth-login" mode="ios">
     <ion-header translucent>
       <ion-toolbar class="auth-login__toolbar">
         <ion-title class="auth-page__title">Iniciar sesion</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content fullscreen class="auth-login__content">
+    <ion-content fullscreen class="auth-login__content" mode="ios">
       <section class="auth-login__wrapper">
 
         <app-login @success="handleSuccess" />

@@ -7,12 +7,18 @@ import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
 import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
 import AddReminderPage from '@/views/AddReminderPage.vue'
+import EditReminderPage from '@/views/EditReminderPage.vue'
 import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
 import MonthlyExpensesPage from '@/views/MonthlyExpensesPage.vue'
 import MonthlyBalancePage from '@/views/MonthlyBalancePage.vue'
 import HistoryIncomePage from '../views/HistoryIncomePage.vue'
 import HistoryExpensePage from '../views/HistoryExpensePage.vue'
 import HistoryBothPage from '../views/HistoryBothPage.vue'
+import ProfilePage from '../views/ProfilePage.vue'
+import GoalsPage from '@/views/GoalsPage.vue'
+import GoalCreatePage from '@/views/GoalCreatePage.vue'
+import GoalEditPage from '@/views/GoalEditPage.vue'
+import GoalDeleteConfirmPage from '@/views/GoalDeleteConfirmPage.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
@@ -21,6 +27,30 @@ const routes = [
   {
     path: '/',
     redirect: '/login'
+  },
+  {
+    path: '/metas',
+    name: 'Goals',
+    component: GoalsPage,
+    meta: { requiresAuth: true, title: 'Metas' }
+  },
+  {
+    path: '/metas/nueva',
+    name: 'GoalCreate',
+    component: GoalCreatePage,
+    meta: { requiresAuth: true, title: 'Crear Meta' }
+  },
+  {
+    path: '/metas/:id/editar',
+    name: 'GoalEdit',
+    component: GoalEditPage,
+    meta: { requiresAuth: true, title: 'Editar Meta' }
+  },
+  {
+    path: '/metas/:id/eliminar',
+    name: 'GoalDelete',
+    component: GoalDeleteConfirmPage,
+    meta: { requiresAuth: true, title: 'Eliminar Meta' }
   },
   {
     path: '/login',
@@ -151,6 +181,24 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Añadir Recordatorio'
+    }
+  },
+  {
+    path: '/perfil',
+    name: 'Profile',
+    component: ProfilePage,
+    meta: {
+      requiresAuth: true,
+      title: 'Perfil'
+          }
+  },
+  {
+    path: '/recordatorios/:id/editar',
+    name: 'EditReminder',
+    component: EditReminderPage,
+    meta: {
+      requiresAuth: true,
+      title: 'Editar Recordatorio'
     }
   }
 ]
