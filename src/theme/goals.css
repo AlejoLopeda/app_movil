@@ -1,0 +1,126 @@
+/* Goals module styles - tuned to MonthlyPanel aesthetics */
+
+/* We reuse MonthlyPanel variables/colors via .monthly-page scope */
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Force readable headings inside Monthly header for this module */
+.monthly-header__title { color: #0b2c33 !important; }
+.monthly-header__subtitle { color: #041c21 !important; opacity: .9; }
+
+.goal-item {
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(13, 63, 72, 0.12);
+  box-shadow: 0 16px 34px -28px rgba(13, 63, 72, 0.55);
+}
+
+.goal-row {
+  display: flex;
+  gap: 8px;
+}
+
+.goal-main {
+  flex: 1;
+}
+
+.goal-title { font-size: 1rem; font-weight: 800; letter-spacing: .02em; }
+.goal-sub { font-size: .9rem; opacity: .9; margin-bottom: 8px; font-weight: 600; }
+.goal-sub .is-complete { color: var(--ion-color-success); font-weight: 600; }
+
+.goal-actions { display: flex; align-items: start; }
+
+.goal-progress__track {
+  width: 100%; height: 10px; background: rgba(13,63,72,.14); border-radius: 999px; overflow: hidden;
+}
+.goal-progress__bar { height: 100%; background: #2a9d8f; width: 0; transition: width .25s ease; }
+.goal-progress__bar.is-complete { background: #1bb76e; }
+.goal-progress__label { display: none; }
+
+.goal-expand { margin-top: 12px; border-top: 2px solid rgba(13,63,72,.08); padding-top: 12px; }
+.goal-transfer { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.goal-transfer-actions { display: flex; gap: 8px; }
+.goal-inputs .goal-amount-input, .goal-inputs .goal-desc-input { width: 100%; }
+.goal-inputs { 
+  --background: rgba(255,255,255,0.95);
+  --color: #0b2c33;
+  border-radius: 12px;
+}
+
+.goal-history { margin-top: 8px; }
+.goal-history__toggle { background: transparent; color: var(--monthly-accent); border: 0; font-weight: 700; }
+.goal-history__list { list-style: none; padding: 0; margin: 6px 0 0; }
+.goal-history__row { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; font-size: .85rem; align-items: center; padding: 6px 0; }
+.goal-history__row--empty { opacity: .7; }
+.goal-history__amount { font-weight: 600; }
+.goal-history__amount.inc { color: var(--ion-color-success); }
+.goal-history__amount.dec { color: var(--ion-color-danger); }
+
+.goals-form__title { text-align: center; margin: 10px 0 16px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+.goals-form__actions { margin-top: 16px; }
+
+.goals-delete { display: grid; gap: 10px; justify-items: center; text-align: center; margin-top: 24px; }
+
+/* Crear/Editar: card y items con look MonthlyPanel */
+.goals-form-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(13,63,72,0.12);
+  box-shadow: 0 16px 34px -28px rgba(13,63,72,0.55);
+}
+
+.goals-form-item {
+  --background: rgba(255,255,255,0.98);
+  --color: #0b2c33;
+  --placeholder-color: rgba(11,44,51,0.6);
+  border-radius: 12px;
+}
+
+.goals-form__actions ion-button {
+  --border-radius: 14px;
+  --background: var(--monthly-accent, #0d3f48);
+  --background-activated: #174a52;
+  --color: #fff;
+  font-weight: 800;
+  letter-spacing: .08em;
+  height: 52px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .goals-form-card {
+    background: rgba(4, 19, 24, 0.82);
+    border-color: rgba(224, 242, 249, 0.2);
+    box-shadow: 0 20px 38px -30px rgba(0,0,0,.72);
+  }
+  .goals-form-item {
+    --background: rgba(4, 19, 24, 0.86);
+    --color: rgba(224, 242, 249, 0.96);
+    --placeholder-color: rgba(224, 242, 249, 0.6);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .monthly-header__title { color: rgba(224,242,249,0.96) !important; }
+  .monthly-header__subtitle { color: rgba(224,242,249,0.86) !important; }
+  .goal-item {
+    background: rgba(4, 19, 24, 0.82);
+    border-color: rgba(224, 242, 249, 0.2);
+    box-shadow: 0 20px 38px -30px rgba(0, 0, 0, 0.72);
+    color: rgba(224, 242, 249, 0.96);
+  }
+  .goal-title { color: rgba(224, 242, 249, 0.98); }
+  .goal-sub { color: rgba(224, 242, 249, 0.9); }
+  .goal-progress__track { background: rgba(224,242,249,.18); }
+  .goal-inputs { 
+    --background: rgba(4, 19, 24, 0.86);
+    --color: rgba(224, 242, 249, 0.96);
+  }
+}
