@@ -51,3 +51,33 @@ export async function deactivateReminder(id) {
   if (error) throw error
   return { ok: true }
 }
+
+export async function getReminder(id) {
+  const { data, error } = await supabase
+    .from('recordatorios')
+    .select('id, user_id, name, frequency, interval_days, end_date, time_at, comment, active, created_at')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error) throw error
+  return data || null
+}
+
+export async function updateReminder(id, updates) {
+  const payload = {
+    name: updates.name,
+    frequency: updates.frequency,
+    interval_days: updates.interval_days ?? null,
+    end_date: updates.end_date,
+    time_at: updates.time_at ?? null,
+    comment: updates.comment ?? null,
+  }
+
+  const { error } = await supabase
+    .from('recordatorios')
+    .update(payload)
+    .eq('id', id)
+
+  if (error) throw error
+  return { ok: true }
+}

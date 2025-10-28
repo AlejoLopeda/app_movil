@@ -18,6 +18,7 @@ export function useSideMenu () {
     { label: 'Inicio',        path: '/dashboard'     },
     { label: 'Ingresos',      path: '/ingresos'      },
     { label: 'Gastos',        path: '/gastos'        },
+    { label: 'Metas',         path: '/metas'         },
     { label: 'Balance',       path: '/historico'     },
     { label: 'Recordatorios', path: '/recordatorios' },
   ]
