@@ -40,10 +40,24 @@ ion-item ion-label p {
 
 /* FAB con color de la barra superior (#0d3f48) */
 .reminders-fab {
-  --background: #0d3f48;
-  --background-activated: #0a3239;
-  --background-hover: #0f4b55;
+  /* Interactivo y alineado a la marca (verde oscuro) */
+  --background: linear-gradient(135deg, #0d3f48 0%, #0f4b55 100%);
+  --background-activated: linear-gradient(135deg, #0a3239 0%, #0c3b42 100%);
+  --background-hover: linear-gradient(135deg, #11535d 0%, #13606c 100%);
   --color: #ffffff; /* icono */
+  --box-shadow: 0 14px 30px -12px rgba(13, 63, 72, 0.55),
+                0 6px 16px -10px rgba(13, 63, 72, 0.35);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+ion-fab-button.reminders-fab:hover,
+ion-fab-button.reminders-fab:focus-visible {
+  transform: translateY(-1px) scale(1.04);
+  filter: saturate(1.06);
+}
+
+ion-fab-button.reminders-fab:active {
+  transform: scale(0.96);
 }
 
 /* Contenedor tipo tarjeta reutilizando el estilo del formulario */
@@ -100,6 +114,12 @@ ion-item ion-label p {
   gap: 8px;
 }
 
+.reminder-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .reminder-actions ion-button {
   --padding-start: 6px;
   --padding-end: 6px;
@@ -111,7 +131,19 @@ ion-item ion-label p {
 }
 
 .reminder-meta .meta-row {
-  margin-top: 4px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-icon {
+  font-size: 18px;
+  color: #0d3f48;
+}
+
+.meta-text {
+  font-weight: 600;
 }
 
 .reminder-modal {
@@ -121,4 +153,108 @@ ion-item ion-label p {
 .reminder-modal .modal-line {
   margin: 8px 0;
   color: #334155;
+}
+
+/* Detalles: modal y contenido */
+.reminder-details-modal {
+  --width: 92vw;
+  --max-width: 520px;
+  --border-radius: 18px;
+  --background: #ffffff;
+  --backdrop-opacity: 0.24;
+}
+
+.reminder-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.reminder-modal .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reminder-modal .modal-title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reminder-modal .modal-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e6f4f1;
+  color: #0d3f48;
+  font-size: 18px;
+}
+
+.reminder-modal .modal-close {
+  --color: #0d3f48;
+}
+
+.reminder-modal .modal-body .modal-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+/* Chip de frecuencia debajo del título */
+.reminder-chip {
+  align-self: flex-start;
+  background: #e6f4f1; /* verde muy claro */
+  color: #0d3f48;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Realce sutil a la tarjeta de recordatorio */
+.reminder-card {
+  border: 2px solid rgba(13, 63, 72, 0.08);
+  box-shadow: 0 18px 38px -26px rgba(13, 63, 72, 0.45);
+}
+
+/* Estilos del alert de eliminación para seguir la estética de la app */
+.reminders-alert {
+  --background: #ffffff;
+  --backdrop-opacity: 0.24;
+}
+
+.reminders-alert .alert-title {
+  color: #0d3f48;
+  font-weight: 800;
+}
+
+.reminders-alert .alert-message {
+  color: #334155;
+}
+
+.reminders-alert .alert-button-group {
+  padding: 0 16px 16px;
+  gap: 10px;
+}
+
+.reminders-alert .alert-button {
+  border-radius: 999px;
+  font-weight: 700;
+  color: #0d3f48;
+}
+
+.reminders-alert .alert-button-role-cancel {
+  background: #e6f4f1;
+}
+
+.reminders-alert .alert-btn--danger {
+  background: #ffecec;
+  color: var(--ion-color-danger);
 }

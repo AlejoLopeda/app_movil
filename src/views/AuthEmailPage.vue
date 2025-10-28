@@ -1,12 +1,12 @@
 ﻿<template>
-  <ion-page class="auth-email">
+  <ion-page class="auth-email" mode="ios">
     <ion-header translucent>
       <ion-toolbar class="auth-email__toolbar">
         <ion-title class="auth-page__title">Registro</ion-title>
     </ion-toolbar>
     </ion-header>
 
-    <ion-content fullscreen class="auth-email__content">
+    <ion-content fullscreen class="auth-email__content" mode="ios">
       <section class="auth-email__wrapper">
        <!--  <ion-button
           class="auth-email__back"

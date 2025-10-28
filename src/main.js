@@ -31,6 +31,11 @@ import '@ionic/vue/css/display.css';
 /* @import '@ionic/vue/css/palettes/dark.class.css'; */
 import '@ionic/vue/css/palettes/dark.system.css';
 
+
+// estilos de vue-advanced-cropper (OBLIGATORIOS)
+import 'vue-advanced-cropper/dist/style.css';
+import 'vue-advanced-cropper/dist/theme.classic.css';
+
 /* Theme variables */
 import './theme/variables.css';
 
