@@ -1,5 +1,5 @@
 <template>
-  <ion-header translucent class="topbar">
+  <ion-header class="topbar">
     <ion-toolbar :class="['topbar__toolbar', { 'topbar__toolbar--twoline': titleHasTwoLines }]">
       <!-- Menú -->
       <ion-buttons slot="start">
