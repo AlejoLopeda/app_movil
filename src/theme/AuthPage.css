@@ -11,6 +11,9 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
+  /* Para header translúcido */
+  --padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  --min-height: 64px;
 }
 
 .auth-page__title {
@@ -23,6 +26,22 @@
 .auth-login__content,
 .auth-email__content {
   --background: #f7f9fc;
+  /* Header translúcido + fullscreen: empuja el contenido */
+  --padding-top: calc(env(safe-area-inset-top, 0px) + 88px);
+}
+
+/* Despega un poco el título del borde superior del toolbar */
+.auth-page__title {
+  padding-top: 6px;
+}
+
+/* Afinar aún más en pantallas pequeñas */
+@media (max-width: 480px) {
+  .auth-login__toolbar,
+  .auth-email__toolbar { --min-height: 68px; --padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  .auth-login__content,
+  .auth-email__content { --padding-top: calc(env(safe-area-inset-top, 0px) + 96px); }
+  .auth-page__title { padding-top: 8px; }
 }
 
 .auth-login__wrapper,
@@ -136,7 +155,11 @@
 .app-login__input {
   --placeholder-font-weight: 600;
   font-weight: 600;
+  /* Fuerza color de texto en WebView Android (md) */
   color: #0d0d0d;
+  --color: #0d0d0d;
+  --placeholder-color: rgba(13, 13, 13, 0.54);
+  --placeholder-opacity: 1;
 }
 
 .app-account__terms {
@@ -153,6 +176,19 @@
   --background-checked: #0d3f48;
   --border-color: #0d3f48;
   --checkmark-color: #ffffff;
+}
+
+.app-account__terms-text {
+  line-height: 1.4;
+}
+.app-account__terms-text .link-inline {
+  padding: 0;
+  margin: 0 2px;
+  background: none;
+  border: none;
+  color: #0d3f48;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .app-account__link {
@@ -238,11 +274,16 @@
 .app-account__input::part(native),
 .app-login__input::part(native) {
   font-size: 0.95rem;
+  color: #0d0d0d;            /* texto digitado */
+  caret-color: #0d0d0d;      /* color del cursor */
+  -webkit-text-fill-color: #0d0d0d; /* corrige forzado de color en md/dark */
 }
 
 .app-account__input::part(native)::placeholder,
 .app-login__input::part(native)::placeholder {
   font-size: 0.85rem;
+  color: rgba(13, 13, 13, 0.54); /* placeholder visible */
+  opacity: 1;
 }
 
 .auth-field-toggle ion-icon {
