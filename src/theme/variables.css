@@ -1,2 +1,8 @@
 /* For information on how to create your own theme, please see:
 http://ionicframework.com/docs/theming/ */
+
+/* Global toast style for in-app reminders */
+.reminder-toast{
+  --border-radius: 14px;
+  font-weight: 700;
+}
