@@ -7,26 +7,32 @@
     :swipe-gesture="true"
     @ionWillOpen="onSideMenuWillOpen"
   >
-    <ion-header>
-      <ion-toolbar class="side-menu__toolbar">
-        <ion-title class="side-menu__title">Menú</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <!-- Barra superior (negra + blur) para el área del status bar -->
+    <div class="side-menu__notch" aria-hidden="true"></div>
 
-    <ion-content class="side-menu__content" :force-overscroll="false">
-      <ion-list class="side-menu__list">
-        <ion-menu-toggle v-for="it in menuItems" :key="it.path" auto-hide="true">
-          <ion-item
-            button
-            detail="false"
-            class="side-menu__item"
-            @click="goTo(it.path)"
-          >
-            {{ it.label }}
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-    </ion-content>
+    <!-- Contenedor interno (fondo translúcido y borroso) -->
+    <div class="side-menu__inner">
+      <ion-header>
+        <ion-toolbar class="side-menu__toolbar">
+          <ion-title class="side-menu__title">Menú</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="side-menu__content" :force-overscroll="false">
+        <ion-list class="side-menu__list">
+          <ion-menu-toggle v-for="it in menuItems" :key="it.path" auto-hide="true">
+            <ion-item
+              button
+              detail="false"
+              class="side-menu__item"
+              @click="goTo(it.path)"
+            >
+              {{ it.label }}
+            </ion-item>
+          </ion-menu-toggle>
+        </ion-list>
+      </ion-content>
+    </div>
   </ion-menu>
 
   <!-- ===== Toasts de validación ===== -->

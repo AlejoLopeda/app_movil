@@ -1,7 +1,7 @@
 /* ========== TOPBAR BASE ========== */
 .topbar{
   /* Altura fija para la franja negra, siempre visible */
-  --notch-height: 22px; /* ajusta a tu gusto (20–28px) */
+  --notch-height: 26px; /* ajusta a tu gusto (20–28px) */
   /* Safe area que pueda aportar el sistema (sumamos por si hay notch real) */
   --safe-top: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
 
