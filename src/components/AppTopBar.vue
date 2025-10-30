@@ -39,12 +39,12 @@
       @close="menuOpen=false"
       @edit="onEdit"
       @report="onReport"
-      @logout="onLogout"
+      @logout="onLogout" 
     />
 
     <ion-toast
       :is-open="logoutErrorOpen"
-      message="No se pudo cerrar sesión. Intenta de nuevo."
+      :message="logoutMsg"
       color="danger"
       duration="3000"
       @didDismiss="logoutErrorOpen=false"
@@ -58,6 +58,8 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton, IonButton, IonAvatar, IonToast
 } from '@ionic/vue'
+import { Capacitor } from '@capacitor/core'
+import { App as CapApp } from '@capacitor/app'          // ✅ para exitApp()
 import UserSpeedDial from './UserSpeedDial.vue'
 import { useTopBarMenu } from '@/composables/useTopBarMenu'
 import { supabase } from '@/lib/supabaseClient'
@@ -80,7 +82,7 @@ const {
   logoutErrorOpen,
   toggleUserMenu,
   onMenuButtonClick,
-  handleLogout,
+  handleLogout,            // (queda disponible, aunque ya no lo usamos aquí)
   wireGlobalEvents,
   unwireGlobalEvents
 } = useTopBarMenu(props)
@@ -194,20 +196,14 @@ async function loadAvatar(force = false) {
 }
 
 /* ===== Listeners para refrescar al instante ===== */
-
-/** Perfil debe disparar: window.dispatchEvent(new CustomEvent('avatar-updated', { detail:{ userId, path, signedUrl } })) */
 function onAvatarUpdated (ev) {
   const detail = ev?.detail || {}
   const { userId, signedUrl } = detail || {}
 
-  // 1) Mostrar YA la nueva imagen si nos pasaron la firmada
   if (signedUrl) {
-    // preload para evitar parpadeo
     preload(signedUrl).catch(() => {})
     avatarSrc.value = signedUrl
   }
-
-  // 2) Actualizar caché para todas las vistas/componentes
   if (userId && signedUrl) {
     const now = Math.floor(Date.now()/1000)
     localStorage.setItem(cacheKey(userId), JSON.stringify({
@@ -215,27 +211,53 @@ function onAvatarUpdated (ev) {
       exp: now + SIGN_TTL_SECONDS
     }))
   }
-
-  // 3) Revalidar contra DB en background (por si cambió la ruta)
   loadAvatar(true).catch(() => {})
 }
 
-/** Si otro componente cambia el localStorage, nos enteramos y recargamos */
 async function onStorage (e) {
   try {
     const { data: authData } = await supabase.auth.getUser()
     const userId = authData?.user?.id
     if (!userId) return
-    if (e.key === cacheKey(userId)) {
-      loadAvatar(true)
-    }
+    if (e.key === cacheKey(userId)) loadAvatar(true)
   } catch {}
 }
 
 /* ===== Acciones ===== */
 async function onEdit ()  { menuOpen.value = false; try { await router.push('/perfil') } catch {} }
 function onReport(){ menuOpen.value = false; emit('report') }
-async function onLogout(){ menuOpen.value = false; await handleLogout(() => emit('logout')) }
+
+/** 🔻 AHORA: cerrar la aplicación en lugar de cerrar sesión */
+const logoutMsg = ref('No se pudo cerrar la app. Intenta de nuevo.')
+async function onLogout(){
+  menuOpen.value = false
+  try {
+    // Android nativo: cerrar app
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      await CapApp.exitApp()
+      return
+    }
+
+    // iOS no permite cerrar programáticamente
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+      logoutMsg.value = 'En iOS no es posible cerrar la app automáticamente. Usa el gesto de Home.'
+      logoutErrorOpen.value = true
+      return
+    }
+
+    // Web / Desktop (PWA): intento cerrar ventana
+    const closed = window.close()
+    if (!closed) {
+      logoutMsg.value = 'No es posible cerrar la ventana desde el navegador. Ciérrala manualmente.'
+      logoutErrorOpen.value = true
+    }
+  } catch (e) {
+    console.error('close app error:', e)
+    logoutMsg.value = 'No se pudo cerrar la app. Intenta de nuevo.'
+    logoutErrorOpen.value = true
+  }
+}
+
 function handleUserMenu () { if (isProfilePage.value) return; toggleUserMenu() }
 
 /* ===== Lifecycle ===== */
@@ -258,3 +280,4 @@ watch(() => route.fullPath, () => loadAvatar(false))
 </script>
 
 <style src="../theme/AppTopBar.css"></style>
+
