@@ -1,22 +1,27 @@
 /* ========== TOPBAR BASE ========== */
 .topbar{
-  /* deja que IonHeader gestione el área segura superior */
-  padding-top: env(safe-area-inset-top);
-  /* fallback para plataformas sin env() (Ionic rellena --ion-safe-area-top) */
-  padding-top: var(--ion-safe-area-top);
+  /* Ionic aplica el padding seguro cuando usamos `translucent` en IonHeader */
   background: var(--app-topbar-bg, #0d3f48);
   position: relative;
   z-index: 10000;
 }
 
+/* Franja que ocupa la zona del notch/estatus y evita que la hora pise la toolbar */
+.topbar__cap{
+  /* usa primero la var de Ionic (Capacitor), si no existe cae a env() */
+  height: var(--ion-safe-area-top, env(safe-area-inset-top, 0px));
+  background: #000;              /* puedes cambiar a el color que prefieras */
+  width: 100%;
+  pointer-events: none;
+}
+
+/* ========== TOOLBAR ========== */
 .topbar__toolbar{
-  --background: transparent;           /* ya dimos el fondo al header */
+  --background: transparent;     /* fondo ya lo da el header */
   --color: #ffffff;
   --border-width: 0;
-
-  /* altura cómoda; sin padding-top extra aquí */
   min-height: 56px;
-  padding-top: 0;
+  padding-top: 0;                /* ya no necesitamos compensar aquí */
   padding-bottom: 4px;
 }
 
@@ -70,7 +75,7 @@
 /* ========== SPEED DIAL Y OVERLAY ========== */
 .user-speed{
   position:fixed; right:12px;
-  top: calc(var(--ion-safe-area-top) + 56px);
+  top: calc(var(--ion-safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
   z-index:9999; display:grid; gap:10px;
 }
 .user-speed__btn{
@@ -84,7 +89,7 @@
 
 .user-speed-overlay{
   position:fixed; left:0; right:0; bottom:0;
-  top: calc(var(--ion-safe-area-top) + 56px);
+  top: calc(var(--ion-safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
   z-index:9998; background:rgba(0,0,0,0); pointer-events:auto;
 }
 
