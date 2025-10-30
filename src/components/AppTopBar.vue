@@ -1,5 +1,8 @@
 <template>
-  <ion-header translucent class="topbar">
+  <ion-header class="topbar">
+    <!-- Barra negra SIEMPRE visible arriba -->
+    <div class="topbar__notch" aria-hidden="true"></div>
+
     <ion-toolbar :class="['topbar__toolbar', { 'topbar__toolbar--twoline': titleHasTwoLines }]">
       <!-- Menú -->
       <ion-buttons slot="start">
@@ -255,4 +258,3 @@ watch(() => route.fullPath, () => loadAvatar(false))
 </script>
 
 <style src="../theme/AppTopBar.css"></style>
-
