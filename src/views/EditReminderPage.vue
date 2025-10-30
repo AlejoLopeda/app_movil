@@ -32,6 +32,7 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { getReminder, updateReminder } from '@/services/reminderService'
+import { upsertSchedulesForReminder, cancelSchedulesForReminder, ensurePermission } from '@/lib/localNotifications'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
@@ -58,7 +59,7 @@ async function loadData() {
   try {
     const row = await getReminder(id)
     if (!row) {
-      showToast('No se encontró el recordatorio', 'danger')
+      showToast('No se encontrÃ³ el recordatorio', 'danger')
       router.replace({ name: 'Recordatorios' })
       return
     }
@@ -84,7 +85,7 @@ async function handleSubmit(payload) {
   if (loading.value) return
   loading.value = true
   try {
-    await updateReminder(id, {
+    const res = await updateReminder(id, {
       name: payload.nombre,
       frequency: payload.frecuencia,
       interval_days: payload.frecuencia === 'custom' ? Number(payload.intervaloDias) : null,
@@ -93,7 +94,17 @@ async function handleSubmit(payload) {
       comment: payload.comentario || null,
     })
     showToast('Recordatorio actualizado', 'success')
-    // Volver al listado después de una breve pausa
+    try {
+      await ensurePermission()
+      if (res?.row) {
+        await upsertSchedulesForReminder(res.row)
+      } else {
+        // fallback: cancelar y avisar cambios
+        await cancelSchedulesForReminder(id)
+      }
+    } catch {}
+    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
+    // Volver al listado despuÃ©s de una breve pausa
     setTimeout(() => router.replace({ name: 'Recordatorios' }), 400)
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
