@@ -44,6 +44,33 @@ function clearUserAvatarCache(uid) {
   } catch {}
 }
 
+/* =================== NUEVO: pedir permisos la 1ª vez =================== */
+const PERM_FLAG = 'avatar.perms.v1'
+async function requestRuntimePermissionsIfFirstTime(toastErr) {
+  if (!Capacitor.isNativePlatform()) return true
+  try {
+    const already = localStorage.getItem(PERM_FLAG)
+    // Solo la primera vez: pedir ambos permisos juntos
+    if (!already) {
+      const res = await Camera.requestPermissions({ permissions: ['camera', 'photos'] })
+      const cam = res?.camera
+      const pho = res?.photos
+      const ok = (cam === 'granted' || cam === 'limited') && (pho === 'granted' || pho === 'limited')
+      if (!ok) {
+        toastErr.value = { open: true, msg: 'Necesitas permitir Cámara y Fotos para cambiar tu avatar.' }
+        return false
+      }
+      localStorage.setItem(PERM_FLAG, '1')
+    }
+    return true
+  } catch (e) {
+    console.error(e)
+    toastErr.value = { open: true, msg: 'No fue posible solicitar permisos.' }
+    return false
+  }
+}
+/* ====================================================================== */
+
 export function useAvatar({ user, extras, toast, toastErr }){
   const uploading = ref(false)
   const isSavingAvatar = ref(false)
@@ -173,6 +200,10 @@ export function useAvatar({ user, extras, toast, toastErr }){
 
   /* ===== Edición de avatar ===== */
   async function openEditOptions () {
+    // 🔄 NUEVO: asegura pedir permisos la 1ª vez que abre "Editar"
+    const ok = await requestRuntimePermissionsIfFirstTime(toastErr)
+    if (!ok) return
+
     avatarModalOpen.value = false
     await Promise.resolve()
     actionOpen.value = true
@@ -187,9 +218,10 @@ export function useAvatar({ user, extras, toast, toastErr }){
       try{
         const photo = await Camera.getPhoto({
           source: CameraSource.Camera,
-          resultType: CameraResultType.DataUrl,
+          resultType: CameraResultType.DataUrl, // mantenemos DataUrl para fluir al crop
           quality: 85,
-          correctOrientation: true
+          correctOrientation: true,
+          width: 1024, // 🔽 reduce tamaño de captura
         })
         if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
       }catch(e){
@@ -212,7 +244,8 @@ export function useAvatar({ user, extras, toast, toastErr }){
         const photo = await Camera.getPhoto({
           source: CameraSource.Photos,
           resultType: CameraResultType.DataUrl,
-          quality: 85
+          quality: 85,
+          width: 1024, // 🔽 reduce tamaño de carga
         })
         if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
       }catch(e){
@@ -233,11 +266,14 @@ export function useAvatar({ user, extras, toast, toastErr }){
       toastErr.value = { open: true, msg: 'Selecciona una imagen válida.' }
       return
     }
-    const sizeMB = file.size / (1024*1024)
-    if (sizeMB > MAX_MB){
-      toastErr.value = { open: true, msg: `La imagen supera ${MAX_MB} MB.` }
-      return
-    }
+
+    // ⛳️ CAMBIO: NO bloqueamos por tamaño aquí (el recorte lo volverá liviano).
+    // const sizeMB = file.size / (1024*1024)
+    // if (sizeMB > MAX_MB){
+    //   toastErr.value = { open: true, msg: `La imagen supera ${MAX_MB} MB.` }
+    //   return
+    // }
+
     const dataUrl = await fileToDataUrl(file)
     tempPreview.value = dataUrl
     cropModalOpen.value = true
@@ -290,8 +326,9 @@ export function useAvatar({ user, extras, toast, toastErr }){
       const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
       const path = `${user.value.id}/${Date.now()}.${ext}`
 
+      // ✅ Validación de tamaño solo en el archivo FINAL (recortado)
       const sizeMB = file.size / (1024*1024)
-      if (sizeMB > MAX_MB) throw new Error(`La imagen supera ${MAX_MB} MB.`)
+      if (sizeMB > MAX_MB) throw new Error(`La imagen final supera ${MAX_MB} MB.`)
 
       // 1) subir archivo
       await uploadAvatar(AVATAR_BUCKET, path, file)
