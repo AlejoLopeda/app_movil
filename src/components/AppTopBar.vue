@@ -1,6 +1,6 @@
 <template>
   <ion-header class="topbar">
-    <!-- Barra negra que ocupa el área del notch / status bar -->
+    <!-- Barra negra SIEMPRE visible arriba -->
     <div class="topbar__notch" aria-hidden="true"></div>
 
     <ion-toolbar :class="['topbar__toolbar', { 'topbar__toolbar--twoline': titleHasTwoLines }]">

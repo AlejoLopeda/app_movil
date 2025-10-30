@@ -1,31 +1,33 @@
 /* ========== TOPBAR BASE ========== */
 .topbar{
-  /* variable que toma el mayor valor disponible entre env() y --ion-safe-area-top */
-  --top-safe: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+  /* Altura fija para la franja negra, siempre visible */
+  --notch-height: 22px; /* ajusta a tu gusto (20–28px) */
+  /* Safe area que pueda aportar el sistema (sumamos por si hay notch real) */
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
 
-  /* reserva de espacio bajo el notch */
-  padding-top: var(--top-safe);
+  /* Reservamos espacio total por encima del toolbar */
+  padding-top: calc(var(--safe-top) + var(--notch-height));
 
   background: var(--app-topbar-bg, #0d3f48);
   position: relative;
   z-index: 10000;
 }
 
-/* Barra negra fija ocupando el área del notch */
+/* Barra negra SIEMPRE visible ocupando status/notch */
 .topbar__notch{
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: var(--top-safe);
+  height: calc(var(--safe-top) + var(--notch-height));
   background: #000;               /* la “raya” negra */
   z-index: 10001;                 /* por encima del header */
   pointer-events: none;           /* no bloquea toques */
 }
 
+/* Toolbar (el fondo del header ya se pinta en .topbar) */
 .topbar__toolbar{
-  --background: transparent;      /* ya dimos el fondo al header */
+  --background: transparent;
   --color: #ffffff;
   --border-width: 0;
-
   min-height: 56px;
   padding-top: 0;
   padding-bottom: 4px;
@@ -33,18 +35,16 @@
 
 .topbar__btn{ --color:#fff; }
 
-/* ========== TÍTULO: 1 o 2 líneas centradas ========== */
+/* ========== TÍTULO ========== */
 .topbar__title{
   display:flex; align-items:center; justify-content:center;
   text-transform:uppercase; letter-spacing:.08em;
   font-weight:800; text-align:center; line-height:1.1;
   overflow:visible; white-space:normal;
 }
-
 .topbar__title-inner{
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
 }
-
 .topbar__title-line1,
 .topbar__title-line2{
   font-size: clamp(16px, 4.6vw, 21px);
@@ -53,10 +53,7 @@
   opacity: 1;
 }
 .topbar__title-line2{ margin-top: 0; }
-
-.topbar__toolbar--twoline{
-  min-height: 66px; /* un poco más alta si hay 2 líneas */
-}
+.topbar__toolbar--twoline{ min-height: 66px; }
 
 /* ========== AVATAR / BOTONES ========== */
 .topbar__user-btn{
@@ -66,22 +63,18 @@
   --box-shadow: none;
   border-radius: 9999px;
 }
-
 .topbar__avatar{
   width: 40px; height: 40px; min-width: 40px; min-height: 40px;
   border: 2px solid #0b3a43; box-shadow: 0 4px 12px rgba(0,0,0,.15);
   overflow:hidden; position:relative;
 }
 .topbar__avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-.topbar__toolbar .topbar__btn ion-icon{
-  font-size: 24px; width: 24px; height: 24px;
-}
+.topbar__toolbar .topbar__btn ion-icon{ font-size: 24px; width: 24px; height: 24px; }
 
 /* ========== SPEED DIAL Y OVERLAY ========== */
 .user-speed{
   position:fixed; right:12px;
-  top: calc(var(--top-safe) + 56px);
+  top: calc(var(--safe-top) + var(--notch-height) + 56px);
   z-index:9999; display:grid; gap:10px;
 }
 .user-speed__btn{
@@ -95,18 +88,14 @@
 
 .user-speed-overlay{
   position:fixed; left:0; right:0; bottom:0;
-  top: calc(var(--top-safe) + 56px);
+  top: calc(var(--safe-top) + var(--notch-height) + 56px);
   z-index:9998; background:rgba(0,0,0,0); pointer-events:auto;
 }
 
 /* Dark mode */
 @media (prefers-color-scheme: dark){
-  .topbar{
-    background: var(--app-topbar-bg-dark, #0b2e35);
-  }
-  .topbar__notch{
-    background: #000; /* mantiene la franja negra también en dark */
-  }
+  .topbar{ background: var(--app-topbar-bg-dark, #0b2e35); }
+  .topbar__notch{ background: #000; }
   .topbar__toolbar{ --color:#e6f1f3; }
   .topbar__btn{ --color:#e6f1f3; }
   .user-speed__btn{ --background: var(--app-topbar-bg-dark, #0b2e35); --color:#fff; }
@@ -122,7 +111,7 @@
   animation: avatarSk 1.2s infinite;
   filter: saturate(.9);
 }
-@keyframes avatarSk{ 
-  0%{ background-position: 0% 0 } 
-  100%{ background-position: 200% 0 } 
+@keyframes avatarSk{
+  0%{ background-position: 0% 0 }
+  100%{ background-position: 200% 0 }
 }
