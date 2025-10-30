@@ -13,12 +13,14 @@ export async function insertReminder(row) {
     active: true,
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('recordatorios')
     .insert(payload)
+    .select('id, user_id, name, frequency, interval_days, end_date, time_at, comment, active, created_at')
+    .single()
 
   if (error) throw error
-  return { ok: true }
+  return { ok: true, row: data }
 }
 
 export async function listActiveReminders() {
@@ -73,11 +75,13 @@ export async function updateReminder(id, updates) {
     comment: updates.comment ?? null,
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('recordatorios')
     .update(payload)
     .eq('id', id)
+    .select('id, user_id, name, frequency, interval_days, end_date, time_at, comment, active, created_at')
+    .single()
 
   if (error) throw error
-  return { ok: true }
+  return { ok: true, row: data }
 }

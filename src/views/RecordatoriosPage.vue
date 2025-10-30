@@ -229,6 +229,7 @@ import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal
 import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
+import { cancelSchedulesForReminder } from '@/lib/localNotifications'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -275,7 +276,9 @@ async function onDeleteDo() {
   try {
     await deactivateReminder(item.id)
     await load()
+    try { await cancelSchedulesForReminder(item.id) } catch {}
     showToast("Recordatorio eliminado", "success")
+    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'deleted', id: item.id } })) } catch {}
   } catch (e) {
     showToast("No se pudo eliminar", "danger")
   }
