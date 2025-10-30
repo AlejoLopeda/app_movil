@@ -1,27 +1,33 @@
 /* ========== TOPBAR BASE ========== */
 .topbar{
-  /* Ionic aplica el padding seguro cuando usamos `translucent` en IonHeader */
+  /* variable que toma el mayor valor disponible entre env() y --ion-safe-area-top */
+  --top-safe: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+
+  /* reserva de espacio bajo el notch */
+  padding-top: var(--top-safe);
+
   background: var(--app-topbar-bg, #0d3f48);
   position: relative;
   z-index: 10000;
 }
 
-/* Franja que ocupa la zona del notch/estatus y evita que la hora pise la toolbar */
-.topbar__cap{
-  /* usa primero la var de Ionic (Capacitor), si no existe cae a env() */
-  height: var(--ion-safe-area-top, env(safe-area-inset-top, 0px));
-  background: #000;              /* puedes cambiar a el color que prefieras */
-  width: 100%;
-  pointer-events: none;
+/* Barra negra fija ocupando el área del notch */
+.topbar__notch{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--top-safe);
+  background: #000;               /* la “raya” negra */
+  z-index: 10001;                 /* por encima del header */
+  pointer-events: none;           /* no bloquea toques */
 }
 
-/* ========== TOOLBAR ========== */
 .topbar__toolbar{
-  --background: transparent;     /* fondo ya lo da el header */
+  --background: transparent;      /* ya dimos el fondo al header */
   --color: #ffffff;
   --border-width: 0;
+
   min-height: 56px;
-  padding-top: 0;                /* ya no necesitamos compensar aquí */
+  padding-top: 0;
   padding-bottom: 4px;
 }
 
@@ -75,7 +81,7 @@
 /* ========== SPEED DIAL Y OVERLAY ========== */
 .user-speed{
   position:fixed; right:12px;
-  top: calc(var(--ion-safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
+  top: calc(var(--top-safe) + 56px);
   z-index:9999; display:grid; gap:10px;
 }
 .user-speed__btn{
@@ -89,7 +95,7 @@
 
 .user-speed-overlay{
   position:fixed; left:0; right:0; bottom:0;
-  top: calc(var(--ion-safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
+  top: calc(var(--top-safe) + 56px);
   z-index:9998; background:rgba(0,0,0,0); pointer-events:auto;
 }
 
@@ -97,6 +103,9 @@
 @media (prefers-color-scheme: dark){
   .topbar{
     background: var(--app-topbar-bg-dark, #0b2e35);
+  }
+  .topbar__notch{
+    background: #000; /* mantiene la franja negra también en dark */
   }
   .topbar__toolbar{ --color:#e6f1f3; }
   .topbar__btn{ --color:#e6f1f3; }

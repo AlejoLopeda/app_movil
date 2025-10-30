@@ -1,8 +1,7 @@
 <template>
-  <!-- Activa padding seguro de Ionic -->
-  <ion-header class="topbar" translucent>
-    <!-- CAP superior: pinta la zona del notch/estatus -->
-    <div class="topbar__cap" aria-hidden="true"></div>
+  <ion-header class="topbar">
+    <!-- Barra negra que ocupa el área del notch / status bar -->
+    <div class="topbar__notch" aria-hidden="true"></div>
 
     <ion-toolbar :class="['topbar__toolbar', { 'topbar__toolbar--twoline': titleHasTwoLines }]">
       <!-- Menú -->
@@ -195,14 +194,20 @@ async function loadAvatar(force = false) {
 }
 
 /* ===== Listeners para refrescar al instante ===== */
+
+/** Perfil debe disparar: window.dispatchEvent(new CustomEvent('avatar-updated', { detail:{ userId, path, signedUrl } })) */
 function onAvatarUpdated (ev) {
   const detail = ev?.detail || {}
   const { userId, signedUrl } = detail || {}
 
+  // 1) Mostrar YA la nueva imagen si nos pasaron la firmada
   if (signedUrl) {
+    // preload para evitar parpadeo
     preload(signedUrl).catch(() => {})
     avatarSrc.value = signedUrl
   }
+
+  // 2) Actualizar caché para todas las vistas/componentes
   if (userId && signedUrl) {
     const now = Math.floor(Date.now()/1000)
     localStorage.setItem(cacheKey(userId), JSON.stringify({
@@ -210,9 +215,12 @@ function onAvatarUpdated (ev) {
       exp: now + SIGN_TTL_SECONDS
     }))
   }
+
+  // 3) Revalidar contra DB en background (por si cambió la ruta)
   loadAvatar(true).catch(() => {})
 }
 
+/** Si otro componente cambia el localStorage, nos enteramos y recargamos */
 async function onStorage (e) {
   try {
     const { data: authData } = await supabase.auth.getUser()
@@ -243,7 +251,9 @@ onUnmounted(() => {
   unwireGlobalEvents()
 })
 
+// Si cambian props.avatarUrl, renovamos
 watch(() => props.avatarUrl, () => loadAvatar(true))
+// (opcional) al cambiar de ruta también podemos intentar revalidar
 watch(() => route.fullPath, () => loadAvatar(false))
 </script>
 
