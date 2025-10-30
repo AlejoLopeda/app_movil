@@ -5,8 +5,13 @@
 
 /* ---- Variables sólo dentro del contexto de History ---- */
 .history-page{
-  /* Layout */
+  /* Altura real de la topbar fija */
   --app-topbar-height: 64px;
+
+  /* Extra para despegar filtros de la topbar (ajusta aquí si quieres más aire) */
+  --history-top-extra: 18px;
+
+  /* Altura de la bottom bar */
   --bottom-bar-height: 84px;
 
   /* Paleta light */
@@ -38,15 +43,15 @@ ion-page.history-page,
   color: var(--h-text);
 }
 
-/* Padding para dejar espacio a la topbar fija y barra inferior */
+/* Padding superior = safe-area + topbar + extra */
 .history-page .history-content{
   --background: var(--h-bg) !important;
-  --padding-top: calc(var(--app-topbar-height) + 8px);
+  --padding-top: calc(var(--ion-safe-area-top, 0px) + var(--app-topbar-height) + var(--history-top-extra));
   --padding-bottom: var(--bottom-bar-height);
 }
 .history-page ion-content.history-content::part(scroll){
   background: var(--h-bg) !important;
-  padding-top: calc(var(--app-topbar-height) + 8px);
+  padding-top: calc(var(--ion-safe-area-top, 0px) + var(--app-topbar-height) + var(--history-top-extra));
 }
 
 /* ====== FILTROS ====== */
@@ -54,8 +59,10 @@ ion-page.history-page,
   display:grid;
   grid-template-columns: 48px 1fr;
   gap:12px;
+
+  /* más espacio visual bajo la topbar */
   padding:12px 16px;
-  margin-top:4px;
+  margin-top: 6px; /* puedes subir a 10–12 si lo prefieres aún más abajo */
 }
 .history-page .filter-btn{
   height:48px;
@@ -124,9 +131,7 @@ ion-page.history-page,
 .history-page .row-amount.expense{ color:var(--h-red); }
 
 /* ====== MODALES ====== */
-.history-page ion-modal{
-  z-index: 20000 !important;
-}
+.history-page ion-modal{ z-index: 20000 !important; }
 .history-page .modal{
   padding:16px;
   background:var(--h-surface);
@@ -145,7 +150,6 @@ ion-page.history-page,
 .history-page .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
 .history-page .modal-note{ margin:6px 2px 0; }
 
-/* Ion inputs dentro del modal */
 .history-page ion-item{
   --background: var(--h-surface-3);
   --color: var(--h-text);
@@ -199,24 +203,10 @@ ion-modal::part(content){
 }
 
 /* ====== MODAL CATEGORÍAS ====== */
-.cat-modal{
-  background: #ffffff;
-  color: #10252a;
-  padding: 16px;
-}
-.cat-modal header h3{
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: .02em;
-}
-.cat-modal header p{
-  margin: 0 0 8px 0;
-  color: #4a6168;
-  font-weight: 600;
-}
+.cat-modal{ background:#ffffff; color:#10252a; padding:16px; }
+.cat-modal header h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; letter-spacing:.02em; }
+.cat-modal header p{ margin:0 0 8px 0; color:#4a6168; font-weight:600; }
 
-/* Grid de chips */
 .cat-modal .cat-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
@@ -230,7 +220,6 @@ ion-modal::part(content){
   .cat-modal .cat-grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
 }
 
-/* Chip de categoría */
 .cat-modal .cat-chip{
   display: inline-flex;
   align-items: center;
@@ -248,37 +237,28 @@ ion-modal::part(content){
   white-space: nowrap;
 }
 .cat-modal .cat-chip ion-icon{ font-size: 18px; }
-.cat-modal .cat-chip.active{
-  background: #0b3a43;
-  color: #ffffff;
-}
+.cat-modal .cat-chip.active{ background: #0b3a43; color: #ffffff; }
 .cat-modal .cat-chip:active{ transform: translateY(1px); }
 
-/* ====== ACCIONES CATEGORÍAS – Ajuste perfecto para móvil ====== */
-
-/* Fila Restablecer / Aplicar en 2 columnas (desktop/tablet) */
+/* ====== ACCIONES CATEGORÍAS ====== */
 .cat-modal .actions-row{
   display:grid;
-  grid-template-columns: 1fr 1fr;   /* dos botones del mismo ancho */
+  grid-template-columns: 1fr 1fr;
   gap:12px;
   margin-top:12px;
   padding: 0 8px;
 }
-
-/* Botón Cerrar centrado debajo */
 .cat-modal .close-row{
   display:flex;
   justify-content:center;
   margin-top:10px;
   padding: 0 8px;
 }
-
-/* Estilo unificado de TODOS los botones (Restablecer, Aplicar, Cerrar) */
 .cat-modal .actions-row ion-button,
 .cat-modal .close-row ion-button,
 .cat-modal .btn-primary,
 .cat-modal .btn-link{
-  width:100%;                        /* ocupan toda su celda */
+  width:100%;
   --background:#0b3a43;
   --color:#fff;
   --border-radius:14px;
@@ -288,59 +268,27 @@ ion-modal::part(content){
   font-weight:800;
   letter-spacing:.02em;
   text-transform:uppercase;
-  margin:0;                           /* quita márgenes raros de Ionic */
+  margin:0;
 }
-
-/* Hover/active */
 .cat-modal .actions-row ion-button:hover,
 .cat-modal .close-row ion-button:hover{ filter:brightness(1.06); }
 .cat-modal .actions-row ion-button:active,
 .cat-modal .close-row ion-button:active{ transform:translateY(1px); filter:brightness(.96); }
 
-/* —— Vista muy pequeña (móvil): apila los 3 botones en columna —— */
 @media (max-width: 420px){
-  .cat-modal .actions-row{
-    grid-template-columns: 1fr;       /* Restablecer arriba, Aplicar abajo */
-    gap:10px;
-  }
-  .cat-modal .close-row{
-    margin-top:10px;
-  }
+  .cat-modal .actions-row{ grid-template-columns: 1fr; gap:10px; }
+  .cat-modal .close-row{ margin-top:10px; }
 }
-
-/* Pequeño “padding-bottom” para que los botones no toquen el borde del modal */
 .cat-modal{ padding-bottom: 18px; }
 
-/* ====== MODAL FECHAS (mismo look que categorías) ====== */
-.date-modal{
-  background:#ffffff;
-  color:#10252a;
-  padding:16px;
-}
-.date-modal header h3{
-  margin:0 0 6px 0;
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:.02em;
-}
-.date-modal header p{
-  margin:0 0 8px 0;
-  color:#4a6168;
-  font-weight:600;
-}
+/* ====== MODAL FECHAS ====== */
+.date-modal{ background:#ffffff; color:#10252a; padding:16px; }
+.date-modal header h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; letter-spacing:.02em; }
+.date-modal header p{ margin:0 0 8px 0; color:#4a6168; font-weight:600; }
 
-/* grid 2 columnas en pantallas medianas, 1 en móvil */
-.date-modal .date-grid{
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:10px;
-  margin:12px 0 10px;
-}
-@media (min-width: 480px){
-  .date-modal .date-grid{ grid-template-columns: 1fr 1fr; }
-}
+.date-modal .date-grid{ display:grid; grid-template-columns: 1fr; gap:10px; margin:12px 0 10px; }
+@media (min-width: 480px){ .date-modal .date-grid{ grid-template-columns: 1fr 1fr; } }
 
-/* ion-item dentro del modal de fechas */
 .date-modal ion-item{
   --background:#ffffff;
   --color:#10252a;
@@ -348,17 +296,12 @@ ion-modal::part(content){
   border:1px solid rgba(0,0,0,.08);
   padding:6px;
 }
+.date-modal .modal-note{ margin:6px 2px 0; }
 
-/* Nota de error */
-.date-modal .modal-note{
-  margin:6px 2px 0;
-}
-
-/* ====== Botones unificados (Restablecer / Aplicar / Cerrar) ====== */
 .date-modal .actions-row,
 .cat-modal  .actions-row{
   display:grid;
-  grid-template-columns: 1fr 1fr;  /* dos botones iguales */
+  grid-template-columns: 1fr 1fr;
   gap:12px;
   margin-top:12px;
   padding:0 8px;
@@ -370,8 +313,6 @@ ion-modal::part(content){
   margin-top:10px;
   padding:0 8px;
 }
-
-/* Mismo estilo en todos los ion-button de acciones y close */
 .date-modal .actions-row ion-button,
 .date-modal .close-row  ion-button,
 .cat-modal  .actions-row ion-button,
@@ -390,14 +331,10 @@ ion-modal::part(content){
   text-transform:uppercase;
   margin:0;
 }
-
-/* Hover/active */
 .date-modal .actions-row ion-button:hover,
 .date-modal .close-row  ion-button:hover,
 .cat-modal  .actions-row ion-button:hover,
-.cat-modal  .close-row  ion-button:hover{
-  filter:brightness(1.06);
-}
+.cat-modal  .close-row  ion-button:hover{ filter:brightness(1.06); }
 .date-modal .actions-row ion-button:active,
 .date-modal .close-row  ion-button:active,
 .cat-modal  .actions-row ion-button:active,
@@ -405,42 +342,27 @@ ion-modal::part(content){
   transform:translateY(1px);
   filter:brightness(.96);
 }
-
-/* En móviles chicos, apila Restablecer/Aplicar y deja Cerrar abajo */
 @media (max-width:420px){
   .date-modal .actions-row,
-  .cat-modal  .actions-row{
-    grid-template-columns: 1fr;
-    gap:10px;
-  }
+  .cat-modal  .actions-row{ grid-template-columns: 1fr; gap:10px; }
 }
-
-/* Evita que los botones peguen al borde inferior */
 .date-modal{ padding-bottom:18px; }
 
-/* ==== Quitar el "marco" extra del ion-item para que no se vea doble card ==== */
+/* ==== Quitar marco extra de ion-item en la lista ==== */
 .history-page ion-item.history-row::part(container){
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
-  padding: 0 !important;   /* elimina el colchón externo */
+  padding: 0 !important;
 }
-
-/* El "inner" también debe ser transparente para no duplicar bordes */
 .history-page ion-item.history-row::part(inner){
   background: transparent !important;
   border: 0 !important;
 }
+.history-page ion-item.history-row{ margin: 10px 0 !important; }
 
-/* Compactar separación entre filas: el card es solo el native */
-.history-page ion-item.history-row{ 
-  margin: 10px 0 !important;        /* separa las filas entre sí */
-}
-
-/* El listado no debe aportar fondos ni padding exagerado */
 .history-page ion-list,
 .history-page ion-list::part(native){
   background: transparent !important;
-  padding: 0 12px !important;       /* lateral sutil y sin marco extra */
+  padding: 0 12px !important;
 }
-
