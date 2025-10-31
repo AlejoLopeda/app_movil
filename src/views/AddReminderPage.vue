@@ -20,7 +20,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
@@ -28,6 +28,7 @@ import { useAddReminder } from '@/composables/useAddReminder'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
+const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
 
 const { loading, saveReminder } = useAddReminder()
@@ -41,8 +42,8 @@ function showToast(message, color = 'primary') {
 async function handleSubmit(payload) {
   const res = await saveReminder(payload)
   if (res.ok) {
-    showToast('Recordatorio creado', 'success')
-    formRef.value?.reset?.()
+    // Redirigir directamente al panel de recordatorios
+    router.replace({ name: 'Recordatorios' })
     return
   }
   if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesión e inténtalo de nuevo', 'danger')

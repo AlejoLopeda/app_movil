@@ -59,7 +59,7 @@ async function loadData() {
   try {
     const row = await getReminder(id)
     if (!row) {
-      showToast('No se encontrÃ³ el recordatorio', 'danger')
+      showToast('No se encontró el recordatorio', 'danger')
       router.replace({ name: 'Recordatorios' })
       return
     }
@@ -104,8 +104,8 @@ async function handleSubmit(payload) {
       }
     } catch {}
     try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
-    // Volver al listado despuÃ©s de una breve pausa
-    setTimeout(() => router.replace({ name: 'Recordatorios' }), 400)
+    // Redirigir directamente al panel de recordatorios
+    router.replace({ name: 'Recordatorios' })
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
   } finally {

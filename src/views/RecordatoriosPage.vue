@@ -221,7 +221,7 @@
 
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
@@ -238,7 +238,17 @@ const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || "Recordatorios")
 
 const { items, load } = useReminders()
-onMounted(load)
+onMounted(() => {
+  load()
+  try {
+    window.addEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
+onBeforeUnmount(() => {
+  try {
+    window.removeEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
 onIonViewWillEnter(load)
 
 function labelFrecuencia(r) {
@@ -285,6 +295,14 @@ async function onDeleteDo() {
 }
 
 const toast = ref({ open: false, message: "", color: "primary" })
+
+// Refrescar y mostrar toast al volver desde crear/editar
+function onRemindersChanged(ev) {
+  load()
+  const action = ev?.detail?.action
+  if (action === 'created') showToast('Recordatorio creado', 'success')
+  else if (action === 'updated') showToast('Recordatorio actualizado', 'success')
+}
 </script>
 
 
