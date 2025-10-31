@@ -148,6 +148,8 @@ ion-fab-button.reminders-fab:active {
 
 .reminder-modal {
   padding: 18px 16px 24px;
+  max-height: 80vh;     /* limitar a viewport para móviles */
+  overflow-y: auto;     /* permitir scroll si el contenido es extenso */
 }
 
 .reminder-modal .modal-line {
@@ -159,9 +161,15 @@ ion-fab-button.reminders-fab:active {
 .reminder-details-modal {
   --width: 92vw;
   --max-width: 520px;
+  --height: auto;
+  --max-height: 85vh;
   --border-radius: 18px;
   --background: #ffffff;
   --backdrop-opacity: 0.24;
+}
+
+.reminder-details-modal::part(content) {
+  overflow: visible;
 }
 
 .reminder-modal .modal-header {
@@ -201,9 +209,29 @@ ion-fab-button.reminders-fab:active {
 
 .reminder-modal .modal-body .modal-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin: 10px 0;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.reminder-modal .reminders-title {
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Buen flujo para etiquetas + contenido largo */
+.reminder-modal .modal-body .modal-line strong {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.reminder-modal .modal-body .modal-line .meta-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* Chip de frecuencia debajo del título */
