@@ -1,51 +1,132 @@
-.bottom-fixed{ position:fixed; left:0; right:0; bottom:0; z-index:9999; height:calc(var(--bottom-bar-height) + env(safe-area-inset-bottom) + 12px); background:var(--app-topbar-bg,#0d3f48); pointer-events:none; }
-.bottombar{ pointer-events:auto; height:var(--bottom-bar-height); padding:8px 14px calc(8px + env(safe-area-inset-bottom)) 14px; --background:transparent; display:grid; align-items:center; }
+/* ===== Barra fija ===== */
+.bottom-fixed{
+  position:fixed; left:0; right:0; bottom:0; z-index:9999;
+  height:calc(var(--bottom-bar-height,72px) + env(safe-area-inset-bottom));
+  background:var(--app-topbar-bg,#0d3f48);
+  pointer-events:none;
+}
+.bottombar{
+  pointer-events:auto;
+  height:var(--bottom-bar-height,72px);
+  /* padding más compacto y simétrico */
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom)) 12px;
+  --background:transparent;
+  display:grid; align-items:center;
+}
+
+/* ===== CTAs (crear/editar, perfil, recordatorios) ===== */
 .nav-cta{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.cta-btn{ height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:6px; padding:0 12px; background:rgba(255,255,255,.12); color:#ffffff; font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em; transition:background .2s, opacity .2s; text-align:center; }
+.cta-btn{
+  height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  gap:6px; padding:0 12px; background:rgba(255,255,255,.12); color:#ffffff; font-weight:600;
+  font-size:12.5px; text-transform:uppercase; letter-spacing:.05em; transition:background .2s, opacity .2s;
+  text-align:center;
+}
 .cta-btn ion-icon{ font-size:19px; }
 .cta-btn:hover{ background:rgba(255,255,255,.22); }
-/* ⬇️ estado disabled */
-.cta-btn[disabled]{
-  opacity:.45;
-  cursor:not-allowed;
-  filter:grayscale(30%);
+.cta-btn[disabled]{ opacity:.45; cursor:not-allowed; filter:grayscale(30%); }
+
+/* ===== Navegación genérica (ingreso, gasto, historial; o balance) ===== */
+.nav{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  background:rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:10px;
 }
-.nav-history{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
-.nav-history .cta-btn{ height:44px; }
-.nav-history .cta-btn.active{ background:#ffffff; color:var(--app-topbar-bg,#0d3f48); box-shadow:0 2px 6px rgba(0,0,0,.18); }
-.nav{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; background:rgba(255,255,255,.10); border-radius:16px; padding:10px; }
-.nav-btn{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:10px 8px; border-radius:12px; background:transparent; color:#fff; font-size:12px; line-height:1.1; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap; transition:background .2s, color .2s, box-shadow .2s; }
+.nav-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; padding:10px 8px; border-radius:12px; background:transparent; color:#fff;
+  font-size:12px; line-height:1.1; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap;
+  transition:background .2s, color .2s, box-shadow .2s;
+}
 .nav-btn ion-icon{ font-size:19px; margin-bottom:2px; }
 .nav-btn:hover{ background:rgba(255,255,255,.15); }
 .nav-btn.active{ background:#fff; color:var(--app-topbar-bg,#0d3f48); box-shadow:0 2px 6px rgba(0,0,0,.18); }
+
+/* ===== Variante CTA (mismo layout que usas en balance) ===== */
 .nav--cta{ background:transparent; padding:0; gap:10px; }
-.nav--cta .nav-btn{ height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:6px; padding:0 12px; background:rgba(255,255,255,.12); color:#ffffff; font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.02em; }
+.nav--cta .nav-btn{
+  height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  flex-direction:row; gap:6px; padding:0 12px; background:rgba(255,255,255,.12); color:#ffffff;
+  font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.02em;
+}
 .nav--cta .nav-btn ion-icon{ font-size:19px; margin:0; }
 .nav--cta .nav-btn:hover{ background:rgba(255,255,255,.22); }
 .nav--cta .nav-btn.active{ background:#ffffff; color:var(--app-topbar-bg,#0d3f48); box-shadow:0 2px 6px rgba(0,0,0,.18); }
 
+/* ===================================================================== */
+/* ================= HISTÓRICO (listas) – layout compacto =============== */
+/* ===================================================================== */
+
+.nav--history{
+  /* anulamos el grid heredado de .nav */
+  display:grid;
+  grid-template-columns: auto 1fr 1fr auto; /* ← | INGRESO | GASTO | ⇄ */
+  align-items:center;
+  gap:10px;
+  background:rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:10px;
+}
+
+/* Botones de histórico (todos con la misma “pastilla” compacta) */
+.nav--history .nav-btn{
+  height:44px;
+  border-radius:12px;
+  background:rgba(255,255,255,.12);
+  color:#ffffff;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:row; gap:6px;
+  padding:0 14px;
+  font-weight:700; font-size:12.5px; text-transform:uppercase; letter-spacing:.02em;
+}
+
+/* Icon-only (flecha y “ambos”) con ancho fijo */
+.nav--history .nav-btn.icon-only{
+  min-width:48px; width:48px; padding:0; gap:0;
+}
+.nav--history .nav-btn.icon-only ion-icon{ margin:0; }
+
+/* Estados */
+.nav--history .nav-btn:hover{ background:rgba(255,255,255,.22); }
+.nav--history .nav-btn.active{
+  background:#ffffff; color:var(--app-topbar-bg,#0d3f48);
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+}
+
+/* Ajustes responsivos estrechos */
+@media (max-width: 380px){
+  .bottombar{ padding-left:8px; padding-right:8px; }
+  .nav--history{ gap:8px; padding:8px; }
+  .nav--history .nav-btn{ padding:0 12px; height:42px; }
+  .nav--history .nav-btn.icon-only{ min-width:44px; width:44px; }
+}
+
+/* ===== Dark mode ===== */
 @media (prefers-color-scheme: dark){
   .cta-btn{ background:rgba(255,255,255,.18); color:#e6f1f3; }
   .cta-btn:hover{ background:rgba(255,255,255,.28); }
+
   .nav{ background:rgba(255,255,255,.08); }
   .nav-btn{ color:#e6f1f3; }
   .nav-btn:hover{ background:rgba(255,255,255,.18); }
   .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
+
   .nav--cta .nav-btn{ background:rgba(255,255,255,.18); color:#e6f1f3; }
   .nav--cta .nav-btn:hover{ background:rgba(255,255,255,.28); }
   .nav--cta .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
+
+  .nav--history{ background:rgba(255,255,255,.08); }
+  .nav--history .nav-btn{ background:rgba(255,255,255,.18); color:#e6f1f3; }
+  .nav--history .nav-btn:hover{ background:rgba(255,255,255,.28); }
+  .nav--history .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
 }
 
-/* Evitar aclarado visual cuando bloqueamos por navegación */
-.bottombar .is-locked {
-  pointer-events: none;         /* bloquea clics sin usar disabled */
-}
-
-/* Si algún botón está disabled pero la razón es "busy",
-   forzamos estilo normal (no griseado) */
+/* ===== Bloqueo por navegación (no cambia visual) ===== */
+.bottombar .is-locked{ pointer-events:none; }
 .bottombar .cta-btn[disabled][data-busy="true"],
-.bottombar .nav-btn[disabled][data-busy="true"] {
-  opacity: 1 !important;
-  filter: none !important;
+.bottombar .nav-btn[disabled][data-busy="true"]{
+  opacity:1 !important; filter:none !important;
 }
-

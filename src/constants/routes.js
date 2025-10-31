@@ -1,7 +1,6 @@
 export const MAIN_ROUTES = [
   '/ingresos',
   '/gastos',
-  '/historico',
   '/dashboard',
   '/monto',
   '/recordatorios',
@@ -9,4 +8,5 @@ export const MAIN_ROUTES = [
   '/historico/gastos',
   '/historico/ambos',
   '/perfil',
+  '/balance',
 ]

@@ -51,7 +51,7 @@ const routes = [
   { path: '/historico/ambos', name: 'HistoryBoth', component: HistoryBothPage, meta: { requiresAuth: true, requiresInitialAmount: true, title: 'Historial Ambos' } },
 
   { path: '/recordatorios', name: 'Recordatorios', component: RecordatoriosPage, meta: { requiresAuth: true, title: 'Recordatorios' } },
-  { path: '/historico', name: 'MonthlyBalance', component: MonthlyBalancePage, meta: { requiresAuth: true, requiresInitialAmount: true, title: 'Balance' } },
+  { path: '/balance', name: 'MonthlyBalance', component: MonthlyBalancePage, meta: { requiresAuth: true, requiresInitialAmount: true, title: 'Balance' } },
   { path: '/recordatorios/nuevo', name: 'AddReminder', component: AddReminderPage, meta: { requiresAuth: true, title: 'Añadir Recordatorio' } },
   { path: '/perfil', name: 'Profile', component: ProfilePage, meta: { requiresAuth: true, title: 'Perfil' } },
   { path: '/recordatorios/:id/editar', name: 'EditReminder', component: EditReminderPage, meta: { requiresAuth: true, title: 'Editar Recordatorio' } },
