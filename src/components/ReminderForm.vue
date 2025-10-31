@@ -37,6 +37,7 @@
       <ion-input type="date" v-model="fechaFin" :min="minEndDate" @ionBlur="validateEndDate" class="expense-form__input" />
     </ion-item>
     <ion-note v-if="endDateError" color="danger" class="expense-form__note">{{ endDateError }}</ion-note>
+    <ion-note v-if="!endDateError && !fechaFin" color="medium" class="expense-form__note expense-form__note--hint">Toca para seleccionar una fecha</ion-note>
 
     <!-- Hora -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': timeError }" mode="ios">
@@ -45,6 +46,7 @@
       <ion-input type="time" v-model="hora" @ionBlur="validateTimeFlexible" class="expense-form__input" />
     </ion-item>
     <ion-note v-if="timeError" color="danger" class="expense-form__note">{{ timeError }}</ion-note>
+    <ion-note v-if="!timeError && !hora" color="medium" class="expense-form__note expense-form__note--hint">Toca para seleccionar una hora</ion-note>
 
     <!-- Comentario -->
     <ion-item class="expense-form__item" mode="ios">
