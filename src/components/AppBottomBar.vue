@@ -1,75 +1,181 @@
 ﻿<template>
   <div v-show="isMainRoute" class="bottom-fixed">
-    <ion-toolbar class="bottombar">
+    <ion-toolbar class="bottombar" :class="{ 'is-busy': isNavigating }">
       <!-- CTA mode: Add/Edit screens -->
       <div v-if="isAddPage" class="nav-cta">
-        <button class="cta-btn" @click="goDashboard">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="chevronBackOutline" />
         </button>
-        <button class="cta-btn" @click="emitAccept">
+
+        <button
+          type="button"
+          class="cta-btn"
+          @click="emitAccept"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="checkmarkOutline" />
           <span>ACEPTAR</span>
         </button>
       </div>
 
-      <!-- Perfil: volver + actualizar (deshabilitado si no hay cambios) -->
+      <!-- Perfil: volver + actualizar -->
       <div v-else-if="isProfilePage" class="nav-cta">
-        <button class="cta-btn" @click="goDashboard">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="chevronBackOutline" />
         </button>
-        <button class="cta-btn" :disabled="!canSaveEnabled" @click="emitAccept">
+
+        <!-- Mantener disabled real solo por canSaveEnabled; si es por navegación, no aclarar -->
+        <button
+          type="button"
+          class="cta-btn"
+          :disabled="!canSaveEnabled"
+          @click="emitAccept"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+          :aria-disabled="!canSaveEnabled || isNavigating"
+        >
           <ion-icon :icon="checkmarkOutline" />
           <span>ACTUALIZAR</span>
         </button>
       </div>
 
-      <!-- Reminders panel: back + create -->
+      <!-- Reminders panel -->
       <div v-else-if="isRemindersPage" class="nav-cta">
-        <button class="cta-btn" @click="goDashboard">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="chevronBackOutline" />
         </button>
-        <button class="cta-btn" @click="goAddReminder">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goAddReminder"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="add" />
           <span>CREAR</span>
         </button>
       </div>
 
-      <!-- History mode: back + tabs -->
+      <!-- History mode -->
       <div v-else-if="isHistoryPage" class="nav-history">
-        <button class="cta-btn" @click="goDashboard">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
           <ion-icon :icon="chevronBackOutline" />
         </button>
-        <button class="cta-btn" :class="{ active: historyTab==='income' }" @click="setHistoryTab('income')">
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: historyTab==='income' }, { 'is-locked': isNavigating }]"
+          @click="setHistoryTab('income')"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="cashOutline" />
           <span>INGRESO</span>
         </button>
-        <button class="cta-btn" :class="{ active: historyTab==='expense' }" @click="setHistoryTab('expense')">
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: historyTab==='expense' }, { 'is-locked': isNavigating }]"
+          @click="setHistoryTab('expense')"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="cardOutline" />
           <span>GASTO</span>
         </button>
-        <button class="cta-btn" :class="{ active: historyTab==='both' }" @click="setHistoryTab('both')">
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: historyTab==='both' }, { 'is-locked': isNavigating }]"
+          @click="setHistoryTab('both')"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="swapHorizontalOutline" />
         </button>
       </div>
 
       <!-- Normal mode -->
       <nav v-else class="nav nav--cta">
-        <button class="nav-btn" :class="{ active: activeTab==='ingresos' }" @click="go('/ingresos')">
+        <button
+          type="button"
+          class="nav-btn"
+          :class="[{ active: activeTab==='ingresos' }, { 'is-locked': isNavigating }]"
+          @click="go('/ingresos')"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="cashOutline" />
           <span>INGRESO</span>
         </button>
-        <button class="nav-btn" :class="{ active: activeTab==='gastos' }" @click="go('/gastos')">
+
+        <button
+          type="button"
+          class="nav-btn"
+          :class="[{ active: activeTab==='gastos' }, { 'is-locked': isNavigating }]"
+          @click="go('/gastos')"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="cardOutline" />
           <span>GASTO</span>
         </button>
-        <button class="nav-btn" :class="{ active: activeTab==='historico' }" @click="goHistory">
+
+        <button
+          type="button"
+          class="nav-btn"
+          :class="[{ active: activeTab==='historico' }, { 'is-locked': isNavigating }]"
+          @click="goHistory"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
           <ion-icon :icon="timeOutline" />
           <span>HISTORIAL</span>
         </button>
       </nav>
     </ion-toolbar>
 
-    <ion-toast :is-open="toastOpen" :message="toastMsg" :duration="2200" color="danger" @didDismiss="toastOpen=false" />
+    <ion-toast
+      :is-open="toastOpen"
+      :message="toastMsg"
+      :duration="2200"
+      color="danger"
+      @didDismiss="toastOpen=false"
+    />
   </div>
 </template>
 
@@ -79,7 +185,6 @@ import {
   cashOutline, cardOutline, timeOutline,
   chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add
 } from 'ionicons/icons'
-
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
@@ -87,6 +192,7 @@ const {
   historyTab, activeTab, canSaveEnabled,
   go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
   toastOpen, toastMsg,
+  isNavigating,
 } = useBottomBar()
 </script>
 

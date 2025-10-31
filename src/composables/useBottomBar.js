@@ -53,55 +53,61 @@ export function useBottomBar() {
     toastOpen.value = true
   }
 
-  /* ===== Optimizaciones de navegación =====
-     - Sin await: no bloqueamos el hilo UI
-     - Guard anti doble tap: 300ms
-  */
+  /* ===== Optimizaciones de navegación ===== */
   const isNavigating = ref(false)
-  function guardNav(fn) {
+  let navTimer = 0
+
+  function withNavGuard(fn) {
     if (isNavigating.value) return
     isNavigating.value = true
-    try { fn() } catch { fail() }
-    finally { setTimeout(() => { isNavigating.value = false }, 300) }
+    clearTimeout(navTimer)
+    try {
+      requestAnimationFrame(() => {
+        try { fn() } catch { fail() }
+      })
+    } finally {
+      navTimer = setTimeout(() => { isNavigating.value = false }, 320)
+    }
   }
 
   function go(path) {
-    guardNav(() => {
+    withNavGuard(() => {
       if (route.path !== path) router.push(path).catch(() => {})
     })
   }
 
   function emitAccept() {
-    // No bloquea; los listeners lo reciben en el frame siguiente
-    requestAnimationFrame(() => {
+    Promise.resolve().then(() => {
       window.dispatchEvent(new CustomEvent('bottom-accept'))
     })
   }
 
   function goDashboard() {
-    guardNav(() => {
-      requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+    withNavGuard(() => {
+      Promise.resolve().then(() =>
+        window.dispatchEvent(new CustomEvent('bottom-back'))
+      )
       const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/dashboard'
       if (route.path !== target) router.replace(target).catch(() => {})
     })
   }
 
   function goAddReminder() {
-    guardNav(() => {
+    withNavGuard(() => {
       const target = '/recordatorios/nuevo'
       if (route.path !== target) router.push(target).catch(() => {})
     })
   }
 
   function goHistory() {
-    guardNav(() => {
+    withNavGuard(() => {
       const target = '/historico/ingresos'
       if (route.path !== target) router.push(target).catch(() => {})
     })
   }
 
   function setHistoryTab(mode) {
-    guardNav(() => {
+    withNavGuard(() => {
       const target = mode === 'income'
         ? '/historico/ingresos'
         : mode === 'expense'
@@ -121,5 +127,10 @@ export function useBottomBar() {
 
     // feedback
     toastOpen, toastMsg,
+
+    // expuesto para la vista
+    isNavigating,
   }
 }
+
+

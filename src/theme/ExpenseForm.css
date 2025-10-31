@@ -5,6 +5,9 @@
   box-shadow: 0 26px 52px -30px rgba(13, 63, 72, 0.45);
   display: grid;
   gap: 14px;
+  /* separación visual respecto a topbar y bottombar */
+  margin-top: clamp(8px, 1.8vh, 16px);
+  margin-bottom: clamp(12px, 2.4vh, 20px);
 }
 
 .expense-form__item {
@@ -22,17 +25,23 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
   backdrop-filter: saturate(110%);
 }
-
-/* Estado hover/focus más amable en móvil */
 .expense-form__item:focus-within {
   border-color: rgba(13, 63, 72, 0.38);
   box-shadow: 0 6px 18px -14px rgba(13, 63, 72, 0.45), 0 0 0 3px rgba(203, 220, 255, 0.9);
 }
-
 .expense-form__item--error {
   border-color: var(--ion-color-danger);
   --highlight-color-focused: var(--ion-color-danger);
   --highlight-color-invalid: var(--ion-color-danger);
+}
+
+/* 💨 respiro extra entre categorías ↔ fecha y fecha ↔ descripción */
+.expense-form__item--date {
+  margin-top: clamp(8px, 1vh, 12px);
+  margin-bottom: clamp(8px, 1vh, 12px);
+}
+.expense-form__item--desc {
+  margin-top: clamp(6px, 0.8vh, 10px);
 }
 
 .expense-form__label {
@@ -52,111 +61,29 @@
 
 .expense-form__input {
   font-weight: 600;
-  /* Text and placeholder in dark green like categories */
   color: #0d3f48;
   --color: #0d3f48;
   --placeholder-color: #0d3f48;
   --padding-start: 0;
 }
 
-/* Color calendar icon inside date inputs to dark green */
-/* Oculta el icono nativo del date input; usamos botón propio */
-.expense-form__input input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; display: none; }
-.expense-form__input input[type="time"]::-webkit-calendar-picker-indicator { opacity: 0; display: none; }
-
-/* Fallback targets for different renderers */
+/* Fecha nativa */
 .expense-form__item input[type="date"] {
-  color: #0d3f48;
+  color: #0b3a43;
+  -webkit-text-fill-color: #0b3a43;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 4px;
 }
 
+/* Iconos */
 .expense-form__icon {
   align-self: center;
   font-size: 22px;
   color: #0d3f48;
 }
 
-/* Botón de apertura de pickers (fecha/hora) */
-.picker-icon-btn {
-  --padding-start: 6px;
-  --padding-end: 6px;
-  --background: transparent;
-  --color: #0d3f48;
-  border: 1px solid rgba(13, 63, 72, 0.2);
-  border-radius: 10px;
-  height: 28px;
-  width: 34px;
-}
-
-/* Modal de pickers */
-.form-picker-modal {
-  --width: min(380px, 92vw);
-  --max-width: 92vw;
-  --height: auto;
-  --max-height: 80vh;
-  --border-radius: 18px;
-  --background: #ffffff;
-  --box-shadow: 0 28px 56px -34px rgba(13, 63, 72, 0.45);
-  /* Fondo del overlay claro, no negro */
-  --backdrop-color: #ffffff;
-  --backdrop-opacity: 0.22;
-}
-.form-picker {
-  padding: 14px 14px 10px;
-  display: grid;
-  gap: 12px;
-}
-.form-picker__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 8px;
-}
-.form-picker__btn { --color: #0d3f48; font-weight: 700; }
-.form-picker__btn--ok { --background: #cbdcff; --color: #0d2c33; border-radius: 999px; }
-
-/* Ajustes de IonDatetime en los modales (rueda iOS legible, sin banda negra) */
-.form-picker ion-datetime {
-  --background: #ffffff;
-  --title-color: #0d3f48;
-  --subtitle-color: #0d3f48;
-  --highlight-color: #0d3f48;                /* texto seleccionado */
-  --wheel-highlight-color: #0d3f48;          /* rueda seleccionada */
-  --wheel-highlight-background: rgba(203, 220, 255, 0.55);
-  /* Sin sombra/oscurecido en la rueda */
-  --wheel-fade-background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 100%);
-  color: #0d3f48;
-  border-radius: 12px;
-  box-shadow: inset 0 0 0 1px rgba(13, 63, 72, 0.10);
-  color-scheme: light;
-}
-
-/* En algunos renderizados, los slots de cabecera/cuerpo requieren padding reducido */
-.form-picker ion-datetime::part(content) { padding: 8px 4px; }
-.form-picker ion-datetime::part(time-body),
-.form-picker ion-datetime::part(calendar-body) {
-  background: #ffffff;
-}
-
-/* Quita cualquier máscara adicional que pueda crear una banda oscura */
-.form-picker ion-datetime::part(wheel) {
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  background: #ffffff;
-}
-.form-picker ion-datetime::part(wheel-item) {
-  background: transparent;
-}
-
-/* Select chevron / icon color */
-ion-select::part(icon) { color: #0d3f48; }
-
-/* Mejora densidad en pantallas pequeñas */
-@media (max-width: 420px) {
-  .expense-form__card { gap: 12px; border-radius: 22px; }
-  .expense-form__item { --padding-top: 12px; --padding-bottom: 12px; border-radius: 16px; }
-  .expense-form__label { font-size: 0.74rem; }
-}
-
+/* Notas / acciones */
 .section-label {
   margin: 22px 0 10px;
   font-weight: 700;
@@ -165,16 +92,8 @@ ion-select::part(icon) { color: #0d3f48; }
   color: #0d3f48;
   font-size: 0.76rem;
 }
-
-.expense-form__note {
-  font-size: 0.78rem;
-  font-weight: 600;
-  margin-left: 4px;
-}
-
-.expense-form__actions {
-  margin-top: 26px;
-}
+.expense-form__note { font-size: 0.78rem; font-weight: 600; margin-left: 4px; }
+.expense-form__actions { margin-top: 26px; }
 
 .expense-form__submit {
   --background: #cbdcff;
@@ -188,13 +107,12 @@ ion-select::part(icon) { color: #0d3f48; }
   height: 48px;
 }
 
+@media (max-width: 420px) {
+  .expense-form__card { gap: 12px; border-radius: 22px; }
+  .expense-form__item { --padding-top: 12px; --padding-bottom: 12px; border-radius: 16px; }
+  .expense-form__label { font-size: 0.74rem; }
+}
 @media (min-width: 640px) {
-  .expense-form__card {
-    gap: 18px;
-    padding: 28px 32px;
-  }
-
-  .section-label {
-    margin-top: 26px;
-  }
+  .expense-form__card { gap: 18px; padding: 28px 32px; }
+  .section-label { margin-top: 26px; }
 }

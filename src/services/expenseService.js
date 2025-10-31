@@ -1,8 +1,8 @@
 import { supabase } from '@/lib/supabaseClient'
-// Reuse only auth helper from income service
-export { getCurrentUserId } from '@/services/incomeService'
 
-// Expense categories (split between main view and modal)
+// ======================
+// Categorías
+// ======================
 const DEFAULT_CATEGORIES = Object.freeze([
   { key: 'transporte', label: 'Transporte' },
   { key: 'hogar', label: 'Hogar' },
@@ -22,19 +22,20 @@ const ADDITIONAL_CATEGORIES = Object.freeze([
 export function presetCategories() {
   return DEFAULT_CATEGORIES.map((item) => ({ ...item }))
 }
-
 export function additionalCategories() {
   return ADDITIONAL_CATEGORIES.map((item) => ({ ...item }))
 }
-
 export function resolveCategory(key) {
   return (
-    DEFAULT_CATEGORIES.find((item) => item.key === key) ??
-    ADDITIONAL_CATEGORIES.find((item) => item.key === key) ??
+    DEFAULT_CATEGORIES.find((i) => i.key === key) ??
+    ADDITIONAL_CATEGORIES.find((i) => i.key === key) ??
     null
   )
 }
 
+// ======================
+// Helpers
+// ======================
 function sanitizeAmount(amount) {
   const numericValue = Number(amount)
   return Number.isFinite(numericValue) ? numericValue : 0
@@ -48,7 +49,6 @@ async function decreaseInitialAmount(userId, amount) {
     .select('initial_amount')
     .eq('id', userId)
     .single()
-
   if (fetchError) throw fetchError
 
   const current = Number(profile?.initial_amount ?? 0)
@@ -66,35 +66,47 @@ async function decreaseInitialAmount(userId, amount) {
     return Number(updated?.initial_amount ?? next)
   }
 
+  // Fallback por si hay política de actualización
   const { data: rpcData, error: rpcError } = await supabase.rpc('set_initial_amount', {
     p_amount: next,
     p_currency: 'COP'
   })
-
   if (rpcError) throw rpcError
   if (rpcData && rpcData.ok === false) {
     throw new Error(rpcData?.message || 'Failed to update initial amount')
   }
-
   return next
 }
 
+// ======================
+// Insertar gasto
+// ======================
 export async function insertExpense(row) {
-  const amount = sanitizeAmount(row.amount)
+  const amount = sanitizeAmount(row.amount ?? row.monto)
 
-  // ✅ Asegura userId desde auth si no viene en row.user_id
-  let ensuredUserId = row?.user_id || null
+  // ✅ userId llega desde el compositor; mantenemos fallbacks livianos
+  let ensuredUserId = row?.user_id || ''
   if (!ensuredUserId) {
     try {
-      const { data: authData, error: authErr } = await supabase.auth.getUser()
-      if (authErr) throw authErr
-      ensuredUserId = authData?.user?.id || null
-    } catch (e) {
-      console.error('[gastos][insertExpense] No se pudo obtener userId:', e)
-    }
+      const { useAuthUser } = await import('@/composables/useAuthUser')
+      const { userId } = useAuthUser()
+      ensuredUserId = userId()
+    } catch (_) {}
+  }
+  if (!ensuredUserId) {
+    // último recurso (solo si es absolutamente necesario)
+    try {
+      const { data } = await supabase.auth.getUser()
+      ensuredUserId = data?.user?.id || ''
+    } catch (_) {}
+  }
+  if (!ensuredUserId) {
+    const err = new Error('auth-missing')
+    err.code = 'PGRST301'
+    throw err
   }
 
-  // ✅ Normaliza nombres por si llegan variantes
+  // Normaliza nombres por si llegan variantes
   const payload = {
     monto: amount,
     categoria: row.category_key ?? row.categoria ?? null,
@@ -103,30 +115,27 @@ export async function insertExpense(row) {
     user_id: ensuredUserId
   }
 
-  // Log de depuración
   console.debug('[gastos][insertExpense] payload:', payload)
 
-  const { error } = await supabase
-    .from('gastos')
-    .insert(payload)
-
+  const { error } = await supabase.from('gastos').insert(payload)
   if (error) throw error
 
   const balance = await decreaseInitialAmount(ensuredUserId, amount)
-
   return { ok: true, balance }
 }
 
-/* ===========================
-   list() para Histórico (ajustada)
-   - Normaliza fechas a YYYY-MM-DD (columna 'fecha' es DATE).
-   - Filtra por el usuario autenticado.
-   - Deja una línea DEV opcional para incluir filas con user_id NULL.
-=========================== */
+// ======================
+// Listado (para Histórico)
+// ======================
 export async function list(filter = {}) {
-  const { data: authData, error: authErr } = await supabase.auth.getUser()
-  if (authErr) throw authErr
-  const userId = authData?.user?.id || null
+  // ✅ sin llamadas repetidas: usa useAuthUser
+  let userId = ''
+  try {
+    const { useAuthUser } = await import('@/composables/useAuthUser')
+    const { userId: uid } = useAuthUser()
+    userId = uid()
+  } catch (_) {}
+
   if (!userId) return []
 
   const dateOnly = (v) => (v ? String(v).slice(0, 10) : undefined)
@@ -138,24 +147,19 @@ export async function list(filter = {}) {
     .from('gastos')
     .select('id, monto, categoria, fecha, descripcion, user_id', { head: false })
     .eq('user_id', userId)
-  // q = q.or(`user_id.eq.${userId},user_id.is.null`) // ← opcional migración
 
   if (from) q = q.gte('fecha', from)
   if (to)   q = q.lte('fecha', to)
 
-  // ✅ saneo: solo aplicar .in si hay categorías válidas conocidas
   const allowed = new Set([
     ...presetCategories().map(c => c.key),
     ...additionalCategories().map(c => c.key)
   ])
   const catsFilter = categories.filter(k => allowed.has(k))
-
   if (catsFilter.length) {
     q = q.in('categoria', catsFilter)
   } else if (categories.length) {
-    // Si pidieron categorías pero ninguna es válida para gastos,
-    // no aplicamos filtro (equivale a "todas") para no devolver vacío por confusión.
-    console.debug('[gastos][list] categorías ignoradas por no ser válidas en gastos:', categories)
+    console.debug('[gastos][list] categorías ignoradas (no válidas para gastos):', categories)
   }
 
   q = q.order('fecha', { ascending: false }).order('id', { ascending: false })

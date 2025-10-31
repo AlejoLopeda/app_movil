@@ -35,3 +35,17 @@
   .nav--cta .nav-btn:hover{ background:rgba(255,255,255,.28); }
   .nav--cta .nav-btn.active{ background:#e6f1f3; color:var(--app-topbar-bg-dark,#0b2e35); }
 }
+
+/* Evitar aclarado visual cuando bloqueamos por navegación */
+.bottombar .is-locked {
+  pointer-events: none;         /* bloquea clics sin usar disabled */
+}
+
+/* Si algún botón está disabled pero la razón es "busy",
+   forzamos estilo normal (no griseado) */
+.bottombar .cta-btn[disabled][data-busy="true"],
+.bottombar .nav-btn[disabled][data-busy="true"] {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
