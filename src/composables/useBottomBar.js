@@ -87,7 +87,7 @@ export function useBottomBar() {
       Promise.resolve().then(() =>
         window.dispatchEvent(new CustomEvent('bottom-back'))
       )
-      const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/dashboard'
+      const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/historico'
       if (route.path !== target) router.replace(target).catch(() => {})
     })
   }
