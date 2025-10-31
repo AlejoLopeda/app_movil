@@ -1,5 +1,5 @@
 <template>
-  <ion-header class="topbar">
+  <ion-header class="topbar" ref="topbarRef">
     <!-- Barra negra SIEMPRE visible arriba -->
     <div class="topbar__notch" aria-hidden="true"></div>
 
@@ -53,27 +53,26 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton, IonButton, IonAvatar, IonToast
 } from '@ionic/vue'
 import { Capacitor } from '@capacitor/core'
-import { App as CapApp } from '@capacitor/app'          // ✅ para exitApp()
+import { App as CapApp } from '@capacitor/app'
 import UserSpeedDial from './UserSpeedDial.vue'
 import { useTopBarMenu } from '@/composables/useTopBarMenu'
 import { supabase } from '@/lib/supabaseClient'
 
-/* ===== Constantes ===== */
 const AVATAR_BUCKET = 'avatars'
-const SIGN_TTL_SECONDS = 60 * 60 * 24 * 7     // 7 días
-const CACHE_GRACE_SECONDS = 60 * 10           // 10 min
+const SIGN_TTL_SECONDS = 60 * 60 * 24 * 7
+const CACHE_GRACE_SECONDS = 60 * 10
 
 const props = defineProps({
   title: { type: String, default: 'INGRESOS' },
   fullName: { type: String, default: '' },
   logoutFn: { type: Function, default: null },
-  avatarUrl: { type: String, default: '' },   // pública o vacía
+  avatarUrl: { type: String, default: '' },
 })
 const emit = defineEmits(['edit', 'report', 'logout'])
 
@@ -82,7 +81,7 @@ const {
   logoutErrorOpen,
   toggleUserMenu,
   onMenuButtonClick,
-  handleLogout,            // (queda disponible, aunque ya no lo usamos aquí)
+  handleLogout,
   wireGlobalEvents,
   unwireGlobalEvents
 } = useTopBarMenu(props)
@@ -90,7 +89,6 @@ const {
 const route = useRoute()
 const router = useRouter()
 
-/* ===== Título / ruta ===== */
 const isProfilePage = computed(() => route.path.startsWith('/perfil'))
 const routeTitle = computed(() => (route.meta?.title || props.title || '').trim())
 const titleLines = computed(() => {
@@ -105,9 +103,8 @@ const firstNameUpper = computed(() => {
   return first.toUpperCase()
 })
 
-/* ===== Avatar: cache + firma + preload ===== */
-const avatarSrc = ref('')     // URL efectiva para <img>
-const dbAvatarPath = ref('')  // ruta bucket o URL pública desde DB
+const avatarSrc = ref('')
+const dbAvatarPath = ref('')
 const cacheKey = (userId) => `avatar:v1:${userId}`
 
 async function readAvatarPathFromDB () {
@@ -123,161 +120,103 @@ async function readAvatarPathFromDB () {
   if (error) throw error
   return { userId, path: (data?.avatar_url || '').trim() }
 }
+function preload(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(src); i.onerror=rej; i.src=src }) }
+async function signIfNeeded(v){ const s=(v||'').trim(); if(!s) return ''; if(/^https?:\/\//i.test(s)) return s; const {data,e}=await supabase.storage.from('avatars').createSignedUrl(s,SIGN_TTL_SECONDS); if(e) throw e; return data?.signedUrl||'' }
 
-function preload(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(src)
-    img.onerror = reject
-    img.src = src
-  })
-}
-
-async function signIfNeeded(value) {
-  const v = (value || '').trim()
-  if (!v) return ''
-  if (/^https?:\/\//i.test(v)) return v
-  const { data, error } = await supabase.storage.from(AVATAR_BUCKET)
-    .createSignedUrl(v, SIGN_TTL_SECONDS)
-  if (error) throw error
-  return data?.signedUrl || ''
-}
-
-/** Carga el avatar desde cache/DB. Si force=true ignora cache y renueva firma. */
-async function loadAvatar(force = false) {
-  try {
+async function loadAvatar(force=false){
+  try{
     const { data: authData } = await supabase.auth.getUser()
     const userId = authData?.user?.id
-    if (!userId) { avatarSrc.value = ''; return }
-
+    if (!userId) { avatarSrc.value=''; return }
     const now = Math.floor(Date.now()/1000)
     const cachedRaw = localStorage.getItem(cacheKey(userId))
-
-    // 1) Cache inmediata (si no forzamos y no está por expirar)
-    if (!force && cachedRaw) {
-      try {
-        const cached = JSON.parse(cachedRaw)
-        if (cached?.signedUrl && cached?.exp && (cached.exp - now) > CACHE_GRACE_SECONDS) {
-          await preload(cached.signedUrl).catch(() => {})
-          avatarSrc.value = cached.signedUrl
-        }
-      } catch {}
+    if(!force && cachedRaw){
+      try{ const c=JSON.parse(cachedRaw); if(c?.signedUrl && c?.exp && (c.exp-now)>CACHE_GRACE_SECONDS){ await preload(c.signedUrl).catch(()=>{}); avatarSrc.value=c.signedUrl } }catch{}
     }
-
-    // 2) DB / prop → firmar
-    const fromDB = await readAvatarPathFromDB()
-    dbAvatarPath.value = fromDB.path
+    const { path } = await readAvatarPathFromDB()
+    dbAvatarPath.value = path
     const candidate = (props.avatarUrl || dbAvatarPath.value || '').trim()
-    if (!candidate) { avatarSrc.value = ''; return }
-
-    const needsRefresh =
-      force ||
-      !avatarSrc.value ||
-      (cachedRaw ? (() => { try {
-          const c = JSON.parse(cachedRaw); return (c.exp - now) <= CACHE_GRACE_SECONDS
-        } catch { return true } })()
-        : true)
-
-    if (needsRefresh) {
+    if(!candidate){ avatarSrc.value=''; return }
+    const needsRefresh = force || !avatarSrc.value || (()=>{ try{ const c=JSON.parse(cachedRaw); return (c.exp-now)<=CACHE_GRACE_SECONDS }catch{return true} })()
+    if(needsRefresh){
       const signed = await signIfNeeded(candidate)
-      if (signed) {
-        await preload(signed).catch(() => {})
-        avatarSrc.value = signed
-        localStorage.setItem(cacheKey(userId), JSON.stringify({
-          signedUrl: signed,
-          exp: now + SIGN_TTL_SECONDS
-        }))
-      }
+      if(signed){ await preload(signed).catch(()=>{}); avatarSrc.value=signed; localStorage.setItem(cacheKey(userId), JSON.stringify({ signedUrl:signed, exp: now+SIGN_TTL_SECONDS })) }
     }
-  } catch (e) {
-    console.error('Avatar load error:', e?.message || e)
-    avatarSrc.value = ''
-  }
+  }catch(e){ console.error('Avatar load error:', e?.message||e); avatarSrc.value='' }
 }
 
-/* ===== Listeners para refrescar al instante ===== */
-function onAvatarUpdated (ev) {
-  const detail = ev?.detail || {}
-  const { userId, signedUrl } = detail || {}
-
-  if (signedUrl) {
-    preload(signedUrl).catch(() => {})
-    avatarSrc.value = signedUrl
-  }
-  if (userId && signedUrl) {
-    const now = Math.floor(Date.now()/1000)
-    localStorage.setItem(cacheKey(userId), JSON.stringify({
-      signedUrl,
-      exp: now + SIGN_TTL_SECONDS
-    }))
-  }
-  loadAvatar(true).catch(() => {})
+function onAvatarUpdated(ev){
+  const { userId, signedUrl } = ev?.detail||{}
+  if(signedUrl){ preload(signedUrl).catch(()=>{}); avatarSrc.value=signedUrl }
+  if(userId && signedUrl){ const now=Math.floor(Date.now()/1000); localStorage.setItem(cacheKey(userId), JSON.stringify({ signedUrl:signedUrl, exp: now+SIGN_TTL_SECONDS })) }
+  loadAvatar(true).catch(()=>{})
+}
+async function onStorage(e){
+  try{ const { data: authData } = await supabase.auth.getUser(); const userId = authData?.user?.id; if(!userId) return; if(e.key===cacheKey(userId)) loadAvatar(true) }catch{}
 }
 
-async function onStorage (e) {
-  try {
-    const { data: authData } = await supabase.auth.getUser()
-    const userId = authData?.user?.id
-    if (!userId) return
-    if (e.key === cacheKey(userId)) loadAvatar(true)
-  } catch {}
-}
+async function onEdit(){ menuOpen.value=false; try{ await router.push('/perfil') }catch{} }
+function onReport(){ menuOpen.value=false; emit('report') }
 
-/* ===== Acciones ===== */
-async function onEdit ()  { menuOpen.value = false; try { await router.push('/perfil') } catch {} }
-function onReport(){ menuOpen.value = false; emit('report') }
-
-/** 🔻 AHORA: cerrar la aplicación en lugar de cerrar sesión */
 const logoutMsg = ref('No se pudo cerrar la app. Intenta de nuevo.')
 async function onLogout(){
-  menuOpen.value = false
-  try {
-    // Android nativo: cerrar app
-    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
-      await CapApp.exitApp()
-      return
-    }
-
-    // iOS no permite cerrar programáticamente
-    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-      logoutMsg.value = 'En iOS no es posible cerrar la app automáticamente. Usa el gesto de Home.'
-      logoutErrorOpen.value = true
-      return
-    }
-
-    // Web / Desktop (PWA): intento cerrar ventana
+  menuOpen.value=false
+  try{
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){ await CapApp.exitApp(); return }
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform()==='ios'){ logoutMsg.value='En iOS no es posible cerrar la app automáticamente. Usa el gesto de Home.'; return (logoutErrorOpen.value=true) }
     const closed = window.close()
-    if (!closed) {
-      logoutMsg.value = 'No es posible cerrar la ventana desde el navegador. Ciérrala manualmente.'
-      logoutErrorOpen.value = true
-    }
-  } catch (e) {
-    console.error('close app error:', e)
-    logoutMsg.value = 'No se pudo cerrar la app. Intenta de nuevo.'
-    logoutErrorOpen.value = true
-  }
+    if(!closed){ logoutMsg.value='No es posible cerrar la ventana desde el navegador. Ciérrala manualmente.'; logoutErrorOpen.value=true }
+  }catch(e){ console.error('close app error:', e); logoutMsg.value='No se pudo cerrar la app. Intenta de nuevo.'; logoutErrorOpen.value=true }
 }
 
-function handleUserMenu () { if (isProfilePage.value) return; toggleUserMenu() }
+/* ✅ Ajuste para que el speed-dial nunca quede pegado al avatar
+   (recalcula altura real del header justo antes de abrir el menú) */
+function handleUserMenu(){
+  if (isProfilePage.value) return
+  // Recalcular altura del header y actualizar la variable CSS usada por el menú
+  nextTick(() => {
+    applyTopbarHeight()
+    // doble raf por si Ionic está terminando un reflow del header
+    requestAnimationFrame(applyTopbarHeight)
+  })
+  toggleUserMenu()
+}
 
-/* ===== Lifecycle ===== */
-onMounted(async () => {
+/* ======= Medición dinámica de la altura del header ======= */
+const topbarRef = ref(null)
+let resizeObs = null
+function applyTopbarHeight(){
+  const h = topbarRef.value?.$el?.offsetHeight || topbarRef.value?.offsetHeight || 0
+  document.documentElement.style.setProperty('--topbar-height', `${Math.max(0,h)}px`)
+}
+onMounted(async ()=>{
   await loadAvatar()
   window.addEventListener('avatar-updated', onAvatarUpdated)
   window.addEventListener('storage', onStorage)
   wireGlobalEvents()
+
+  await nextTick()
+  applyTopbarHeight()
+  try{
+    resizeObs = new ResizeObserver(()=>applyTopbarHeight())
+    const el = topbarRef.value?.$el || topbarRef.value
+    if(el) resizeObs.observe(el)
+  }catch{}
+  window.addEventListener('resize', applyTopbarHeight, { passive:true })
 })
-onUnmounted(() => {
+onUnmounted(()=>{
   window.removeEventListener('avatar-updated', onAvatarUpdated)
   window.removeEventListener('storage', onStorage)
   unwireGlobalEvents()
+  window.removeEventListener('resize', applyTopbarHeight)
+  try{
+    const el = topbarRef.value?.$el || topbarRef.value
+    if(resizeObs && el) resizeObs.unobserve(el)
+  }catch{}
 })
-
-// Si cambian props.avatarUrl, renovamos
-watch(() => props.avatarUrl, () => loadAvatar(true))
-// (opcional) al cambiar de ruta también podemos intentar revalidar
-watch(() => route.fullPath, () => loadAvatar(false))
+watch(()=>route.fullPath, ()=> nextTick().then(applyTopbarHeight))
+watch(titleHasTwoLines, ()=> nextTick().then(applyTopbarHeight))
+watch(()=>props.avatarUrl, ()=> loadAvatar(true))
 </script>
 
 <style src="../theme/AppTopBar.css"></style>
-
