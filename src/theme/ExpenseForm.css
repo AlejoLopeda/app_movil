@@ -93,6 +93,7 @@
   font-size: 0.76rem;
 }
 .expense-form__note { font-size: 0.78rem; font-weight: 600; margin-left: 4px; }
+.expense-form__note--hint { font-size: 0.72rem; color: #64748b; }
 .expense-form__actions { margin-top: 26px; }
 
 .expense-form__submit {
