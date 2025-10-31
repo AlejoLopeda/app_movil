@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'vue'
+﻿import { onMounted, onUnmounted } from 'vue'
 import { listActiveReminders } from '@/services/reminderService'
 import { supabase } from '@/lib/supabaseClient'
 import { showBanner } from '@/stores/notify'
@@ -73,7 +73,7 @@ function shouldTrigger(now, reminder) {
   const lastKey = lastFiredMap.get(reminder.id)
   if (lastKey === minuteNowKey) return false // already fired in this minute
 
-  // Build todayâ€™s scheduled time
+  // Build todayÃ¢â‚¬â„¢s scheduled time
   const todayAt = combineDateAndTime(now, reminder.time_at)
   const matchesTimeThisMinute = ymdhm(todayAt) === minuteNowKey
   if (!matchesTimeThisMinute) return false
@@ -213,10 +213,24 @@ export function useReminderNotifications() {
       if (document.visibilityState === 'visible') onFocus()
     })
 
+    // If user grants permission from the CTA banner, reschedule immediately
+    const onPerm = async () => {
+      try {
+        const perm = await ensurePermission()
+        if (perm.granted) {
+          for (const r of cache.reminders) {
+            try { await upsertSchedulesForReminder(r) } catch {}
+          }
+        }
+      } catch {}
+    }
+    window.addEventListener('reminders:perm-granted', onPerm)
+
     // Store cleanup callbacks on window to remove on unmount
     window.__remindersCleanup = () => {
       window.removeEventListener('reminders:changed', onChanged)
       window.removeEventListener('focus', onFocus)
+      window.removeEventListener('reminders:perm-granted', onPerm)
     }
   })
 
@@ -234,3 +248,4 @@ export function useReminderNotifications() {
     try { window.__remindersCleanup?.(); delete window.__remindersCleanup } catch {}
   })
 }
+

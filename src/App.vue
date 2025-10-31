@@ -4,6 +4,7 @@
     <ion-router-outlet id="main-content" />
     <AppBottomBar />
     <NotificationBanner />
+    <PermissionBanner />
     <ion-toast
       class="reminder-toast"
       :is-open="notification.open"
@@ -21,6 +22,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AppBottomBar from '@/components/AppBottomBar.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
+import PermissionBanner from '@/components/PermissionBanner.vue'
 import { notification } from '@/stores/notify'
 import { useReminderNotifications } from '@/composables/useReminderNotifications'
 
