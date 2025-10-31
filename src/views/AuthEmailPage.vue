@@ -1,9 +1,10 @@
 ﻿<template>
   <ion-page class="auth-email" mode="ios">
-    <ion-header translucent>
-      <ion-toolbar class="auth-email__toolbar">
-        <ion-title class="auth-page__title">Registro</ion-title>
-    </ion-toolbar>
+    <ion-header class="auth-topbar">
+      <div class="auth-topbar__notch" aria-hidden="true"></div>
+      <ion-toolbar class="auth-topbar__toolbar">
+        <ion-title class="auth-topbar__title">Registro</ion-title>
+      </ion-toolbar>
     </ion-header>
 
     <ion-content fullscreen class="auth-email__content" mode="ios">

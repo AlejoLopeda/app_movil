@@ -1,12 +1,13 @@
 <template>
   <ion-page class="auth-email" mode="ios">
-    <ion-header translucent>
-      <ion-toolbar class="auth-email__toolbar">
-        <ion-title class="auth-page__title">Términos y Condiciones</ion-title>
+    <ion-header class="auth-topbar">
+      <div class="auth-topbar__notch" aria-hidden="true"></div>
+      <ion-toolbar class="auth-topbar__toolbar">
+        <ion-title class="auth-topbar__title">Términos y condiciones</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content fullscreen class="auth-email__content" mode="ios" style="--padding-top: var(--ion-safe-area-top);">
+    <ion-content fullscreen class="auth-email__content" mode="ios">
       <section class="auth-email__wrapper">
         <ion-card class="app-account__card" mode="ios">
           <ion-card-content>
@@ -118,3 +119,4 @@ function acceptTerms() {
 .terms__btn { --color: #0d3f48; font-weight: 700; }
 .terms__btn--ok { --background: #cbdcff; --color: #0d2c33; border-radius: 999px; }
 </style>
+
