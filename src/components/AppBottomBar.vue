@@ -80,19 +80,8 @@
         </button>
       </div>
 
-      <!-- History mode -->
-      <div v-else-if="isHistoryPage" class="nav-history">
-        <button
-          type="button"
-          class="cta-btn"
-          @click="goDashboard"
-          :aria-disabled="isNavigating"
-          :data-busy="isNavigating"
-          :class="{ 'is-locked': isNavigating }"
-        >
-          <ion-icon :icon="chevronBackOutline" />
-        </button>
-
+      <!-- Historial: ingreso, gasto, ambos + botón de BALANCE (ambos) -->
+      <div v-else-if="isHistoryListPage" class="nav-history">
         <button
           type="button"
           class="cta-btn"
@@ -126,6 +115,69 @@
           :data-busy="isNavigating"
         >
           <ion-icon :icon="swapHorizontalOutline" />
+          <span>AMBOS</span>
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goMonthlyBoth"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
+          <ion-icon :icon="statsChartOutline" />
+          <span>BALANCE</span>
+        </button>
+      </div>
+
+      <!-- Balance views (ingreso, gasto, ambos) + historial (ambos) -->
+      <div v-else-if="isMonthlyArea" class="nav-history">
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: activeTab==='ingresos' }, { 'is-locked': isNavigating }]"
+          @click="goMonthlyIncome"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
+          <ion-icon :icon="cashOutline" />
+          <span>INGRESO</span>
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: activeTab==='gastos' }, { 'is-locked': isNavigating }]"
+          @click="goMonthlyExpense"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
+          <ion-icon :icon="cardOutline" />
+          <span>GASTO</span>
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: isMonthlyBothPage }, { 'is-locked': isNavigating }]"
+          @click="goMonthlyBoth"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
+          <ion-icon :icon="swapHorizontalOutline" />
+          <span>AMBOS</span>
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          :class="[{ active: isHistoryListPage }, { 'is-locked': isNavigating }]"
+          @click="goHistory"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+        >
+          <ion-icon :icon="timeOutline" />
+          <span>HISTORIAL</span>
         </button>
       </div>
 
@@ -183,14 +235,17 @@
 import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
-  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add
+  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add,
+  statsChartOutline,
 } from 'ionicons/icons'
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
   isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
   historyTab, activeTab, canSaveEnabled,
+  isHistoryListPage, isMonthlyBothPage, isMonthlyArea,
   go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
+  goMonthlyIncome, goMonthlyExpense, goMonthlyBoth,
   toastOpen, toastMsg,
   isNavigating,
 } = useBottomBar()
