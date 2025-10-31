@@ -16,6 +16,13 @@ export function useBottomBar() {
   const isRemindersPage    = computed(() => route.path === '/recordatorios')
   const isProfilePage      = computed(() => route.path.startsWith('/perfil'))
   const isHistoryPage      = computed(() => route.path.startsWith('/historico'))
+  const isHistoryListPage  = computed(() => /\/historico\//.test(route.path))
+  const isMonthlyBothPage  = computed(() => route.path === '/historico')
+  const isMonthlyArea      = computed(() => (
+    route.path.startsWith('/ingresos') ||
+    route.path.startsWith('/gastos') ||
+    route.path.startsWith('/historico')
+  ))
 
   const isAddPage = computed(() =>
     isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value
@@ -87,7 +94,7 @@ export function useBottomBar() {
       Promise.resolve().then(() =>
         window.dispatchEvent(new CustomEvent('bottom-back'))
       )
-      const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/dashboard'
+      const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/historico'
       if (route.path !== target) router.replace(target).catch(() => {})
     })
   }
@@ -101,10 +108,15 @@ export function useBottomBar() {
 
   function goHistory() {
     withNavGuard(() => {
-      const target = '/historico/ingresos'
+      const target = '/historico/ambos'
       if (route.path !== target) router.push(target).catch(() => {})
     })
   }
+
+  // Navegación entre balances mensuales
+  function goMonthlyIncome()  { withNavGuard(() => { if (route.path !== '/ingresos')  router.replace('/ingresos').catch(() => {}) }) }
+  function goMonthlyExpense() { withNavGuard(() => { if (route.path !== '/gastos')    router.replace('/gastos').catch(() => {}) }) }
+  function goMonthlyBoth()    { withNavGuard(() => { if (route.path !== '/historico') router.replace('/historico').catch(() => {}) }) }
 
   function setHistoryTab(mode) {
     withNavGuard(() => {
@@ -120,10 +132,12 @@ export function useBottomBar() {
   return {
     // estado de UI
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea,
     historyTab, activeTab, canSaveEnabled,
 
     // navegación/acciones
     go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
+    goMonthlyIncome, goMonthlyExpense, goMonthlyBoth,
 
     // feedback
     toastOpen, toastMsg,

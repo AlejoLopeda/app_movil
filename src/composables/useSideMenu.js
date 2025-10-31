@@ -15,7 +15,7 @@ export function useSideMenu () {
 
   // Opciones requeridas (siempre visibles)
   const requiredItems = [
-    { label: 'Inicio',        path: '/dashboard'     },
+    { label: 'Inicio',        path: '/historico'     },
     { label: 'Metas',         path: '/metas'         },
     { label: 'Balance',       path: '/historico'     },
     { label: 'Recordatorios', path: '/recordatorios' },
