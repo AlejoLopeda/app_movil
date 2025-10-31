@@ -34,9 +34,6 @@
       <ion-icon slot="start" :icon="calendarIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Fecha fin</ion-label>
       <ion-input type="date" v-model="fechaFin" @ionBlur="validateEndDate" class="expense-form__input" />
-      <ion-button slot="end" fill="clear" size="small" class="picker-icon-btn" @click="openDatePicker" aria-label="Elegir fecha">
-        <ion-icon :icon="calendarIcon" />
-      </ion-button>
     </ion-item>
     <ion-note v-if="endDateError" color="danger" class="expense-form__note">{{ endDateError }}</ion-note>
 
@@ -45,9 +42,6 @@
       <ion-icon slot="start" :icon="timeIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Hora</ion-label>
       <ion-input type="time" v-model="hora" @ionBlur="validateTimeFlexible" class="expense-form__input" />
-      <ion-button slot="end" fill="clear" size="small" class="picker-icon-btn" @click="openTimePicker" aria-label="Elegir hora">
-        <ion-icon :icon="timeIcon" />
-      </ion-button>
     </ion-item>
     <ion-note v-if="timeError" color="danger" class="expense-form__note">{{ timeError }}</ion-note>
 
@@ -63,32 +57,12 @@
     </div>
   </div>
 
-  <!-- Date picker modal -->
-  <ion-modal :is-open="dateOpen" @didDismiss="dateOpen=false" class="form-picker-modal">
-    <div class="form-picker">
-      <ion-datetime presentation="date" prefer-wheel="true" locale="es-ES" :value="fechaFinTemp" @ionChange="onDateTempChange" />
-      <div class="form-picker__actions">
-        <ion-button fill="clear" class="form-picker__btn" @click="dateOpen=false">Cancelar</ion-button>
-        <ion-button class="form-picker__btn form-picker__btn--ok" @click="applyDate">Aceptar</ion-button>
-      </div>
-    </div>
-  </ion-modal>
-
-  <!-- Time picker modal -->
-  <ion-modal :is-open="timeOpen" @didDismiss="timeOpen=false" class="form-picker-modal">
-    <div class="form-picker">
-      <ion-datetime presentation="time" hour-cycle="h23" prefer-wheel="true" :value="timeTemp" @ionChange="onTimeTempChange" />
-      <div class="form-picker__actions">
-        <ion-button fill="clear" class="form-picker__btn" @click="timeOpen=false">Cancelar</ion-button>
-        <ion-button class="form-picker__btn form-picker__btn--ok" @click="applyTime">Aceptar</ion-button>
-      </div>
-    </div>
-  </ion-modal>
+  
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption, IonIcon, IonModal, IonDatetime } from '@ionic/vue'
+import { IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption, IonIcon } from '@ionic/vue'
 import { personOutline, repeatOutline, calendarOutline, timeOutline, chatbubbleOutline } from 'ionicons/icons'
 import '@/theme/ExpenseForm.css'
 
@@ -120,6 +94,7 @@ const intervalError = ref('')
 const endDateError = ref('')
 const timeError = ref('')
 
+// Estados para antiguos pickers (ya no usados)
 const dateOpen = ref(false)
 const timeOpen = ref(false)
 const fechaFinTemp = ref('')
