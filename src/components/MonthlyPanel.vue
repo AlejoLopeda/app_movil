@@ -84,7 +84,7 @@
               :class="{ active: selectedCategories.includes(c.key) }"
               @click="toggleCategory(c.key)"
             >
-              <ion-icon :icon="gridIcon" />
+              <ion-icon :icon="categoryIcon(c.key)" />
               <span>{{ c.label }}</span>
             </button>
           </div>
@@ -174,26 +174,24 @@
         </div>
       </div>
 
-      <!-- Acciones -->
-      <div class="monthly-actions">
+      <!-- Acciones: mostrar botón de Crear según el tipo de panel (income/expense)
+           No se muestran en el panel combinado (balance) según lo solicitado. -->
+      <div v-if="(showIncomeAction || showExpenseAction) && panelType !== 'all'" class="monthly-actions">
         <ion-button
           v-if="showIncomeAction"
           expand="block"
-          router-link="/ingresos/nuevo"
+          @click="openAddIncome"
         >
-          <ion-icon slot="start" :icon="addIncomeIcon" />
-          NUEVO INGRESO
+          Crear ingreso
         </ion-button>
 
         <ion-button
           v-if="showExpenseAction"
           expand="block"
-          router-link="/gastos/nuevo"
-          color="light"
           class="secondary"
+          @click="openAddExpense"
         >
-          <ion-icon slot="start" :icon="addExpenseIcon" />
-          NUEVO GASTO
+          Crear gasto
         </ion-button>
       </div>
     </div>
@@ -201,11 +199,13 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { IonToggle, IonSpinner, IonButton, IonIcon, IonModal } from '@ionic/vue'
-import { cardOutline, cashOutline, gridOutline } from 'ionicons/icons'
+import { useRouter } from 'vue-router'
+import { gridOutline } from 'ionicons/icons'
 import MonthlyChart from '@/components/MonthlyChart.vue'
 import { useMonthlySummary } from '@/composables/useMonthlySummary'
+import { iconForCategory } from '@/utils/categoryIcons'
 
 const props = defineProps({
   panelType: { type: String, default: 'all', validator: v => ['all','income','expense'].includes(v) }
@@ -249,12 +249,36 @@ const balance             = computed(() => summary.balance.value)
 const showIncomeCard      = computed(() => config.value.showIncomeCard)
 const showExpenseCard     = computed(() => config.value.showExpenseCard)
 const showBalanceCard     = computed(() => config.value.showBalanceCard)
-const showIncomeAction    = computed(() => config.value.showIncomeAction)
-const showExpenseAction   = computed(() => config.value.showExpenseAction)
 
-const addIncomeIcon = computed(() => cashOutline)
-const addExpenseIcon = computed(() => cardOutline)
+// The panel no longer renders action buttons for add income/expense, so
+// remove the action-specific computed flags and icons. Keep the grid icon
+// used by the categories control above.
 const gridIcon = gridOutline
+function categoryIcon(key){ return iconForCategory(key) }
+
+const router = useRouter()
+function openAddIncome(){
+  try {
+    if (document && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur()
+    }
+  } catch(e){ void e }
+  router.push({ name: 'AddIncome' })
+}
+function openAddExpense(){
+  try {
+    if (document && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur()
+    }
+  } catch(e){ void e }
+  router.push({ name: 'AddExpense' })
+}
+
+/* Expose panel-specific action flags so the template can show the
+  appropriate 'Crear ingreso' / 'Crear gasto' buttons when the component
+  is used as an income-only or expense-only panel. */
+const showIncomeAction = computed(() => config.value.showIncomeAction)
+const showExpenseAction = computed(() => config.value.showExpenseAction)
 
 const detailItem = computed(() => !activeKey.value ? null : chartItems.value.find(i => i.key === activeKey.value) ?? null)
 const balanceClass = computed(() => ({ 'monthly-summary-card--positive': balance.value >= 0, 'monthly-summary-card--negative': balance.value < 0 }))
@@ -286,5 +310,17 @@ watch(chartItems, (items) => {
   if (!activeKey.value || !items.some(it => it.key === activeKey.value)) activeKey.value = items[0].key
 })
 
-onMounted(() => { summary.load() })
+const handleTransactionsChanged = () => { summary.load() }
+const handleGoalsChanged = () => { summary.load() }
+
+onMounted(() => {
+  summary.load()
+  window.addEventListener('data:transactions-changed', handleTransactionsChanged)
+  window.addEventListener('data:goals-changed', handleGoalsChanged)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('data:transactions-changed', handleTransactionsChanged)
+  window.removeEventListener('data:goals-changed', handleGoalsChanged)
+})
 </script>

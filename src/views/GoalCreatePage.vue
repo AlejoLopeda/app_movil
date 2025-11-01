@@ -18,7 +18,13 @@
 
           <ion-item class="goals-form-item" lines="full">
             <ion-label position="stacked">Monto a alcanzar</ion-label>
-            <ion-input v-model.number="amount" inputmode="decimal" type="number" placeholder="$" />
+            <ion-input
+              :value="amount"
+              inputmode="decimal"
+              type="text"
+              placeholder="$"
+              @ionInput="onAmountInput"
+            />
           </ion-item>
 
           <ion-item class="goals-form-item" lines="full">
@@ -44,6 +50,7 @@ import { useRouter } from 'vue-router'
 import { IonPage, IonContent, IonItem, IonLabel, IonInput, IonButton, IonToast } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { useGoals } from '@/composables/useGoals'
+import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
 import '@/theme/MonthlyPanel.css'
 import '@/theme/goals.css'
 
@@ -51,20 +58,25 @@ const router = useRouter()
 const { create } = useGoals()
 
 const name = ref('')
-const amount = ref(null)
+const amount = ref('')
 const comment = ref('')
 const busy = ref(false)
 const toast = ref({ open: false, message: '', color: 'primary' })
 
-const canSubmit = computed(() => name.value.trim().length > 0 && Number(amount.value) > 0)
+const amountValue = computed(() => parsePositiveNumber(amount.value))
+const canSubmit = computed(() => name.value.trim().length > 0 && amountValue.value !== null)
 
 function openToast(message, color='primary'){ toast.value = { open: true, message, color } }
+
+function onAmountInput(ev){
+  amount.value = sanitizePositiveDecimalInput(ev.detail?.value)
+}
 
 async function onCreate(){
   if (!canSubmit.value) return
   busy.value = true
   try {
-    await create({ nombre: name.value.trim(), monto: Number(amount.value), descripcion: comment.value || null })
+    await create({ nombre: name.value.trim(), monto: amountValue.value, descripcion: comment.value || null })
     openToast('Meta creada con éxito.', 'success')
     router.replace('/metas')
   } catch (e) {

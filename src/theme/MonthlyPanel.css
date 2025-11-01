@@ -1,6 +1,7 @@
-/* ===== Fondo blanco global (también en dark) ===== */
-:host{ --ion-background-color:#ffffff; }
-.monthly-section{ background:#ffffff; }
+ q q/* ===== Fondo blanco global (también en dark) ===== */
+:host{ --ion-background-color: var(--page-bg, #ffffff); }
+.monthly-section{ background: var(--page-bg, #ffffff) !important; }
+.monthly-page, .monthly-content{ --background: var(--page-bg, #ffffff) !important; background: var(--page-bg, #ffffff) !important; }
 
 /* ==== Anti-overflow móvil dentro del panel ==== */
 html, body, ion-content, .monthly-section { overflow-x:hidden; }
@@ -8,19 +9,28 @@ html, body, ion-content, .monthly-section { overflow-x:hidden; }
 
 /* ============ Layout base y separación con top/bottom bars ============ */
 .monthly-section{
-  --app-topbar-height: 64px;
+  /* Reduce spacing between the fixed topbar and the monthly card to avoid
+    a very large white gap on small screens. These values are conservative
+    and still respect the safe area on iOS. */
+  --app-topbar-height: 48px;
   --bottom-bar-height: 84px;
-  --monthly-top-extra: 10px;
+  --monthly-top-extra: 6px;
 
-  padding-top: calc(var(--ion-safe-area-top, 0px) + var(--app-topbar-height) + var(--monthly-top-extra));
+  /* Keep only the safe-area + small extra padding here and pull the card
+    slightly up so it visually sits under the topbar without a large white
+    block. The card uses a negative margin so the layout doesn't hide
+    behind a fixed topbar while removing the big gap. */
+  padding-top: calc(var(--ion-safe-area-top, 0px) + var(--monthly-top-extra));
   padding-bottom: calc(var(--bottom-bar-height) + var(--ion-safe-area-bottom, 0px) - 12px);
-  padding-left: 12px;
-  padding-right: 12px;
+  padding-left: 0;
+  padding-right: 0;
 
   display: grid;
   place-items: start center;
   width: 100%;
   max-width: 100vw;       /* evita desbordes laterales */
+  border: none !important;
+  background: none !important;
 }
 
 /* ============ Card contenedora estilo Historial ============ */
@@ -28,20 +38,34 @@ html, body, ion-content, .monthly-section { overflow-x:hidden; }
   width: 100%;
   max-width: 980px;
   margin: 0 auto;
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,.06);
+  /* pull card up a bit so it visually hugs the topbar; adjust if needed */
+  margin-top: -12px;
+  background: var(--card-bg, #ffffff);
+  border: none;
   border-radius: 18px;
-  box-shadow: 0 16px 34px -24px rgba(16,28,33,.18);
+  box-shadow: var(--card-shadow, 0 16px 34px -24px rgba(16,28,33,.18));
   padding: 18px 14px;
   overflow: hidden;       /* oculta sombras internas que se salgan */
 }
 
 /* ============ Header ============ */
 .monthly-header{ display:flex; flex-direction:column; gap: 12px; padding: 0 4px; }
-.monthly-header__title{
-  font-size:1.25rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#0b2c33;
+.monthly-card .monthly-header__title,
+.monthly-header h2,
+h2.monthly-header__title{
+  font-size:1.25rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+  /* Force the app accent (brand green) for monthly headings so the
+     'Resumen mensual' / 'Panel de metas' headings keep the app green
+     color in light mode while still honoring the variable in dark mode. */
+  color: var(--accent, var(--app-topbar-bg, #0d3f48)) !important;
 }
-.monthly-header__subtitle{ margin-top:4px; font-size:.9rem; font-weight:600; color:#4a6168; }
+.monthly-card .monthly-header__subtitle,
+.monthly-header p,
+p.monthly-header__subtitle{ 
+  margin-top:4px; font-size:.9rem; font-weight:600;
+  /* Subtitle should visually match the header color (app green) as requested */
+  color: var(--accent, var(--app-topbar-bg, #0d3f48)) !important;
+}
 
 /* Controles en “pill” clara — flex-wrap para móvil */
 .monthly-header__controls{
@@ -219,10 +243,11 @@ html, body, ion-content, .monthly-section { overflow-x:hidden; }
 
 /* ============ Dark mode (mantener blancos solicitados) ============ */
 @media (prefers-color-scheme: dark){
-  .monthly-section{ background:#ffffff; }
+  .monthly-section{ background:#ffffff !important; }
+  .monthly-page, .monthly-content{ --background:#ffffff !important; background:#ffffff !important; }
   .monthly-card{ background:#ffffff; border-color: rgba(0,0,0,.08); }
-  .monthly-header__title{ color:#0b2c33; }
-  .monthly-header__subtitle{ color:#4a6168; }
+  .monthly-header__title{ color:#072026; }
+  .monthly-header__subtitle{ color:#072026; }
   .monthly-header__controls{
     background:#ffffff; border-color: rgba(0,0,0,.08);
     box-shadow: 0 10px 24px -18px rgba(16,28,33,.18);

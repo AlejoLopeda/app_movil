@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useAuthUser } from '@/composables/useAuthUser'
 import {
   fetchMonthlySummary,
@@ -152,6 +152,15 @@ export function useMonthlySummary(options = {}) {
 
   function formatCurrency(value) { return currencyFormatter.format(Math.round(value || 0)) }
 
+  function onTransactionsChanged(event) {
+    const type = event?.detail?.type || 'all'
+    const relevant =
+      type === 'all' ||
+      (type === 'income' && includeIncomes) ||
+      (type === 'expense' && includeExpenses)
+    if (!relevant) return
+    load(true)
+  }
   function buildQueryKey(uid) {
     // clave única por usuario + flags + mes (YYYY-MM)
     const ym = `${monthRange.start.slice(0,7)}`
@@ -201,8 +210,12 @@ export function useMonthlySummary(options = {}) {
   function setChartMode(next) { chartMode.value = next === 'bar' ? 'bar' : 'pie' }
 
   // Auto-load: si el usuario inicia sesión después de montar
-  onMounted(() => { if (isLoggedIn()) load() })
+  onMounted(() => {
+    if (isLoggedIn()) load()
+    window.addEventListener('data:transactions-changed', onTransactionsChanged)
+  })
   watch(user, (u, prev) => { if (u?.id && u?.id !== prev?.id) load(true) })
+  onBeforeUnmount(() => { window.removeEventListener('data:transactions-changed', onTransactionsChanged) })
 
   return {
     // estado

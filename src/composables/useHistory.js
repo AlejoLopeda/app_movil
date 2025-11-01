@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import * as incomeService from '@/services/incomeService'
 import * as expenseService from '@/services/expenseService'
 import { useAuthUser } from '@/composables/useAuthUser'
-import { calendarOutline } from 'ionicons/icons'
+import { iconForCategory } from '@/utils/categoryIcons'
 
 function formatMoney(n){
   try { return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n) }
@@ -86,9 +86,7 @@ export function useHistory(options = {}) {
     return [...map.values()]
   })
   function iconFor(key){
-    const inc = incomeService.resolveCategory?.(key)
-    const exp = expenseService.resolveCategory?.(key)
-    return (inc?.icon || exp?.icon || calendarOutline)
+    return iconForCategory(key)
   }
   function labelFor(key){
     return (
@@ -159,6 +157,17 @@ export function useHistory(options = {}) {
 
   const validCatKeys = computed(() => new Set(visibleCategories.value.map(c => c.key)))
 
+  function shouldReloadFor(type){
+    if (!type || type === 'all') return true
+    if (tab.value === 'both') return true
+    return tab.value === type
+  }
+  function onTransactionsChanged(event){
+    const type = event?.detail?.type || 'all'
+    if (!shouldReloadFor(type)) return
+    load()
+  }
+
   onMounted(async () => {
     if (fixedTab) {
       // siempre inicia limpio si la vista es fija
@@ -175,10 +184,12 @@ export function useHistory(options = {}) {
     }
     ready.value = true
     if (!fixedTab) window.addEventListener('history-tab', onHistoryTab)
+    window.addEventListener('data:transactions-changed', onTransactionsChanged)
   })
 
   onBeforeUnmount(() => {
     if (!fixedTab) window.removeEventListener('history-tab', onHistoryTab)
+    window.removeEventListener('data:transactions-changed', onTransactionsChanged)
   })
 
   async function load(){

@@ -55,7 +55,7 @@
       </div>
 
       <!-- Recordatorios -->
-      <div v-else-if="isRemindersPage" class="nav-cta">
+  <div v-else-if="isRemindersPage" class="nav-cta">
         <button
           type="button"
           class="cta-btn"
@@ -70,6 +70,32 @@
           type="button"
           class="cta-btn"
           @click="goAddReminder"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="add" />
+          <span>CREAR</span>
+        </button>
+      </div>
+
+      <!-- Metas -->
+      <div v-else-if="isGoalsPage" class="nav-cta">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goAddGoal"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           :class="{ 'is-locked': isNavigating }"
@@ -232,10 +258,10 @@ import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
   isMainRoute, isAddPage, isProfilePage, isRemindersPage,
-  isHistoryListPage, isMonthlyBothPage, isMonthlyArea,
+  isHistoryListPage, isMonthlyArea, isGoalsPage,
   historyTab, activeTab, canSaveEnabled,
-  go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
-  goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
+  goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
+  goAddGoal,
   goOrToggleIncome, goOrToggleExpense,
   toastOpen, toastMsg, isNavigating,
 } = useBottomBar()

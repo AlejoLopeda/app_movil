@@ -1,2 +1,48 @@
+/* Global theme variables for light/dark support.
+	 These provide a minimal palette used across the app so individual
+	 component CSS can reference variables instead of hard-coded colors.
+	 Light mode defaults are chosen to preserve the current look; dark
+	 mode overrides live in the media query below. */
+
+:root{
+	/* Accent / brand */
+	--accent: #0d3f48;               /* primary brand green */
+	--accent-dark: #0b2e35;          /* darker accent for dark mode */
+
+	/* Page / surface */
+	--page-bg: #ffffff;
+	--card-bg: #ffffff;
+	--card-border: rgba(13,63,72,0.08);
+	--card-shadow: 0 16px 34px -24px rgba(16,28,33,.18);
+
+	/* Text */
+	--text: #10252a;    /* body text */
+	--text-muted: #4a6168;
+	--title: var(--accent);
+
+	/* Semantic */
+	--danger: #ff6b6b;
+}
+
+@media (prefers-color-scheme: dark){
+	:root{
+		--accent: var(--accent-dark);
+		--page-bg: #071617;            /* dark page background */
+		--card-bg: rgba(4,19,24,0.82); /* dark card */
+		--card-border: rgba(224,242,249,0.12);
+		--card-shadow: 0 20px 38px -30px rgba(0,0,0,.72);
+		--text: rgba(224,242,249,0.96);
+		--text-muted: rgba(224,242,249,0.6);
+		--title: rgba(224,242,249,0.96);
+	}
+}
+
+/* For backward compatibility many files use --app-topbar-bg; keep it in
+	 terms of the new accent variable. */
+:root{ --app-topbar-bg: var(--accent); --app-topbar-bg-dark: var(--accent-dark); }
+
+/* For Ionic host background fallback used in some components */
+:root{ --ion-background-color: var(--page-bg); }
+
 /* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
+	 http://ionicframework.com/docs/theming/ */
