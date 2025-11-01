@@ -1,13 +1,12 @@
 /* ========== TOPBAR BASE ========== */
 .topbar{
-  /* Altura fija para la franja negra, siempre visible */
-  --notch-height: 26px; /* ajusta a tu gusto (20–28px) */
-  /* Safe area que pueda aportar el sistema (sumamos por si hay notch real) */
+  --notch-height: 26px;
   --safe-top: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
 
-  /* Reservamos espacio total por encima del toolbar */
-  padding-top: calc(var(--safe-top) + var(--notch-height));
+  /* 👇 NUEVO: separación estándar debajo del header para overlays/menus */
+  --user-speed-gap: 12px;
 
+  padding-top: calc(var(--safe-top) + var(--notch-height));
   background: var(--app-topbar-bg, #0d3f48);
   position: relative;
   z-index: 10000;
@@ -23,7 +22,7 @@
   pointer-events: none;           /* no bloquea toques */
 }
 
-/* Toolbar (el fondo del header ya se pinta en .topbar) */
+/* Toolbar */
 .topbar__toolbar{
   --background: transparent;
   --color: #ffffff;
@@ -42,9 +41,7 @@
   font-weight:800; text-align:center; line-height:1.1;
   overflow:visible; white-space:normal;
 }
-.topbar__title-inner{
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
-}
+.topbar__title-inner{ display:flex; flex-direction:column; align-items:center; gap:0; }
 .topbar__title-line1,
 .topbar__title-line2{
   font-size: clamp(16px, 4.6vw, 21px);
@@ -72,9 +69,10 @@
 .topbar__toolbar .topbar__btn ion-icon{ font-size: 24px; width: 24px; height: 24px; }
 
 /* ========== SPEED DIAL Y OVERLAY ========== */
+/* 👇 Clave: arrancar debajo del header + un GAP fijo para que no “toque” el avatar */
 .user-speed{
   position:fixed; right:12px;
-  top: calc(var(--safe-top) + var(--notch-height) + 56px);
+  top: calc(var(--topbar-height, calc(var(--safe-top) + var(--notch-height) + 56px)) + var(--user-speed-gap, 12px));
   z-index:9999; display:grid; gap:10px;
 }
 .user-speed__btn{
@@ -86,9 +84,10 @@
 .user-speed__btn--danger{ --background:#e53935; --color:#fff; }
 .user-speed__btn ion-icon{ font-size:22px; width:22px; height:22px; color:#fff; }
 
+/* Overlay con el mismo TOP + GAP */
 .user-speed-overlay{
   position:fixed; left:0; right:0; bottom:0;
-  top: calc(var(--safe-top) + var(--notch-height) + 56px);
+  top: calc(var(--topbar-height, calc(var(--safe-top) + var(--notch-height) + 56px)) + var(--user-speed-gap, 12px));
   z-index:9998; background:rgba(0,0,0,0); pointer-events:auto;
 }
 
