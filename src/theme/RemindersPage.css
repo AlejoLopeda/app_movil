@@ -107,6 +107,19 @@ ion-fab-button.reminders-fab:active {
   padding: clamp(16px, 4vw, 22px);
 }
 
+/* Hacer la tarjeta interactiva para abrir detalles */
+.reminder-card {
+  cursor: pointer;
+}
+
+/* Texto sutil para indicar tap */
+.reminder-tap-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b; /* slate-500 */
+  font-weight: 600;
+}
+
 .reminder-header {
   display: flex;
   align-items: center;
@@ -123,6 +136,41 @@ ion-fab-button.reminders-fab:active {
 .reminder-actions ion-button {
   --padding-start: 6px;
   --padding-end: 6px;
+}
+
+/* Botones de acción: redondos, claros y táctiles */
+.reminder-actions .action-btn {
+  --border-radius: 999px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --box-shadow: none;
+  height: 36px;
+  min-width: 36px;
+}
+
+/* Editar: acento neutro/brand */
+.reminder-actions .action-btn--edit {
+  --background: #e6f4f1;        /* verde muy claro */
+  --background-activated: #d7ece8;
+  --background-hover: #dff1ed;
+  --color: #0d3f48;             /* texto/icono */
+}
+
+/* Eliminar: fondo sutil peligro */
+.reminder-actions .action-btn--delete {
+  --background: #ffecec;        /* rojo muy claro */
+  --background-activated: #ffdcdc;
+  --background-hover: #ffe3e3;
+  --color: var(--ion-color-danger);
+}
+
+.reminder-actions .action-btn ion-icon {
+  font-size: 18px;
+}
+
+.reminder-actions .action-btn:focus-visible {
+  outline: 2px solid rgba(13, 63, 72, 0.25);
+  outline-offset: 2px;
 }
 
 .reminder-meta {
@@ -148,6 +196,8 @@ ion-fab-button.reminders-fab:active {
 
 .reminder-modal {
   padding: 18px 16px 24px;
+  max-height: 80vh;     /* limitar a viewport para móviles */
+  overflow-y: auto;     /* permitir scroll si el contenido es extenso */
 }
 
 .reminder-modal .modal-line {
@@ -159,9 +209,15 @@ ion-fab-button.reminders-fab:active {
 .reminder-details-modal {
   --width: 92vw;
   --max-width: 520px;
+  --height: auto;
+  --max-height: 85vh;
   --border-radius: 18px;
   --background: #ffffff;
   --backdrop-opacity: 0.24;
+}
+
+.reminder-details-modal::part(content) {
+  overflow: visible;
 }
 
 .reminder-modal .modal-header {
@@ -201,9 +257,44 @@ ion-fab-button.reminders-fab:active {
 
 .reminder-modal .modal-body .modal-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin: 10px 0;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Comentario en dos líneas: etiqueta arriba, texto abajo */
+.reminder-modal .modal-body .modal-line--comment .modal-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reminder-modal .modal-body .modal-line--comment .comment-text {
+  margin: 0;
+  white-space: pre-wrap;  /* respeta saltos de línea del usuario */
+  color: #334155;         /* legible sobre blanco */
+}
+
+.reminder-modal .reminders-title {
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Buen flujo para etiquetas + contenido largo */
+.reminder-modal .modal-body .modal-line strong {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.reminder-modal .modal-body .modal-line .meta-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* Chip de frecuencia debajo del título */

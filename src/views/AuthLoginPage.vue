@@ -1,8 +1,9 @@
 <template>
   <ion-page class="auth-login" mode="ios">
-    <ion-header translucent>
-      <ion-toolbar class="auth-login__toolbar">
-        <ion-title class="auth-page__title">Iniciar sesion</ion-title>
+    <ion-header class="auth-topbar">
+      <div class="auth-topbar__notch" aria-hidden="true"></div>
+      <ion-toolbar class="auth-topbar__toolbar">
+        <ion-title class="auth-topbar__title">Iniciar sesion</ion-title>
       </ion-toolbar>
     </ion-header>
 

@@ -1,12 +1,13 @@
-<template>
+﻿<template>
   <div class="expense-form__card">
     <!-- Nombre -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': nameError }" mode="ios">
       <ion-icon slot="start" :icon="personIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Nombre</ion-label>
-      <ion-input class="expense-form__input" placeholder="Ej. Pagar servicio de luz" v-model="nombre" @ionBlur="validateName" />
+      <ion-input class="expense-form__input" placeholder="Ej. Pagar servicio de luz" v-model="nombre" @ionBlur="validateName" maxlength="60" />
     </ion-item>
     <ion-note v-if="nameError" color="danger" class="expense-form__note">{{ nameError }}</ion-note>
+    <ion-note v-else-if="String(nombre||'').length >= 60" color="medium" class="expense-form__note">Has alcanzado el límite de 60 caracteres</ion-note>
 
     <!-- Frecuencia -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': freqError }" mode="ios">
@@ -25,7 +26,7 @@
     <ion-item v-if="frecuencia==='custom'" class="expense-form__item" :class="{ 'expense-form__item--error': intervalError }" mode="ios">
       <ion-icon slot="start" :icon="repeatIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Intervalo (días)</ion-label>
-      <ion-input class="expense-form__input" type="number" inputmode="numeric" min="1" placeholder="Cada cuántos días" v-model.number="intervaloDias" @ionBlur="validateInterval" />
+      <ion-input class="expense-form__input" type="number" inputmode="numeric" min="2" placeholder="Cada cuántos días (mín. 2)" v-model.number="intervaloDias" @ionInput="onIntervalInput" @ionBlur="validateInterval" />
     </ion-item>
     <ion-note v-if="intervalError" color="danger" class="expense-form__note">{{ intervalError }}</ion-note>
 
@@ -33,62 +34,39 @@
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': endDateError }" mode="ios">
       <ion-icon slot="start" :icon="calendarIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Fecha fin</ion-label>
-      <ion-input type="date" v-model="fechaFin" @ionBlur="validateEndDate" class="expense-form__input" />
-      <ion-button slot="end" fill="clear" size="small" class="picker-icon-btn" @click="openDatePicker" aria-label="Elegir fecha">
-        <ion-icon :icon="calendarIcon" />
-      </ion-button>
+      <ion-input type="date" v-model="fechaFin" :min="minEndDate" @ionBlur="validateEndDate" class="expense-form__input" />
     </ion-item>
     <ion-note v-if="endDateError" color="danger" class="expense-form__note">{{ endDateError }}</ion-note>
+    <ion-note v-if="!endDateError && !fechaFin" color="medium" class="expense-form__note expense-form__note--hint">Toca para seleccionar una fecha</ion-note>
 
     <!-- Hora -->
     <ion-item class="expense-form__item" :class="{ 'expense-form__item--error': timeError }" mode="ios">
       <ion-icon slot="start" :icon="timeIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Hora</ion-label>
       <ion-input type="time" v-model="hora" @ionBlur="validateTimeFlexible" class="expense-form__input" />
-      <ion-button slot="end" fill="clear" size="small" class="picker-icon-btn" @click="openTimePicker" aria-label="Elegir hora">
-        <ion-icon :icon="timeIcon" />
-      </ion-button>
     </ion-item>
     <ion-note v-if="timeError" color="danger" class="expense-form__note">{{ timeError }}</ion-note>
+    <ion-note v-if="!timeError && !hora" color="medium" class="expense-form__note expense-form__note--hint">Toca para seleccionar una hora</ion-note>
 
     <!-- Comentario -->
     <ion-item class="expense-form__item" mode="ios">
       <ion-icon slot="start" :icon="commentIcon" class="expense-form__icon" />
       <ion-label position="stacked" class="expense-form__label">Comentario</ion-label>
-      <ion-input placeholder="Opcional" v-model="comentario" class="expense-form__input" />
+      <ion-input placeholder="Opcional" v-model="comentario" class="expense-form__input" maxlength="280" />
     </ion-item>
+    <ion-note v-if="String(comentario||'').length >= 280" color="medium" class="expense-form__note">Has alcanzado el límite de 280 caracteres</ion-note>
 
     <div v-if="showSubmit" class="expense-form__actions">
       <ion-button expand="block" class="expense-form__submit" :disabled="!isValid || loading" @click="emitSubmit">ACEPTAR</ion-button>
     </div>
   </div>
 
-  <!-- Date picker modal -->
-  <ion-modal :is-open="dateOpen" @didDismiss="dateOpen=false" class="form-picker-modal">
-    <div class="form-picker">
-      <ion-datetime presentation="date" prefer-wheel="true" locale="es-ES" :value="fechaFinTemp" @ionChange="onDateTempChange" />
-      <div class="form-picker__actions">
-        <ion-button fill="clear" class="form-picker__btn" @click="dateOpen=false">Cancelar</ion-button>
-        <ion-button class="form-picker__btn form-picker__btn--ok" @click="applyDate">Aceptar</ion-button>
-      </div>
-    </div>
-  </ion-modal>
-
-  <!-- Time picker modal -->
-  <ion-modal :is-open="timeOpen" @didDismiss="timeOpen=false" class="form-picker-modal">
-    <div class="form-picker">
-      <ion-datetime presentation="time" hour-cycle="h23" prefer-wheel="true" :value="timeTemp" @ionChange="onTimeTempChange" />
-      <div class="form-picker__actions">
-        <ion-button fill="clear" class="form-picker__btn" @click="timeOpen=false">Cancelar</ion-button>
-        <ion-button class="form-picker__btn form-picker__btn--ok" @click="applyTime">Aceptar</ion-button>
-      </div>
-    </div>
-  </ion-modal>
+  
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption, IonIcon, IonModal, IonDatetime } from '@ionic/vue'
+import { IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption, IonIcon } from '@ionic/vue'
 import { personOutline, repeatOutline, calendarOutline, timeOutline, chatbubbleOutline } from 'ionicons/icons'
 import '@/theme/ExpenseForm.css'
 
@@ -109,8 +87,9 @@ const commentIcon = chatbubbleOutline
 
 const nombre = ref('')
 const frecuencia = ref('daily')
-const intervaloDias = ref(1)
+const intervaloDias = ref(2)
 const fechaFin = ref('')
+const minEndDate = ref(new Date().toISOString().slice(0, 10))
 const hora = ref('')
 const comentario = ref('')
 
@@ -120,20 +99,23 @@ const intervalError = ref('')
 const endDateError = ref('')
 const timeError = ref('')
 
+// Estados para antiguos pickers (ya no usados)
 const dateOpen = ref(false)
 const timeOpen = ref(false)
 const fechaFinTemp = ref('')
 const timeTemp = ref('')
 
 function validateName() {
-  if (!nombre.value || !String(nombre.value).trim()) nameError.value = 'El nombre es requerido'
-  else nameError.value = ''
+  const val = String(nombre.value || '').trim()
+  if (!val) { nameError.value = 'El nombre es requerido'; return }
+  if (val.length > 60) { nameError.value = 'Máximo 60 caracteres'; return }
+  nameError.value = ''
 }
 function validateFrequency() { freqError.value = frecuencia.value ? '' : 'Selecciona una frecuencia' }
 function validateInterval() {
   if (frecuencia.value === 'custom') {
     const n = Number(intervaloDias.value)
-    if (!Number.isFinite(n) || n < 1) { intervalError.value = 'Ingresa un intervalo válido mayor a 0'; return }
+    if (!Number.isFinite(n) || n < 2) { intervalError.value = 'Ingresa un intervalo válido mayor o igual a 2'; return }
   }
   intervalError.value = ''
 }
@@ -143,7 +125,12 @@ function isValidDateString(s) {
   const d = new Date(s)
   return !Number.isNaN(d.getTime())
 }
-function validateEndDate() { endDateError.value = isValidDateString(fechaFin.value) ? '' : 'Debes seleccionar una fecha válida' }
+function validateEndDate() {
+  const v = String(fechaFin.value || '')
+  if (!isValidDateString(v)) { endDateError.value = 'Debes seleccionar una fecha válida'; return }
+  if (v < minEndDate.value) { endDateError.value = 'La fecha no puede ser anterior a hoy'; return }
+  endDateError.value = ''
+}
 
 function openDatePicker() { fechaFinTemp.value = fechaFin.value || new Date().toISOString().slice(0, 10); dateOpen.value = true }
 function onDateTempChange(ev) { const v = String(ev.detail?.value || ''); if (/^\d{4}-\d{2}-\d{2}/.test(v)) fechaFinTemp.value = v.slice(0, 10) }
@@ -162,19 +149,21 @@ function applyTime() { if (timeTemp.value) { hora.value = timeTemp.value; valida
 const isValid = computed(() => (
   !nameError.value && !freqError.value && !intervalError.value && !endDateError.value && !timeError.value &&
   !!nombre.value && !!frecuencia.value && isValidDateString(fechaFin.value) &&
-  (frecuencia.value !== 'custom' || (Number(intervaloDias.value) >= 1))
+  (frecuencia.value !== 'custom' || (Number(intervaloDias.value) >= 2))
 ))
 
 function emitSubmit() {
   validateName(); validateFrequency(); validateInterval(); validateEndDate(); validateTimeFlexible()
   if (!isValid.value) return
+  const nameOut = String(nombre.value).trim().slice(0, 60)
+  const commentOut = (comentario.value ? String(comentario.value) : '').slice(0, 280)
   emit('submit', {
-    nombre: String(nombre.value).trim(),
+    nombre: nameOut,
     frecuencia: frecuencia.value,
     intervaloDias: frecuencia.value === 'custom' ? Number(intervaloDias.value) : null,
     fechaFin: fechaFin.value,
     hora: normalizeTimeString((hora.value || '').toString().trim()),
-    comentario: comentario.value || null,
+    comentario: commentOut || null,
   })
 }
 
@@ -183,8 +172,8 @@ watch(() => props.initial, (val) => {
   if (!val) return
   nombre.value = val.nombre ?? ''
   frecuencia.value = val.frecuencia ?? 'daily'
-  intervaloDias.value = val.intervaloDias ?? 1
-  fechaFin.value = val.fechaFin ?? ''
+  intervaloDias.value = Math.max(Number(val.intervaloDias ?? 3), 3)
+  fechaFin.value = (val.fechaFin && String(val.fechaFin) >= minEndDate.value) ? val.fechaFin : minEndDate.value
   hora.value = normalizeTimeString(val.hora ?? '') || ''
   comentario.value = val.comentario ?? ''
   nameError.value = freqError.value = intervalError.value = endDateError.value = timeError.value = ''
@@ -195,8 +184,8 @@ defineExpose({
   reset: () => {
     nombre.value = ''
     frecuencia.value = 'daily'
-    intervaloDias.value = 1
-    fechaFin.value = ''
+    intervaloDias.value = 2
+    fechaFin.value = minEndDate.value
     hora.value = ''
     comentario.value = ''
     nameError.value = freqError.value = intervalError.value = endDateError.value = timeError.value = ''
@@ -226,3 +215,6 @@ function normalizeTimeString(input) {
   return `${HH}:${MM}`
 }
 </script>
+
+
+function onIntervalInput(ev) { try { const v = Number(ev?.detail?.value); if (Number.isFinite(v) && v <= 2) intervaloDias.value = 2 } catch {} }
