@@ -257,8 +257,22 @@ const gridIcon = gridOutline
 function categoryIcon(key){ return iconForCategory(key) }
 
 const router = useRouter()
-function openAddIncome(){ router.push({ name: 'AddIncome' }) }
-function openAddExpense(){ router.push({ name: 'AddExpense' }) }
+function openAddIncome(){
+  try {
+    if (document && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur()
+    }
+  } catch(e){ void e }
+  router.push({ name: 'AddIncome' })
+}
+function openAddExpense(){
+  try {
+    if (document && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur()
+    }
+  } catch(e){ void e }
+  router.push({ name: 'AddExpense' })
+}
 
 /* Expose panel-specific action flags so the template can show the
   appropriate 'Crear ingreso' / 'Crear gasto' buttons when the component

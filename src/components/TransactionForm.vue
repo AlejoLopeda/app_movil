@@ -7,14 +7,15 @@
       mode="ios"
     >
       <ion-label position="stacked" class="expense-form__label">Monto</ion-label>
+      <span slot="start" class="expense-form__prefix">$</span>
       <ion-input
         class="expense-form__input"
         type="number"
         inputmode="decimal"
         placeholder="0.00"
         v-model.number="monto"
+        @ionInput="onAmountInput"
         @ionBlur="validateAmount"
-        prefix="$"
       />
       <ion-icon slot="end" :icon="calculatorOutline" class="expense-form__icon" />
     </ion-item>
