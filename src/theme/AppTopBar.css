@@ -1,143 +1,116 @@
-.topbar__toolbar {
-  --background: var(--app-topbar-bg, #0d3f48);
+/* ========== TOPBAR BASE ========== */
+.topbar{
+  --notch-height: 26px;
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+
+  /* 👇 NUEVO: separación estándar debajo del header para overlays/menus */
+  --user-speed-gap: 12px;
+
+  padding-top: calc(var(--safe-top) + var(--notch-height));
+  background: var(--app-topbar-bg, #0d3f48);
+  position: relative;
+  z-index: 10000;
+}
+
+/* Barra negra SIEMPRE visible ocupando status/notch */
+.topbar__notch{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: calc(var(--safe-top) + var(--notch-height));
+  background: transparent;        /* quitamos el fondo negro */
+  z-index: 10001;                /* por encima del header */
+  pointer-events: none;           /* no bloquea toques */
+}
+
+/* Toolbar */
+.topbar__toolbar{
+  --background: transparent;
   --color: #ffffff;
   --border-width: 0;
   min-height: 56px;
+  padding-top: 0;
+  padding-bottom: 4px;
 }
 
-.topbar__btn {
-  --color: #ffffff;
+.topbar__btn{ --color:#fff; }
+
+/* ========== TÍTULO ========== */
+.topbar__title{
+  display:flex; align-items:center; justify-content:center;
+  text-transform:uppercase; letter-spacing:.08em;
+  font-weight:800; text-align:center; line-height:1.1;
+  overflow:visible; white-space:normal;
 }
-
-.topbar__title {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 800;
-  text-align: center;
+.topbar__title-inner{ display:flex; flex-direction:column; align-items:center; gap:0; }
+.topbar__title-line1,
+.topbar__title-line2{
+  font-size: clamp(16px, 4.6vw, 21px);
+  line-height: 1.06;
+  letter-spacing: .08em;
+  opacity: 1;
 }
+.topbar__title-line2{ margin-top: 0; }
+.topbar__toolbar--twoline{ min-height: 66px; }
 
-.topbar__user-label {
-  margin-left: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: inline;
-  white-space: nowrap;
-}
-
-.user-speed {
-  position: fixed;
-  z-index: 9999;
-  top: calc(env(safe-area-inset-top) + 60px);
-  right: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-.user-speed__btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  --border-radius: 50%;
-  --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  --color: #fff;
-  --background: var(--app-topbar-bg, #0d3f48);
-  --padding-start: 0;
-  --padding-end: 0;
-  display: grid;
-  place-items: center;
-}
-
-.user-speed__btn--danger {
-  --background: #e53935;
-  --color: #fff;
-}
-
-.user-speed__btn ion-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
-  color: #fff;
-}
-
-.user-speed-overlay {
-  position: fixed;
-  top: calc(env(safe-area-inset-top) + 56px);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9998;
-  background: rgba(0, 0, 0, 0);
-  pointer-events: auto;
-  top: calc(var(--ion-safe-area-top) + 56px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .topbar__toolbar {
-    --background: var(--app-topbar-bg-dark, #0b2e35);
-    --color: #e6f1f3;
-    padding-top: var(--ion-safe-area-top);
-    min-height: calc(56px + var(--ion-safe-area-top));
-  }
-
-  .topbar__btn {
-    --color: #e6f1f3;
-  }
-
-  .user-speed__btn {
-    --background: var(--app-topbar-bg-dark, #0b2e35);
-    --color: #fff;
-    top: calc(var(--ion-safe-area-top) + 60px);
-  }
-
-  .user-speed__btn--danger {
-    --background: #e53935;
-    --color: #fff;
-  }
-  
-  .topbar__user-btn{
-  --padding-start: 4px;
-  --padding-end: 4px;
+/* ========== AVATAR / BOTONES ========== */
+.topbar__user-btn{
+  --padding-start: 10px;
+  --padding-end: 10px;
   --background: transparent;
   --box-shadow: none;
   border-radius: 9999px;
-  }
+}
+.topbar__avatar{
+  width: 40px; height: 40px; min-width: 40px; min-height: 40px;
+  border: 2px solid #0b3a43; box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  overflow:hidden; position:relative;
+}
+.topbar__avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+.topbar__toolbar .topbar__btn ion-icon{ font-size: 24px; width: 24px; height: 24px; }
 
-  .topbar__avatar{
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  min-height: 34px;
-  border: 2px solid #0b3a43;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
-  overflow: hidden;
-  position: relative;
-  }
-  .topbar__avatar-skel{
-    position:absolute; inset:0;
-    border-radius: 9999px;
-    background: linear-gradient(90deg, #0f2c31, #1b424a, #0f2c31);
-    animation: avatarSk 1.2s infinite;
-    filter: saturate(.8);
-  }
-  @keyframes avatarSk{ 0%{background-position:0 0} 100%{background-position:120px 0} }
-  .topbar__avatar img{
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .topbar__user-btn{
-    --padding-start: 6px;
-    --padding-end: 6px;
-    --background: transparent;
-    --box-shadow: none;
-    border-radius: 9999px;
-  }
+/* ========== SPEED DIAL Y OVERLAY ========== */
+/* 👇 Clave: arrancar debajo del header + un GAP fijo para que no “toque” el avatar */
+.user-speed{
+  position:fixed; right:12px;
+  top: calc(var(--topbar-height, calc(var(--safe-top) + var(--notch-height) + 56px)) + var(--user-speed-gap, 12px));
+  z-index:9999; display:grid; gap:10px;
+}
+.user-speed__btn{
+  width:44px; height:44px; border-radius:50%;
+  --border-radius:50%; --box-shadow:0 6px 18px rgba(0,0,0,.18);
+  --color:#fff; --background: var(--app-topbar-bg, #0d3f48);
+  --padding-start:0; --padding-end:0; display:grid; place-items:center;
+}
+.user-speed__btn--danger{ --background:#e53935; --color:#fff; }
+.user-speed__btn ion-icon{ font-size:22px; width:22px; height:22px; color:#fff; }
 
-  .topbar__avatar img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+/* Overlay con el mismo TOP + GAP */
+.user-speed-overlay{
+  position:fixed; left:0; right:0; bottom:0;
+  top: calc(var(--topbar-height, calc(var(--safe-top) + var(--notch-height) + 56px)) + var(--user-speed-gap, 12px));
+  z-index:9998; background:rgba(0,0,0,0); pointer-events:auto;
 }
 
+/* Dark mode */
+@media (prefers-color-scheme: dark){
+  .topbar{ background: var(--app-topbar-bg-dark, #0b2e35); }
+  .topbar__notch{ background: transparent; }
+  .topbar__toolbar{ --color:#e6f1f3; }
+  .topbar__btn{ --color:#e6f1f3; }
+  .user-speed__btn{ --background: var(--app-topbar-bg-dark, #0b2e35); --color:#fff; }
+}
+
+/* Skeleton avatar */
+.topbar__avatar { position: relative; }
+.topbar__avatar-skel{
+  position:absolute; inset:0;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #0f2c31 0%, #1b424a 50%, #0f2c31 100%);
+  background-size: 200% 100%;
+  animation: avatarSk 1.2s infinite;
+  filter: saturate(.9);
+}
+@keyframes avatarSk{
+  0%{ background-position: 0% 0 }
+  100%{ background-position: 200% 0 }
+}

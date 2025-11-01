@@ -1,51 +1,163 @@
-/* ====== Estilo del menú lateral (alineado a tu topbar) ====== */
+/* ====== Side Menu con look de HISTÓRICO (claro) + glass ====== */
 .side-menu {
-  --width: 84vw;
-  --max-width: 320px;
+  /* ancho del panel */
+  --menu-width: min(65vw, 300px);
+  --width: var(--menu-width);
+
+  /* alturas */
+  --notch-height: 26px;                  /* franja negra superior */
+  --toolbar-height: 60px;                /* igual que tu topbar */
+
+  /* paleta como Histórico */
+  --m-bg: #f2f5f7;                       /* base clara */
+  --m-surface: #ffffff;                  /* tarjetas/opciones */
+  --m-border: rgba(0,0,0,.08);           /* bordes sutiles   */
+  --m-text: #10252a;                     /* texto principal  */
+  --m-text-dim: #0d3f48;                 /* texto tenue      */
+  --m-radius-lg: 14px;
+  --m-shadow: 0 10px 30px rgba(12,28,35,.08);
+
+  /* color de la topbar (marca) */
+  --topbar-bg: var(--app-topbar-bg, #0d3f48);
+
+  /* Glass tint (oscurece y permite blur del fondo) */
+  --glass-tint: rgba(13,63,72,0.12);
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-blur: 14px;
+  --glass-sat: 118%;
 }
 
+/* contenedor del drawer transparente */
+ion-menu.side-menu::part(container) {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* backdrop exterior (fuera del panel) con leve blur */
+ion-menu.side-menu::part(backdrop) {
+  background: rgba(0,0,0,.28);
+  opacity: 1;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* franja negra fija superior (no se blurea) */
+.side-menu__notch{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--menu-width);
+  height: var(--notch-height);
+  background: transparent; /* quitar la franja negra */
+  z-index: 10001;
+  pointer-events: none;
+}
+
+/* cuerpo del panel con efecto glass */
+.side-menu__inner{
+  position: relative;                    /* para el overlay sólido */
+  width: var(--menu-width);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--notch-height);      /* bajo la franja negra */
+
+  /* Glassmorphism: base clara + tinte + blur */
+  background:
+    linear-gradient(0deg, var(--glass-tint), var(--glass-tint)),
+    var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+
+  border-right: 1px solid var(--m-border);
+  overflow: hidden;
+}
+
+/* --- Overlay sólido del color de la topbar bajo el toolbar --- */
+/* Esto asegura que la barra del menú tenga la MISMA oscuridad que la topbar */
+.side-menu__inner::before{
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: calc(var(--notch-height) + var(--toolbar-height));
+  background: var(--topbar-bg);          /* mismo color que la topbar */
+  z-index: 0;                            /* debajo de texto/iconos del toolbar */
+}
+
+/* toolbar del menú (texto por encima del overlay) */
 .side-menu__toolbar {
-  --background: var(--app-topbar-bg, #0d3f48);
+  --background: transparent;             /* usamos el overlay para el fondo */
+  background: transparent !important;
   --color: #fff;
   --border-width: 0;
-  min-height: 56px;
+  min-height: var(--toolbar-height);
+  padding-top: 0;
+  margin-top: 0;
+  position: relative;
+  z-index: 1;                            /* sobre el overlay */
 }
 .side-menu__title {
   text-transform: uppercase;
   letter-spacing: .08em;
   font-weight: 800;
+  color: #fff;                           /* asegura contraste */
 }
 
-.side-menu__content {
-  --background: var(--ion-background-color, #0f0f0f);
-}
-.side-menu__list { padding: 8px 0; }
+/* ====== limpiar fondos por defecto ====== */
+.side-menu__content { --background: transparent; }
 
+/* quita el “bloque” del ion-list */
+.side-menu__list,
+.side-menu__list::part(native){
+  background: transparent !important;
+  padding: 10px 0 14px !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* IonItem como tarjeta blanca */
 .side-menu__item {
-  --background: transparent;
-  --color: var(--ion-text-color);
-  --border-radius: 12px;
-  margin: 6px 10px;
-  padding-inline-start: 14px;
-  padding-inline-end: 10px;
-  min-height: 46px;
-  font-weight: 600;
+  --background: transparent;             /* nada detrás */
+  --color: var(--m-text);
+  margin: 8px 12px;
+  min-height: 48px;
+  font-weight: 700;
+  letter-spacing: .01em;
 }
 
-.side-menu__item:hover,
-.side-menu__item:focus {
-  background: rgba(255,255,255,.06);
+/* eliminar contenedor por defecto del item */
+.side-menu__item::part(container){
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
 }
 
-/* Modo claro */
-@media (prefers-color-scheme: light) {
-  .side-menu__content { --background: #f7f9fc; }
-  .side-menu__item:hover,
-  .side-menu__item:focus { background: rgba(0,0,0,.06); }
+/* tarjeta blanca real */
+.side-menu__item::part(native){
+  background: var(--m-surface) !important;
+  color: var(--m-text) !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: var(--m-radius-lg) !important;
+  box-shadow: var(--m-shadow) !important;
+  padding-inline-start: 14px !important;
+  padding-inline-end: 10px !important;
 }
 
-/* Backdrop para cerrar al tocar fuera del menú */
-ion-menu::part(backdrop) {
-  background: rgba(0,0,0,.4);
-  opacity: 1;
+/* sin divisores internos */
+.side-menu__item::part(inner) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
+
+/* hover/active */
+.side-menu__item:hover::part(native){
+  box-shadow: 0 14px 34px rgba(16,28,33,.12) !important;
+  background: #ffffff !important;
+}
+.side-menu__item:active::part(native){
+  transform: translateY(1px);
+}
+
+/* subtítulo opcional */
+.side-menu__item .subtle { color: var(--m-text-dim); font-weight: 600; }

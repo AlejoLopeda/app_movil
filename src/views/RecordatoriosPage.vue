@@ -12,7 +12,15 @@
 
         <div v-if="items.length" class="reminders-list">
 
-          <div v-for="r in items" :key="r.id" class="expense-form__card reminder-card">
+          <div
+            v-for="r in items"
+            :key="r.id"
+            class="expense-form__card reminder-card"
+            role="button"
+            tabindex="0"
+            @click="onDetails(r)"
+            @keyup.enter="onDetails(r)"
+          >
 
             <div class="reminder-header">
 
@@ -26,19 +34,27 @@
 
               <div class="reminder-actions">
 
-                <ion-button fill="clear" size="small" @click="onDetails(r)" aria-label="Ver detalles">
-
-                  <ion-icon :icon="informationCircleOutline" />
-
-                </ion-button>
-
-                <ion-button fill="clear" size="small" @click="onEdit(r)" aria-label="Editar">
+                <ion-button
+                  class="action-btn action-btn--edit"
+                  fill="solid"
+                  size="small"
+                  @click.stop="onEdit(r)"
+                  aria-label="Editar"
+                  title="Editar"
+                >
 
                   <ion-icon :icon="createOutline" />
 
                 </ion-button>
 
-                <ion-button fill="clear" size="small" color="danger" @click="onDeleteAsk(r)" aria-label="Eliminar">
+                <ion-button
+                  class="action-btn action-btn--delete"
+                  fill="solid"
+                  size="small"
+                  @click.stop="onDeleteAsk(r)"
+                  aria-label="Eliminar"
+                  title="Eliminar"
+                >
 
                   <ion-icon :icon="trashOutline" />
 
@@ -81,6 +97,8 @@
               </div>
 
             </div>
+
+            <div class="reminder-tap-hint">Toca para ver más detalles</div>
 
           </div>
 
@@ -156,15 +174,16 @@
 
             </p>
 
-            <p v-if="details.item?.comment" class="modal-line">
+            <div v-if="details.item?.comment" class="modal-line modal-line--comment">
 
               <ion-icon :icon="chatbubbleOutline" class="meta-icon" />
 
-              <strong>Comentario:</strong>
+              <div class="modal-col">
+                <strong>Comentario:</strong>
+                <p class="meta-text comment-text">{{ details.item?.comment }}</p>
+              </div>
 
-              <span class="meta-text">{{ details.item?.comment }}</span>
-
-            </p>
+            </div>
 
           </div>
 
@@ -182,7 +201,7 @@
 
         css-class="reminders-alert"
 
-        message="Â¿Seguro que deseas eliminarlo?"
+        message="&iquest;Seguro que deseas eliminarlo?"
 
         :buttons="[
 
@@ -221,7 +240,7 @@
 
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
@@ -229,6 +248,7 @@ import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal
 import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
+import { cancelSchedulesForReminder } from '@/lib/localNotifications'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -237,7 +257,17 @@ const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || "Recordatorios")
 
 const { items, load } = useReminders()
-onMounted(load)
+onMounted(() => {
+  load()
+  try {
+    window.addEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
+onBeforeUnmount(() => {
+  try {
+    window.removeEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
 onIonViewWillEnter(load)
 
 function labelFrecuencia(r) {
@@ -275,13 +305,23 @@ async function onDeleteDo() {
   try {
     await deactivateReminder(item.id)
     await load()
+    try { await cancelSchedulesForReminder(item.id) } catch {}
     showToast("Recordatorio eliminado", "success")
+    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'deleted', id: item.id } })) } catch {}
   } catch (e) {
     showToast("No se pudo eliminar", "danger")
   }
 }
 
 const toast = ref({ open: false, message: "", color: "primary" })
+
+// Refrescar y mostrar toast al volver desde crear/editar
+function onRemindersChanged(ev) {
+  load()
+  const action = ev?.detail?.action
+  if (action === 'created') showToast('Recordatorio creado', 'success')
+  else if (action === 'updated') showToast('Recordatorio actualizado', 'success')
+}
 </script>
 
 

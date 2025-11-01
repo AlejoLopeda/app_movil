@@ -92,20 +92,12 @@
             <ion-checkbox
               v-model="form.acceptTerms"
               class="app-account__checkbox"
-              aria-label="Acepto los terminos y condiciones"
+              aria-label="Acepto los términos y condiciones"
             />
-            <span class="app-account__terms-text">Acepto los terminos y condiciones.</span>
+            <span class="app-account__terms-text">
+              Acepto los <button type="button" class="link-inline" @click="goToTerms">términos y condiciones</button>.
+            </span>
           </div>
-
-          <ion-button
-            class="app-account__link"
-            fill="clear"
-            size="small"
-            type="button"
-            href="#"
-          >
-            Leer terminos y condiciones
-          </ion-button>
 
           <ion-button
             class="app-account__submit"
@@ -145,6 +137,7 @@ import {
 import { personOutline, mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons'
 import '@/theme/AuthPage.css'
 import { useAuth } from '../composables/useAuth.js'
+import { useRouter, useRoute } from 'vue-router'
 
 const form = reactive({
   name: '',
@@ -164,6 +157,8 @@ const eyeIcon = eyeOutline
 const eyeOffIcon = eyeOffOutline
 
 const { register, isLoading, authError, registrationResult } = useAuth()
+const router = useRouter()
+const route = useRoute()
 
 const errorMessage = computed(() => authError.value)
 const successMessage = computed(() => {
@@ -204,10 +199,26 @@ watch(registrationResult, (result) => {
 
 const onSubmit = async () => {
   if (!form.acceptTerms) {
-    authError.value = 'Debes aceptar los terminos y condiciones.'
+    authError.value = 'Debes aceptar los términos y condiciones.'
     return
   }
 
   await register({ ...form })
 }
+
+function goToTerms() {
+  router.push({ name: 'Terms', query: { from: 'register' } })
+}
+
+watch(
+  () => route.query.accepted,
+  (val) => {
+    if (val === '1') {
+      form.acceptTerms = true
+      // Limpia el query param para evitar re-disparos
+      router.replace({ query: { ...route.query, accepted: undefined } })
+    }
+  },
+  { immediate: true }
+)
 </script>

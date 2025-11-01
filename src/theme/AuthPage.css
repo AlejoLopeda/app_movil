@@ -1,6 +1,7 @@
 .auth-login,
 .auth-email {
   --background: #f7f9fc;
+  /* Evita que Android WebView fuerce modo oscuro */
   color-scheme: light;
 }
 
@@ -11,6 +12,9 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
+  /* Para header translúcido */
+  --padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  --min-height: 64px;
 }
 
 .auth-page__title {
@@ -23,6 +27,22 @@
 .auth-login__content,
 .auth-email__content {
   --background: #f7f9fc;
+  /* Header translúcido + fullscreen: empuja el contenido */
+  --padding-top: calc(env(safe-area-inset-top, 0px) + 88px);
+}
+
+/* Despega un poco el título del borde superior del toolbar */
+.auth-page__title {
+  padding-top: 6px;
+}
+
+/* Afinar aún más en pantallas pequeñas */
+@media (max-width: 480px) {
+  .auth-login__toolbar,
+  .auth-email__toolbar { --min-height: 68px; --padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  .auth-login__content,
+  .auth-email__content { --padding-top: calc(env(safe-area-inset-top, 0px) + 96px); }
+  .auth-page__title { padding-top: 8px; }
 }
 
 .auth-login__wrapper,
@@ -136,7 +156,11 @@
 .app-login__input {
   --placeholder-font-weight: 600;
   font-weight: 600;
-  color: #0d0d0d;
+  /* Fuerza color de texto en WebView Android (md) */
+  color: #0d0d0d !important;
+  --color: #0d0d0d !important;
+  --placeholder-color: rgba(13, 13, 13, 0.54) !important;
+  --placeholder-opacity: 1 !important;
 }
 
 .app-account__terms {
@@ -153,6 +177,19 @@
   --background-checked: #0d3f48;
   --border-color: #0d3f48;
   --checkmark-color: #ffffff;
+}
+
+.app-account__terms-text {
+  line-height: 1.4;
+}
+.app-account__terms-text .link-inline {
+  padding: 0;
+  margin: 0 2px;
+  background: none;
+  border: none;
+  color: #0d3f48;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .app-account__link {
@@ -238,11 +275,16 @@
 .app-account__input::part(native),
 .app-login__input::part(native) {
   font-size: 0.95rem;
+  color: #0d0d0d !important;            /* texto digitado */
+  caret-color: #0d0d0d !important;      /* color del cursor */
+  -webkit-text-fill-color: #0d0d0d !important; /* corrige forzado de color en md/dark */
 }
 
 .app-account__input::part(native)::placeholder,
 .app-login__input::part(native)::placeholder {
   font-size: 0.85rem;
+  color: rgba(13, 13, 13, 0.54) !important; /* placeholder visible */
+  opacity: 1 !important;
 }
 
 .auth-field-toggle ion-icon {
@@ -251,3 +293,57 @@
 
 
 
+/* ====== AUTH TOPBAR (match AppTopBar) ====== */
+.auth-topbar {
+  --notch-height: 26px;
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--ion-safe-area-top, 0px));
+  padding-top: calc(var(--safe-top) + var(--notch-height));
+  background: var(--app-topbar-bg, #0d3f48);
+  position: relative;
+  z-index: 1000;
+}
+.auth-topbar__notch {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: calc(var(--safe-top) + var(--notch-height));
+  background: #000;
+  z-index: 1001;
+  pointer-events: none;
+}
+.auth-topbar__toolbar {
+  --background: transparent;
+  --color: #ffffff;
+  --border-width: 0;
+  /* Altura suficiente para títulos de dos líneas */
+  min-height: 66px;
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+.auth-topbar__title,
+.auth-page__title {
+  /* Igualar composición con la topbar principal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ffffff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  white-space: normal; /* permitir dos líneas */
+  overflow: visible;
+  /* Mismo escalado de tamaño que la topbar */
+  font-size: clamp(16px, 4.6vw, 21px);
+  padding: 0 8px; /* margen lateral para evitar cortes */
+}
+
+/* Con este header no translúcido, el contenido no necesita padding superior extra */
+.auth-login__content,
+.auth-email__content {
+  --padding-top: 0px;
+}
+
+@media (max-width: 480px) {
+  .auth-topbar__toolbar { min-height: 60px; }
+}
