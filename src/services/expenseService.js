@@ -27,8 +27,8 @@ export function additionalCategories() {
 }
 export function resolveCategory(key) {
     return (
-        DEFAULT_CATEGORIES.find((i) => i.key === key) ? ?
-        ADDITIONAL_CATEGORIES.find((i) => i.key === key) ? ?
+        DEFAULT_CATEGORIES.find((i) => i.key === key) ??
+        ADDITIONAL_CATEGORIES.find((i) => i.key === key) ??
         null
     )
 }
@@ -51,7 +51,7 @@ async function decreaseInitialAmount(userId, amount) {
         .single()
     if (fetchError) throw fetchError
 
-    const current = Number(profile ? .initial_amount ? ? 0)
+    const current = Number(profile?.initial_amount ?? 0)
     const delta = Number.isFinite(amount) ? amount : 0
     const next = Number.isFinite(current - delta) ? current - delta : current
 
@@ -63,7 +63,7 @@ async function decreaseInitialAmount(userId, amount) {
         .single()
 
     if (!updateError) {
-        return Number(updated ? .initial_amount ? ? next)
+        return Number(updated?.initial_amount ?? next)
     }
 
     // Fallback por si hay política de actualización
@@ -73,7 +73,7 @@ async function decreaseInitialAmount(userId, amount) {
     })
     if (rpcError) throw rpcError
     if (rpcData && rpcData.ok === false) {
-        throw new Error(rpcData ? .message || 'Failed to update initial amount')
+        throw new Error(rpcData?.message || 'Failed to update initial amount')
     }
     return next
 }
@@ -82,14 +82,13 @@ async function decreaseInitialAmount(userId, amount) {
 // Insertar gasto
 // ======================
 export async function insertExpense(row) {
-    const amount = sanitizeAmount(row.amount ? ? row.monto)
+    const amount = sanitizeAmount(row.amount ?? row.monto)
 
     // ✅ userId llega desde el compositor; mantenemos fallbacks livianos
-    let ensuredUserId = row ? .user_id || ''
+    let ensuredUserId = row?.user_id || ''
     if (!ensuredUserId) {
         try {
-            const { useAuthUser } = await
-            import ('@/composables/useAuthUser')
+            const { useAuthUser } = await import('@/composables/useAuthUser')
             const { userId } = useAuthUser()
             ensuredUserId = userId()
         } catch (_) {}
@@ -98,7 +97,7 @@ export async function insertExpense(row) {
         // último recurso (solo si es absolutamente necesario)
         try {
             const { data } = await supabase.auth.getUser()
-            ensuredUserId = data ? .user ? .id || ''
+            ensuredUserId = data?.user?.id || ''
         } catch (_) {}
     }
     if (!ensuredUserId) {
@@ -110,9 +109,9 @@ export async function insertExpense(row) {
     // Normaliza nombres por si llegan variantes
     const payload = {
         monto: amount,
-        categoria: row.category_key ? ? row.categoria ? ? null,
-        fecha: row.occurred_on ? ? row.fecha,
-        descripcion: row.description ? ? row.descripcion ? ? null,
+        categoria: row.category_key ?? row.categoria ?? null,
+        fecha: row.occurred_on ?? row.fecha,
+        descripcion: row.description ?? row.descripcion ?? null,
         user_id: ensuredUserId
     }
 
@@ -183,7 +182,7 @@ export async function list(filter = {}) {
         throw error
     }
 
-    console.debug('[gastos][list] userId:', userId, 'from:', from, 'to:', to, 'rows:', data ? .length ? ? 0, 'cats:', catsFilter)
+    console.debug('[gastos][list] userId:', userId, 'from:', from, 'to:', to, 'rows:', data?.length ?? 0, 'cats:', catsFilter)
 
     return (data || []).map(r => ({
         id: r.id,
