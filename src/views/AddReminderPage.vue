@@ -42,7 +42,7 @@ function showToast(message, color = 'primary') {
 async function handleSubmit(payload) {
   const res = await saveReminder(payload)
   if (res.ok) {
-    // Redirigir directamente al panel de recordatorios
+    // Redirigir al panel de recordatorios
     router.replace({ name: 'Recordatorios' })
     return
   }

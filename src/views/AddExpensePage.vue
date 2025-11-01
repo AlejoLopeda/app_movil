@@ -77,7 +77,7 @@ async function handleSubmit(payload) {
   if (res.ok) {
     showToast('Gasto guardado', 'success')
     formRef.value?.reset?.()
-    setTimeout(() => router.replace('/historico'), 450)
+    setTimeout(() => router.replace('/balance'), 450)
     return
   }
 
