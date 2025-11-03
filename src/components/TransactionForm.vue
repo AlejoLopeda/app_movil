@@ -7,14 +7,15 @@
       mode="ios"
     >
       <ion-label position="stacked" class="expense-form__label">Monto</ion-label>
+      <span slot="start" class="expense-form__prefix">$</span>
       <ion-input
         class="expense-form__input"
         type="number"
         inputmode="decimal"
         placeholder="0.00"
         v-model.number="monto"
+        @ionInput="onAmountInput"
         @ionBlur="validateAmount"
-        prefix="$"
       />
       <ion-icon slot="end" :icon="calculatorOutline" class="expense-form__icon" />
     </ion-item>
@@ -123,13 +124,12 @@ import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton, IonModal } fr
 import {
   calculatorOutline,
   addCircleOutline,
-  cashOutline, homeOutline, restaurantOutline, carOutline, schoolOutline,
-  filmOutline, shirtOutline, airplaneOutline, pawOutline, giftOutline, medkitOutline,
-  peopleOutline, briefcaseOutline, refreshOutline, cartOutline, walletOutline,
   calendarOutline, createOutline,
 } from 'ionicons/icons'
 import { additionalCategories as addExp, presetCategories as preExp, resolveCategory as resExp } from '@/services/expenseService'
 import { additionalCategories as addInc, presetCategories as preInc, resolveCategory as resInc } from '@/services/incomeService'
+import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
+import { iconForCategory } from '@/utils/categoryIcons'
 import '@/theme/ExpenseCategories.css'
 import '@/theme/ExpenseForm.css'
 
@@ -143,10 +143,12 @@ const mode = computed(() => (props.mode === 'income' ? 'income' : 'expense'))
 const showSubmit = computed(() => props.showSubmit)
 const emit = defineEmits(['submit'])
 
-const monto = ref(null)
+const monto = ref('')
 const categoria = ref(null)
 const fecha = ref('')
 const descripcion = ref('')
+
+const amountValue = computed(() => parsePositiveNumber(monto.value))
 
 const amountError = ref('')
 const dateError = ref('')
@@ -166,33 +168,15 @@ const categories = computed(() => {
 })
 
 function iconFor(key) {
-  switch (key) {
-    // expense
-    case 'salud': return medkitOutline
-    case 'hogar': return homeOutline
-    case 'comida': return restaurantOutline
-    case 'transporte': return carOutline
-    case 'educacion': return schoolOutline
-    case 'entretenimiento': return filmOutline
-    case 'ropa': return shirtOutline
-    case 'viajes': return airplaneOutline
-    case 'mascotas': return pawOutline
-    case 'regalos': return giftOutline
-    case 'otros': return cashOutline
-    // income
-    case 'salario': return cashOutline
-    case 'pension': return peopleOutline
-    case 'comisiones': return briefcaseOutline
-    case 'propinas': return restaurantOutline
-    case 'reembolsos': return refreshOutline
-    case 'ventas': return cartOutline
-    case 'mesada': return walletOutline
-  }
-  return cashOutline
+  return iconForCategory(key)
+}
+
+function onAmountInput(ev) {
+  monto.value = sanitizePositiveDecimalInput(ev.detail?.value)
 }
 
 function validateAmount() {
-  if (monto.value == null || isNaN(Number(monto.value)) || Number(monto.value) <= 0) {
+  if (amountValue.value === null) {
     amountError.value = 'El monto debe ser mayor a 0'
   } else {
     amountError.value = ''
@@ -211,10 +195,10 @@ const isValid = computed(
   () =>
     !amountError.value &&
     !dateError.value &&
-    monto.value != null &&
-    Number(monto.value) > 0 &&
+    amountValue.value !== null &&
     !!fecha.value
 )
+
 
 function openCategorias() { showMoreCategories.value = true }
 function closeCategorias() { showMoreCategories.value = false }
@@ -234,7 +218,7 @@ function emitSubmit() {
   validateDate()
   if (!isValid.value) return
   emit('submit', {
-    monto: Number(monto.value),
+    monto: amountValue.value,
     categoria: categoria.value,
     fecha: fecha.value,
     descripcion: descripcion.value || null,
@@ -244,7 +228,7 @@ function emitSubmit() {
 defineExpose({
   submit: emitSubmit,
   reset: () => {
-    monto.value = null
+    monto.value = ''
     categoria.value = null
     fecha.value = ''
     descripcion.value = ''

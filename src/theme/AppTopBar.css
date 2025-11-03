@@ -17,9 +17,9 @@
   position: fixed;
   top: 0; left: 0; right: 0;
   height: calc(var(--safe-top) + var(--notch-height));
-  background: #000;
-  z-index: 10001;
-  pointer-events: none;
+  background: transparent;        /* quitamos el fondo negro */
+  z-index: 10001;                /* por encima del header */
+  pointer-events: none;           /* no bloquea toques */
 }
 
 /* Toolbar */
@@ -94,7 +94,7 @@
 /* Dark mode */
 @media (prefers-color-scheme: dark){
   .topbar{ background: var(--app-topbar-bg-dark, #0b2e35); }
-  .topbar__notch{ background: #000; }
+  .topbar__notch{ background: transparent; }
   .topbar__toolbar{ --color:#e6f1f3; }
   .topbar__btn{ --color:#e6f1f3; }
   .user-speed__btn{ --background: var(--app-topbar-bg-dark, #0b2e35); --color:#fff; }

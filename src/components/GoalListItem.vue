@@ -14,27 +14,30 @@
         </goal-progress-bar>
       </div>
       <div class="goal-actions">
-        <ion-button size="small" fill="clear" @click="emit('edit', goal.id)">
+        <ion-button class="action-btn action-btn--edit" size="small" fill="solid" @click="emit('edit', goal.id)">
           <ion-icon :icon="pencilOutline" />
         </ion-button>
-        <ion-button size="small" fill="clear" color="danger" @click="emit('delete', goal.id)">
+        <ion-button class="action-btn action-btn--delete" size="small" fill="solid" color="danger" @click="emit('delete', goal.id)">
           <ion-icon :icon="trashOutline" />
         </ion-button>
-        <ion-button size="small" fill="clear" @click="expanded = !expanded">
+        <ion-button class="action-btn" size="small" fill="clear" @click="expanded = !expanded">
           <ion-icon :icon="expanded ? chevronUpOutline : chevronDownOutline" />
         </ion-button>
       </div>
     </div>
 
-    <div v-if="expanded" class="goal-expand">
+  <div v-if="!expanded" class="goal-tap-hint">Toca para ver más detalles</div>
+
+  <div v-if="expanded" class="goal-expand">
       <div class="goal-transfer">
         <ion-item lines="none" class="goal-inputs">
           <ion-input
             class="goal-amount-input"
             placeholder="$ monto"
             inputmode="decimal"
-            type="number"
-            v-model="amount"
+            type="text"
+            :value="amount"
+            @ionInput="onAmountInput"
           />
         </ion-item>
         <ion-item lines="none" class="goal-inputs">
@@ -75,6 +78,7 @@ import { ref, computed } from 'vue'
 import { IonButton, IonIcon, IonItem, IonInput, IonToast } from '@ionic/vue'
 import { pencilOutline, trashOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons'
 import GoalProgressBar from '@/components/GoalProgressBar.vue'
+import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
 import '@/theme/goals.css'
 
 const props = defineProps({
@@ -92,17 +96,23 @@ const showHistory = ref(false)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 
-const canSubmit = computed(() => Number(amount.value) > 0)
+const amountValue = computed(() => parsePositiveNumber(amount.value))
+const canSubmit = computed(() => amountValue.value !== null)
 
 function openToast(message, color='primary'){
   toast.value = { open: true, message, color }
 }
 
+function onAmountInput(ev){
+  amount.value = sanitizePositiveDecimalInput(ev.detail?.value)
+}
+
+
 async function onDeposit(){
   if (!canSubmit.value) return
   try {
     busy.value = true
-    await emit('deposit', { id: props.goal.id, amount: Number(amount.value), description: description.value })
+    await emit('deposit', { id: props.goal.id, amount: amountValue.value, description: description.value })
     amount.value=''
     description.value=''
     openToast('Abono registrado', 'success')
@@ -115,7 +125,7 @@ async function onWithdraw(){
   if (!canSubmit.value) return
   try {
     busy.value = true
-    await emit('withdraw', { id: props.goal.id, amount: Number(amount.value), description: description.value })
+    await emit('withdraw', { id: props.goal.id, amount: amountValue.value, description: description.value })
     amount.value=''
     description.value=''
     openToast('Retiro registrado', 'success')
@@ -129,3 +139,4 @@ function toggleHistory(){
   if (showHistory.value) emit('toggle-history', props.goal.id)
 }
 </script>
+

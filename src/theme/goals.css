@@ -9,31 +9,99 @@
 }
 
 /* Force readable headings inside Monthly header for this module */
-.monthly-header__title { color: #0b2c33 !important; }
-.monthly-header__subtitle { color: #041c21 !important; opacity: .9; }
+.monthly-header__title { color: var(--app-topbar-bg, #0d3f48) !important; }
+.monthly-header__subtitle { color: var(--app-topbar-bg, #0d3f48) !important; opacity: .9; }
 
 .goal-item {
+  /* Match the reminder card exactly: padding, border, shadow, background */
+  padding: clamp(16px, 4vw, 22px);
   border-radius: 18px;
-  padding: 14px 14px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(13, 63, 72, 0.12);
-  box-shadow: 0 16px 34px -28px rgba(13, 63, 72, 0.55);
+  background: #ffffff;
+  border: 2px solid rgba(13,63,72,0.08);
+  box-shadow: 0 18px 38px -26px rgba(13,63,72,0.45);
+  cursor: pointer;
 }
 
 .goal-row {
   display: flex;
   gap: 8px;
+  align-items: flex-start;
 }
 
 .goal-main {
   flex: 1;
 }
 
-.goal-title { font-size: 1rem; font-weight: 800; letter-spacing: .02em; }
-.goal-sub { font-size: .9rem; opacity: .9; margin-bottom: 8px; font-weight: 600; }
+.goal-title { font-size: 1rem; font-weight: 800; letter-spacing: .02em; color: #0d3f48; }
+.goal-sub { font-size: .9rem; opacity: .9; margin-bottom: 8px; font-weight: 600; color: #334155; }
 .goal-sub .is-complete { color: var(--ion-color-success); font-weight: 600; }
 
-.goal-actions { display: flex; align-items: start; }
+.goal-actions { display: flex; align-items: center; gap: 8px; }
+
+/* Action buttons styling inspired by reminders: round, tactile, small */
+.goal-actions .action-btn {
+  --border-radius: 999px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --box-shadow: none;
+  height: 36px;
+  min-width: 36px;
+}
+.goal-actions .action-btn ion-icon { font-size: 18px; }
+
+/* Make action buttons visually identical to reminder actions: round, tactile */
+.goal-actions .action-btn {
+  --border-radius: 999px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --box-shadow: none;
+  height: 36px;
+  min-width: 36px;
+}
+.goal-actions .action-btn:focus-visible{
+  outline: 2px solid rgba(13,63,72,0.25);
+  outline-offset: 2px;
+}
+
+/* Match reminder action button colors */
+.goal-actions .action-btn--edit {
+  --background: #e6f4f1;        /* verde muy claro */
+  --background-activated: #d7ece8;
+  --background-hover: #dff1ed;
+  --color: #0d3f48;             /* texto/icono */
+}
+.goal-actions .action-btn--delete {
+  --background: #ffecec;        /* rojo muy claro */
+  --background-activated: #ffdcdc;
+  --background-hover: #ffe3e3;
+  --color: var(--ion-color-danger);
+}
+
+/* Small chip (e.g., complete status) following reminders style */
+.goal-chip {
+  align-self: flex-start;
+  background: #e6f4f1;
+  color: #0d3f48;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Small helper text like 'Toca para ver más detalles' */
+.goal-tap-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b; /* slate-500 */
+  font-weight: 600;
+}
+
+/* Meta rows and icons like reminders */
+.goal-meta { margin-top: 8px; color: #334155; }
+.goal-meta .meta-row{ margin-top:6px; display:flex; align-items:center; gap:8px; }
+.meta-icon { font-size:18px; color: #0d3f48; }
+.meta-text { font-weight:600; }
 
 .goal-progress__track {
   width: 100%; height: 10px; background: rgba(13,63,72,.14); border-radius: 999px; overflow: hidden;
@@ -68,13 +136,14 @@
 
 /* Crear/Editar: card y items con look MonthlyPanel */
 .goals-form-card {
+  /* Match reminder/modal card feel for create/edit */
   display: grid;
   gap: 12px;
-  padding: 16px;
+  padding: clamp(16px, 4vw, 22px);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(13,63,72,0.12);
-  box-shadow: 0 16px 34px -28px rgba(13,63,72,0.55);
+  background: #ffffff;
+  border: 2px solid rgba(13,63,72,0.08);
+  box-shadow: 0 18px 38px -26px rgba(13,63,72,0.45);
 }
 
 .goals-form-item {

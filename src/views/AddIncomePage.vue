@@ -72,7 +72,7 @@ async function handleSubmit(payload) {
   if (res.ok) {
     showToast('Ingreso guardado', 'success')
     formRef.value?.reset?.()
-    setTimeout(() => router.replace('/historico'), 450)
+    setTimeout(() => router.replace('/balance'), 450)
     return
   }
   console.error('[Guardar ingreso][error]', {

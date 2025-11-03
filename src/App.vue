@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { IonApp, IonRouterOutlet } from '@ionic/vue'
+import { IonApp, IonRouterOutlet, IonToast } from '@ionic/vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AppBottomBar from '@/components/AppBottomBar.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'

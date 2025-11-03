@@ -33,6 +33,7 @@ export function useAddExpense() {
         description: descripcion || null,
         user_id: userId()               // ✅ pasamos el userId ya resuelto
       })
+      window.dispatchEvent(new CustomEvent('data:transactions-changed', { detail: { type: 'expense' } }))
       return { ok: true }
     } catch (error) {
       return { ok: false, reason: mapErrorReason(error), error }

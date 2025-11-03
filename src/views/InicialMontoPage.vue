@@ -74,7 +74,7 @@ async function onAccept(){
 // Redirección cuando el toast se cierra
 function goDashboard() {
   showSuccess.value = false
-  r.replace('/historico')
+  r.replace('/balance')
 }
 </script>
 

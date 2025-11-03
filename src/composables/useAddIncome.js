@@ -38,6 +38,7 @@ export function useAddIncome() {
         description: descripcion || null,
         user_id: uid,
       })
+      window.dispatchEvent(new CustomEvent('data:transactions-changed', { detail: { type: 'income' } }))
       return { ok: true }
     } catch (error) {
       return { ok: false, reason: mapErrorReason(error), error }
