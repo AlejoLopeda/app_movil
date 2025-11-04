@@ -9,6 +9,7 @@ export async function getAuthUser() {
 }
 
 export async function getProfileName(userId) {
+  if (!userId) return ''
   const { data, error } = await supabase
     .from('profiles')
     .select('full_name')
@@ -20,6 +21,7 @@ export async function getProfileName(userId) {
 }
 
 export async function getProfileExtras(userId) {
+  if (!userId) return null
   const { data, error } = await supabase
     .from('profile_extras')
     .select('phone, country, birthdate, avatar_url')
@@ -36,7 +38,6 @@ export async function upsertProfileExtras(payload) {
   if (error) throw error
 }
 
-/** ✅ Persiste SOLO el avatar_url (cuando subes un nuevo avatar) */
 export async function updateAvatarUrl(userId, path) {
   const payload = {
     user_id: userId,
@@ -55,12 +56,10 @@ export async function reauthWithPassword(email, password) {
   const { error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) throw error
 }
-
 export async function updatePassword(newPassword) {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) throw error
 }
-
 export async function refreshSession() {
   const { error } = await supabase.auth.refreshSession()
   if (error) throw error
@@ -75,7 +74,6 @@ export async function createSignedUrl(bucket, path, ttlSeconds) {
   if (error) throw error
   return data?.signedUrl || ''
 }
-
 export async function uploadAvatar(bucket, path, file) {
   const { error } = await supabase
     .storage

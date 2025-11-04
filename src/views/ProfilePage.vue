@@ -63,20 +63,50 @@
           <ion-label>Teléfono</ion-label>
           <ion-text>{{ extras.phone || '—' }}</ion-text>
         </ion-item>
-        <ion-item lines="none" v-else>
-          <ion-label position="stacked">Teléfono</ion-label>
-          <ion-input v-model="draft.phone" placeholder="Ej: +57 300 000 0000" inputmode="tel" />
-        </ion-item>
+        <template v-else>
+          <ion-item lines="none">
+            <ion-label position="stacked">Teléfono</ion-label>
+            <ion-input
+              v-model="phoneRaw"
+              placeholder="Ej: 3136758492"
+              inputmode="tel"
+              @ionInput="showPhoneTouched = true"
+              @ionBlur="showPhoneTouched = true"
+            />
+          </ion-item>
+          <ion-note
+            v-if="showPhoneTouched && phoneError"
+            color="danger"
+            style="margin-left:16px; font-size:0.9rem; margin-top:-4px"
+          >
+            {{ phoneError }}
+          </ion-note>
+        </template>
 
         <!-- País -->
         <ion-item lines="none" v-if="!editExtras">
           <ion-label>País</ion-label>
           <ion-text>{{ extras.country || '—' }}</ion-text>
         </ion-item>
-        <ion-item lines="none" v-else>
-          <ion-label position="stacked">País</ion-label>
-          <ion-input v-model="draft.country" placeholder="Ej: Colombia" autocapitalize="words" />
-        </ion-item>
+        <template v-else>
+          <ion-item lines="none">
+            <ion-label position="stacked">País</ion-label>
+            <ion-input
+              v-model="draft.country"
+              placeholder="Ej: Colombia"
+              autocapitalize="words"
+              @ionInput="showCountryTouched = true"
+              @ionBlur="showCountryTouched = true"
+            />
+          </ion-item>
+          <ion-note
+            v-if="showCountryTouched && countryError"
+            color="danger"
+            style="margin-left:16px; font-size:0.9rem; margin-top:-4px"
+          >
+            {{ countryError }}
+          </ion-note>
+        </template>
 
         <!-- Fecha de nacimiento (solo seteable si está vacía) -->
         <ion-item lines="none" v-if="hasBirthdate">
@@ -85,8 +115,11 @@
         </ion-item>
         <ion-item lines="none" v-else>
           <ion-label position="stacked">Fecha de nacimiento</ion-label>
-          <ion-input type="date" style="--color:#0b3a43; --placeholder-color:#0b3a43; color-scheme:light;"
-          v-model="draft.birthdate" />
+          <ion-input
+            type="date"
+            style="--color:#0b3a43; --placeholder-color:#0b3a43; color-scheme:light;"
+            v-model="draft.birthdate"
+          />
         </ion-item>
       </div>
 
@@ -117,22 +150,32 @@
           </div>
         </div>
 
-        <!-- Vista normal: placeholder con ojo -->
+        <!-- Vista normal -->
         <ion-item lines="none" v-if="!editPwd">
           <ion-label>Contraseña</ion-label>
           <div class="pwd-row">
             <span class="pwd-dots">{{ pwdVisible ? fakePwd : '••••••••••' }}</span>
-            <ion-button size="small" fill="clear" class="icon-btn" @click="pwdVisible = !pwdVisible" :aria-label="pwdVisible ? 'Ocultar' : 'Mostrar'">
-              <ion-icon :icon="pwdVisible ? eyeOffOutline : eyeOutline" />
+            <ion-button
+              size="small"
+              fill="clear"
+              class="icon-btn"
+              @click="pwdVisible = !pwdVisible"
+              :aria-label="pwdVisible ? 'Ocultar' : 'Mostrar'"
+            >
+              <ion-icon :icon="eyeOutline" v-if="!pwdVisible" />
+              <ion-icon :icon="eyeOffOutline" v-else />
             </ion-button>
           </div>
         </ion-item>
         <ion-item lines="none" v-if="!editPwd">
-          <ion-note class="hint">Por seguridad no se puede leer tu contraseña actual; solo puedes actualizarla.</ion-note>
+          <ion-note class="hint">
+            Por seguridad no se puede leer tu contraseña actual; solo puedes actualizarla.
+          </ion-note>
         </ion-item>
 
         <!-- Edición: actual + nueva + confirmar -->
         <template v-else>
+          <!-- Actual -->
           <ion-item lines="none">
             <ion-label position="stacked">Contraseña actual</ion-label>
             <div class="input-with-eye">
@@ -144,14 +187,29 @@
                 inputmode="text"
                 class="native-input"
                 placeholder="Tu contraseña actual"
+                @input="currTouched = true"
+                @blur="currTouched = true"
                 @keyup.enter="savePassword"
               />
-              <button class="eye" type="button" @click.stop="showCurr = !showCurr" :aria-label="showCurr? 'Ocultar' : 'Mostrar'">
+              <button
+                class="eye"
+                type="button"
+                @click.stop="showCurr = !showCurr"
+                :aria-label="showCurr? 'Ocultar' : 'Mostrar'"
+              >
                 <ion-icon :icon="showCurr ? eyeOffOutline : eyeOutline" />
               </button>
             </div>
           </ion-item>
+          <ion-note
+            v-if="currTouched && currentPwdError"
+            color="danger"
+            style="margin-left:16px; font-size:0.9rem; margin-top:-4px"
+          >
+            {{ currentPwdError }}
+          </ion-note>
 
+          <!-- Nueva -->
           <ion-item lines="none">
             <ion-label position="stacked">Nueva contraseña</ion-label>
             <div class="input-with-eye">
@@ -162,15 +220,30 @@
                 autocapitalize="off"
                 inputmode="text"
                 class="native-input"
-                placeholder="Mínimo 8, 1 mayúscula y 1 especial"
+                placeholder="Mínimo 8, mayúscula, minúscula, número y símbolo"
+                @input="newTouched = true"
+                @blur="newTouched = true"
                 @keyup.enter="savePassword"
               />
-              <button class="eye" type="button" @click.stop="showNew = !showNew" :aria-label="showNew? 'Ocultar' : 'Mostrar'">
+              <button
+                class="eye"
+                type="button"
+                @click.stop="showNew = !showNew"
+                :aria-label="showNew? 'Ocultar' : 'Mostrar'"
+              >
                 <ion-icon :icon="showNew ? eyeOffOutline : eyeOutline" />
               </button>
             </div>
           </ion-item>
+          <ion-note
+            v-if="newTouched && newPwdError"
+            color="danger"
+            style="margin-left:16px; font-size:0.9rem; margin-top:-4px"
+          >
+            {{ newPwdError }}
+          </ion-note>
 
+          <!-- Confirmar -->
           <ion-item lines="none">
             <ion-label position="stacked">Confirmar contraseña</ion-label>
             <div class="input-with-eye">
@@ -182,14 +255,29 @@
                 inputmode="text"
                 class="native-input"
                 placeholder="Repite la nueva contraseña"
+                @input="confTouched = true"
+                @blur="confTouched = true"
                 @keyup.enter="savePassword"
               />
-              <button class="eye" type="button" @click.stop="showConf = !showConf" :aria-label="showConf? 'Ocultar' : 'Mostrar'">
+              <button
+                class="eye"
+                type="button"
+                @click.stop="showConf = !showConf"
+                :aria-label="showConf? 'Ocultar' : 'Mostrar'"
+              >
                 <ion-icon :icon="showConf ? eyeOffOutline : eyeOutline" />
               </button>
             </div>
           </ion-item>
+          <ion-note
+            v-if="confTouched && confirmPwdError"
+            color="danger"
+            style="margin-left:16px; font-size:0.9rem; margin-top:-4px"
+          >
+            {{ confirmPwdError }}
+          </ion-note>
 
+          <!-- Nota general -->
           <ion-item lines="none">
             <ion-note :class="['hint', pwdMsg.color]">{{ pwdMsg.text }}</ion-note>
           </ion-item>
@@ -204,8 +292,20 @@
       </div>
 
       <!-- Toasts -->
-      <ion-toast :is-open="toast.open" :message="toast.msg" :duration="2200" color="success" @didDismiss="toast.open=false" />
-      <ion-toast :is-open="toastErr.open" :message="toastErr.msg" :duration="3000" color="danger" @didDismiss="toastErr.open=false" />
+      <ion-toast
+        :is-open="toast.open"
+        :message="toast.msg"
+        :duration="2200"
+        color="success"
+        @didDismiss="toast.open=false"
+      />
+      <ion-toast
+        :is-open="toastErr.open"
+        :message="toastErr.msg"
+        :duration="3000"
+        color="danger"
+        @didDismiss="toastErr.open=false"
+      />
 
       <!-- inputs ocultos -->
       <input ref="fileInput" type="file" accept="image/*" class="hidden-file" @change="onFileChange" />
@@ -256,7 +356,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   IonPage, IonContent, IonItem, IonLabel, IonText, IonInput, IonButton,
   IonToast, IonModal, IonActionSheet, IonIcon, IonNote
@@ -277,13 +377,26 @@ const {
   hasBirthdate, formatDate,
   editPwd, enterEditPwd, cancelEditPwd,
   pwdVisible, fakePwd, pwdForm, showCurr, showNew, showConf, savingPwd, pwdMsg,
-  validatePassword, savePassword,
   saving, toast, toastErr, logout,
-  /** bottom-accept handler (para la barra inferior) */
   handleBottomAccept,
+  // validaciones extras
+  phoneRaw, phoneError, countryError,
+  // errores inline password
+  currentPwdError, newPwdError, confirmPwdError,
 } = useProfile()
 
-/** ===== Avatar (permisos, crop, subir, cache/signed url) ===== */
+// flags para mostrar errores de campos de extras
+const showPhoneTouched = ref(false)
+const showCountryTouched = ref(false)
+
+// flags para mostrar errores de campos de password
+const currTouched = ref(false)
+const newTouched  = ref(false)
+const confTouched = ref(false)
+
+/** ===== Avatar (permisos, crop, subir, cache/signed url) =====
+ *  BLOQUES Y LÓGICA EXACTAMENTE IGUAL A TU VERSIÓN QUE FUNCIONA
+ */
 const {
   defaultImage, uploading, isSavingAvatar,
   avatarReady, avatarPreview, avatarModalOpen,
