@@ -1,30 +1,33 @@
-// composables/useAvatar.js
 import { ref, computed, watchEffect } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import { Camera, CameraSource, CameraResultType } from '@capacitor/camera'
 import {
   createSignedUrl,
   uploadAvatar,
-  getAuthUser,
-  updateAvatarUrl, // ✅ persiste en BD la nueva ruta
+  updateAvatarUrl,
 } from '@/services/profileService'
+import { useAuthUser } from '@/composables/useAuthUser'
 
 const AVATAR_BUCKET = 'avatars'
 const MAX_MB = 5
 const SIGN_TTL_SECONDS = 60 * 60 * 24 * 7
 const CACHE_GRACE_SECONDS = 60 * 10
 
-// v2: el caché depende de user y path
+// cache en memoria + disco
+const memCache = new Map()
 const cacheKeyFor = (userId, path) => `avatar:v2:${userId}:${path}`
 
-const defaultImage = 'https://i.pravatar.cc/200?img=64'
+export const defaultImage = 'https://i.pravatar.cc/200?img=64'
 
-const preload = (src) => new Promise((resolve, reject) => {
-  const img = new Image()
-  img.onload = () => resolve(src)
-  img.onerror = reject
-  img.src = src
-})
+// Precalienta sin bloquear la UI
+function warmup(src){
+  try {
+    const img = new Image()
+    img.decoding = 'async'
+    img.loading = 'eager'
+    img.src = src
+  } catch {}
+}
 
 async function signIfNeeded(value) {
   const v = (value || '').trim()
@@ -36,6 +39,7 @@ async function signIfNeeded(value) {
 
 function clearUserAvatarCache(uid) {
   try {
+    for (const k of memCache.keys()) if (k.startsWith(`avatar:v2:${uid}:`)) memCache.delete(k)
     const keys = Object.keys(localStorage)
     for (const k of keys) {
       if (k.startsWith(`avatar:v2:${uid}:`)) localStorage.removeItem(k)
@@ -44,18 +48,16 @@ function clearUserAvatarCache(uid) {
   } catch {}
 }
 
-/* =================== NUEVO: pedir permisos la 1ª vez =================== */
 const PERM_FLAG = 'avatar.perms.v1'
 async function requestRuntimePermissionsIfFirstTime(toastErr) {
   if (!Capacitor.isNativePlatform()) return true
   try {
     const already = localStorage.getItem(PERM_FLAG)
-    // Solo la primera vez: pedir ambos permisos juntos
     if (!already) {
       const res = await Camera.requestPermissions({ permissions: ['camera', 'photos'] })
-      const cam = res?.camera
-      const pho = res?.photos
-      const ok = (cam === 'granted' || cam === 'limited') && (pho === 'granted' || pho === 'limited')
+      const ok =
+        (res?.camera === 'granted' || res?.camera === 'limited') &&
+        (res?.photos === 'granted' || res?.photos === 'limited')
       if (!ok) {
         toastErr.value = { open: true, msg: 'Necesitas permitir Cámara y Fotos para cambiar tu avatar.' }
         return false
@@ -69,9 +71,10 @@ async function requestRuntimePermissionsIfFirstTime(toastErr) {
     return false
   }
 }
-/* ====================================================================== */
 
 export function useAvatar({ user, extras, toast, toastErr }){
+  const { user: authUser } = useAuthUser()
+
   const uploading = ref(false)
   const isSavingAvatar = ref(false)
 
@@ -107,80 +110,98 @@ export function useAvatar({ user, extras, toast, toastErr }){
     { text: 'Cancelar', role: 'cancel' }
   ]
 
-  /* ====== Resolver URL visible ====== */
-  async function resolveAvatarUrl(isFirstCall = false){
+  /* ====== Resolver URL (rápido y sin bloquear) ====== */
+  let resolveToken = 0
+
+  async function resolveAvatarUrl(){
     if (pendingFile.value) return
+    const myToken = ++resolveToken
 
-    const raw = (extras.value.avatar_url || '').trim()
-    const authUser = await getAuthUser()
-    const uid = authUser?.id
+    try{
+      const raw = (extras.value.avatar_url || '').trim()
+      const uid = authUser.value?.id || ''
 
-    if (!raw){
-      tempAvatarUrl.value = ''
-      avatarReady.value = true
-      return
-    }
-
-    if (/^https?:\/\//i.test(raw)){
-      try { await preload(raw) } catch {}
-      tempAvatarUrl.value = raw
-      avatarReady.value = true
-      return
-    }
-
-    if (uid){
-      const key = cacheKeyFor(uid, raw)
-      const cachedRaw = localStorage.getItem(key)
-      const now = Math.floor(Date.now()/1000)
-
-      if (cachedRaw){
-        try{
-          const cached = JSON.parse(cachedRaw)
-          if (cached?.path === raw && cached?.signedUrl && cached?.exp && (cached.exp - now) > CACHE_GRACE_SECONDS){
-            try { await preload(cached.signedUrl) } catch {}
-            tempAvatarUrl.value = cached.signedUrl
-            avatarReady.value = true
-            return
-          }
-        }catch{}
+      // Sin avatar → listo
+      if (!raw){
+        tempAvatarUrl.value = ''
+        avatarReady.value = true
+        return
       }
 
-      try{
-        let signed = await signIfNeeded(raw)
-        if (signed){
-          signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
-          try { await preload(signed) } catch {}
-          tempAvatarUrl.value = signed
-          avatarReady.value = true
-          localStorage.setItem(key, JSON.stringify({
-            path: raw,
-            signedUrl: signed,
-            exp: Math.floor(Date.now()/1000) + SIGN_TTL_SECONDS
-          }))
+      // Pública → asigna ya y calienta
+      if (/^https?:\/\//i.test(raw)){
+        tempAvatarUrl.value = raw
+        avatarReady.value = true
+        warmup(raw)
+        return
+      }
+
+      // Con usuario (ruta en bucket)
+      if (uid){
+        const k   = cacheKeyFor(uid, raw)
+        const now = Math.floor(Date.now()/1000)
+
+        // 1) Memoria
+        const mem = memCache.get(k)
+        if (mem && (mem.exp - now) > CACHE_GRACE_SECONDS){
+          tempAvatarUrl.value = mem.signedUrl
+          avatarReady.value   = true
+          warmup(mem.signedUrl)
+          return
         }
-      }catch(e){
-        console.error(e)
-        if (!tempAvatarUrl.value) avatarReady.value = true
-      }
-    }else{
-      try{
+
+        // 2) Disco
+        const cachedRaw = localStorage.getItem(k)
+        if (cachedRaw){
+          try{
+            const cached = JSON.parse(cachedRaw)
+            if (cached?.signedUrl && cached?.exp && (cached.exp - now) > CACHE_GRACE_SECONDS){
+              tempAvatarUrl.value = cached.signedUrl
+              avatarReady.value   = true
+              memCache.set(k, { signedUrl: cached.signedUrl, exp: cached.exp })
+              warmup(cached.signedUrl)
+              return
+            }
+          }catch{}
+        }
+
+        // 3) Firmar
         let signed = await signIfNeeded(raw)
+        if (myToken !== resolveToken) return
         if (signed){
           signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
-          try { await preload(signed) } catch {}
           tempAvatarUrl.value = signed
+          avatarReady.value   = true
+          const exp = Math.floor(Date.now()/1000) + SIGN_TTL_SECONDS
+          memCache.set(k, { signedUrl: signed, exp })
+          localStorage.setItem(k, JSON.stringify({ path: raw, signedUrl: signed, exp }))
+          warmup(signed)
         } else {
           tempAvatarUrl.value = ''
+          avatarReady.value   = true
         }
-      }catch{ tempAvatarUrl.value = '' }
-      avatarReady.value = true
-    }
+        return
+      }
 
-    if (isFirstCall && !avatarReady.value) avatarReady.value = true
+      // Sin uid (poco común): firmar igual
+      let signed = await signIfNeeded(raw)
+      if (myToken !== resolveToken) return
+      if (signed){
+        signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
+        tempAvatarUrl.value = signed
+        warmup(signed)
+      }else{
+        tempAvatarUrl.value = ''
+      }
+      avatarReady.value = true
+    }catch(e){
+      console.error(e)
+      if (!avatarReady.value) avatarReady.value = true
+    }
   }
 
-  /* ======== Permisos (Cámara / Fotos) ======== */
-  async function ensurePermission(kind /* 'camera' | 'photos' */){
+  /* ======== Permisos ======== */
+  async function ensurePermission(kind){
     try{
       const current = await Camera.checkPermissions()
       let status = current?.[kind] || 'prompt'
@@ -200,10 +221,8 @@ export function useAvatar({ user, extras, toast, toastErr }){
 
   /* ===== Edición de avatar ===== */
   async function openEditOptions () {
-    // 🔄 NUEVO: asegura pedir permisos la 1ª vez que abre "Editar"
     const ok = await requestRuntimePermissionsIfFirstTime(toastErr)
     if (!ok) return
-
     avatarModalOpen.value = false
     await Promise.resolve()
     actionOpen.value = true
@@ -218,10 +237,10 @@ export function useAvatar({ user, extras, toast, toastErr }){
       try{
         const photo = await Camera.getPhoto({
           source: CameraSource.Camera,
-          resultType: CameraResultType.DataUrl, // mantenemos DataUrl para fluir al crop
+          resultType: CameraResultType.DataUrl,
           quality: 85,
           correctOrientation: true,
-          width: 1024, // 🔽 reduce tamaño de captura
+          width: 1024,
         })
         if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
       }catch(e){
@@ -245,7 +264,7 @@ export function useAvatar({ user, extras, toast, toastErr }){
           source: CameraSource.Photos,
           resultType: CameraResultType.DataUrl,
           quality: 85,
-          width: 1024, // 🔽 reduce tamaño de carga
+          width: 1024,
         })
         if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
       }catch(e){
@@ -266,19 +285,10 @@ export function useAvatar({ user, extras, toast, toastErr }){
       toastErr.value = { open: true, msg: 'Selecciona una imagen válida.' }
       return
     }
-
-    // ⛳️ CAMBIO: NO bloqueamos por tamaño aquí (el recorte lo volverá liviano).
-    // const sizeMB = file.size / (1024*1024)
-    // if (sizeMB > MAX_MB){
-    //   toastErr.value = { open: true, msg: `La imagen supera ${MAX_MB} MB.` }
-    //   return
-    // }
-
     const dataUrl = await fileToDataUrl(file)
     tempPreview.value = dataUrl
     cropModalOpen.value = true
   }
-
   function fileToDataUrl(file){
     return new Promise((res, rej) => {
       const fr = new FileReader()
@@ -315,64 +325,60 @@ export function useAvatar({ user, extras, toast, toastErr }){
     if (pendingPreview.value) URL.revokeObjectURL(pendingPreview.value)
     pendingPreview.value = ''
     pendingFile.value = null
-    resolveAvatarUrl(true)
+    // 👇 NO volver a resolver aquí; ya tenemos tempAvatarUrl correcto
+    // resolveAvatarUrl()
   }
 
   async function savePendingAvatar(){
-    if (!pendingFile.value || !user.value.id) return
+    const uid = authUser.value?.id || ''
+    if (!pendingFile.value || !uid) return
     isSavingAvatar.value = true
     try{
       const file = pendingFile.value
       const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
-      const path = `${user.value.id}/${Date.now()}.${ext}`
+      const path = `${uid}/${Date.now()}.${ext}`
 
-      // ✅ Validación de tamaño solo en el archivo FINAL (recortado)
       const sizeMB = file.size / (1024*1024)
       if (sizeMB > MAX_MB) throw new Error(`La imagen final supera ${MAX_MB} MB.`)
 
-      // 1) subir archivo
       await uploadAvatar(AVATAR_BUCKET, path, file)
+      await updateAvatarUrl(uid, path)
 
-      // 2) persistir en BD
-      await updateAvatarUrl(user.value.id, path)
+      clearUserAvatarCache(uid)
 
-      // 3) actualizar estado local y limpiar caché antiguo del usuario
-      extras.value.avatar_url = path
-      clearUserAvatarCache(user.value.id)
-
-      // 4) firmar y usar la nueva URL
       let signed = await signIfNeeded(path)
       if (signed){
         signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
-        try { await preload(signed) } catch {}
         tempAvatarUrl.value = signed
-        const now = Math.floor(Date.now()/1000)
-        const key = cacheKeyFor(user.value.id, path)
-        localStorage.setItem(key, JSON.stringify({
-          path,
-          signedUrl: signed,
-          exp: now + SIGN_TTL_SECONDS
+        const exp = Math.floor(Date.now()/1000) + SIGN_TTL_SECONDS
+        const k = cacheKeyFor(uid, path)
+        memCache.set(k, { signedUrl: signed, exp })
+        localStorage.setItem(k, JSON.stringify({ path, signedUrl: signed, exp }))
+
+        // 👇 MUY IMPORTANTE: actualizar la fuente (extras) para que futuras resoluciones usen el nuevo path
+        if (extras?.value) extras.value.avatar_url = path
+
+        window.dispatchEvent(new CustomEvent('avatar-updated', {
+          detail: { userId: uid, path, signedUrl: signed }
         }))
 
-        /* 5) 🔔 NOTIFICAR A TODA LA APP (TopBar y otras vistas) */
-        window.dispatchEvent(new CustomEvent('avatar-updated', {
-          detail: { userId: user.value.id, path, signedUrl: signed }
-        }))
+        warmup(signed)
+      } else {
+        tempAvatarUrl.value = ''
       }
 
       discardPending()
       toast.value = { open: true, msg: 'Avatar guardado' }
     }catch(e){
       console.error(e)
-      toastErr.value = { open: true, msg: e.message || 'No se pudo guardar el avatar' }
+      toastErr.value = { open: true, msg: e?.message || 'No se pudo guardar el avatar' }
     }finally{
       isSavingAvatar.value = false
     }
   }
 
-  watchEffect(async () => {
-    await resolveAvatarUrl(true)
-  })
+  // Reaccionar a cambios (uid o avatar_url)
+  watchEffect(() => { resolveAvatarUrl() })
 
   return {
     defaultImage, uploading, isSavingAvatar,

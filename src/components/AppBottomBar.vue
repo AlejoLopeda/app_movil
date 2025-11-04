@@ -55,7 +55,7 @@
       </div>
 
       <!-- Recordatorios -->
-  <div v-else-if="isRemindersPage" class="nav-cta">
+      <div v-else-if="isRemindersPage" class="nav-cta">
         <button
           type="button"
           class="cta-btn"
@@ -111,7 +111,7 @@
         <button
           type="button"
           class="nav-btn icon-only"
-          @click="goBalance"
+          @click="goDashboard"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           aria-label="Volver a Balance"
@@ -266,15 +266,5 @@ const {
   toastOpen, toastMsg, isNavigating,
 } = useBottomBar()
 </script>
-
-<style scoped>
-/* Histórico: compactar icon-only */
-.nav--history .nav-btn.icon-only{
-  min-width: 48px;
-  width: 48px;
-  padding: 0;
-  justify-content: center;
-}
-</style>
 
 <style src="../theme/BottomBar.css"></style>
