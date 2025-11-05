@@ -105,7 +105,7 @@ async function handleSubmit(payload) {
     } catch {}
     try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
     // Redirigir directamente al panel de recordatorios
-    router.replace({ name: 'Recordatorios' })
+    await router.replace({ name: 'Recordatorios', query: { toast: 'updated' } })
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
   } finally {
