@@ -42,8 +42,8 @@ function showToast(message, color = 'primary') {
 async function handleSubmit(payload) {
   const res = await saveReminder(payload)
   if (res.ok) {
-    // Redirigir al panel de recordatorios
-    router.replace({ name: 'Recordatorios' })
+    // Redirigir al panel de recordatorios mostrando confirmación en la lista
+    await router.replace({ name: 'Recordatorios', query: { toast: 'created' } })
     return
   }
   if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesión e inténtalo de nuevo', 'danger')

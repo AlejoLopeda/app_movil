@@ -240,7 +240,7 @@
 
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
@@ -314,6 +314,26 @@ async function onDeleteDo() {
 }
 
 const toast = ref({ open: false, message: "", color: "primary" })
+
+function clearToastQuery() {
+  if (!route?.query || route.query.toast === undefined) return
+  const { toast: _ignored, ...rest } = route.query
+  router.replace({ query: { ...rest } })
+}
+
+watch(
+  () => route.query.toast,
+  (action) => {
+    if (action === 'created') {
+      showToast('Recordatorio creado', 'success')
+      clearToastQuery()
+    } else if (action === 'updated') {
+      showToast('Recordatorio actualizado', 'success')
+      clearToastQuery()
+    }
+  },
+  { immediate: true }
+)
 
 // Refrescar y mostrar toast al volver desde crear/editar
 function onRemindersChanged(ev) {
