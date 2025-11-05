@@ -1,5 +1,7 @@
+// src/composables/useAvatar.js
 import { ref, computed, watchEffect } from 'vue'
 import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app' // 👈 NUEVO
 import { Camera, CameraSource, CameraResultType } from '@capacitor/camera'
 import {
   createSignedUrl,
@@ -19,7 +21,9 @@ const cacheKeyFor = (userId, path) => `avatar:v2:${userId}:${path}`
 
 export const defaultImage = 'https://i.pravatar.cc/200?img=64'
 
-// Precalienta sin bloquear la UI
+// Helpers de plataforma
+const isAndroid = () => Capacitor.getPlatform() === 'android'
+
 function warmup(src){
   try {
     const img = new Image()
@@ -49,6 +53,19 @@ function clearUserAvatarCache(uid) {
 }
 
 const PERM_FLAG = 'avatar.perms.v1'
+
+// 👇 si el permiso quedó “bloqueado” (no vuelve a preguntar), ofrece abrir Ajustes
+async function openSettingsIfBlocked(kind, toastErr){
+  if (!isAndroid()) return
+  // En Android no hay “limited”, solo granted/denied; si el usuario tildó "no volver a preguntar",
+  // Camera.requestPermissions volverá a devolver "denied". En ese caso, ofrecemos abrir Ajustes.
+  toastErr.value = {
+    open: true,
+    msg: `Necesitas habilitar el permiso de ${kind === 'camera' ? 'Cámara' : 'Fotos'} en Ajustes.`,
+  }
+  try { await App.openSettings() } catch {}
+}
+
 async function requestRuntimePermissionsIfFirstTime(toastErr) {
   if (!Capacitor.isNativePlatform()) return true
   try {
@@ -59,7 +76,8 @@ async function requestRuntimePermissionsIfFirstTime(toastErr) {
         (res?.camera === 'granted' || res?.camera === 'limited') &&
         (res?.photos === 'granted' || res?.photos === 'limited')
       if (!ok) {
-        toastErr.value = { open: true, msg: 'Necesitas permitir Cámara y Fotos para cambiar tu avatar.' }
+        // si aquí ya quedó “denied” en Android, ofrecemos abrir Ajustes
+        await openSettingsIfBlocked('camera', toastErr)
         return false
       }
       localStorage.setItem(PERM_FLAG, '1')
@@ -121,14 +139,12 @@ export function useAvatar({ user, extras, toast, toastErr }){
       const raw = (extras.value.avatar_url || '').trim()
       const uid = authUser.value?.id || ''
 
-      // Sin avatar → listo
       if (!raw){
         tempAvatarUrl.value = ''
         avatarReady.value = true
         return
       }
 
-      // Pública → asigna ya y calienta
       if (/^https?:\/\//i.test(raw)){
         tempAvatarUrl.value = raw
         avatarReady.value = true
@@ -136,12 +152,10 @@ export function useAvatar({ user, extras, toast, toastErr }){
         return
       }
 
-      // Con usuario (ruta en bucket)
       if (uid){
         const k   = cacheKeyFor(uid, raw)
         const now = Math.floor(Date.now()/1000)
 
-        // 1) Memoria
         const mem = memCache.get(k)
         if (mem && (mem.exp - now) > CACHE_GRACE_SECONDS){
           tempAvatarUrl.value = mem.signedUrl
@@ -150,7 +164,6 @@ export function useAvatar({ user, extras, toast, toastErr }){
           return
         }
 
-        // 2) Disco
         const cachedRaw = localStorage.getItem(k)
         if (cachedRaw){
           try{
@@ -165,7 +178,6 @@ export function useAvatar({ user, extras, toast, toastErr }){
           }catch{}
         }
 
-        // 3) Firmar
         let signed = await signIfNeeded(raw)
         if (myToken !== resolveToken) return
         if (signed){
@@ -183,7 +195,6 @@ export function useAvatar({ user, extras, toast, toastErr }){
         return
       }
 
-      // Sin uid (poco común): firmar igual
       let signed = await signIfNeeded(raw)
       if (myToken !== resolveToken) return
       if (signed){
@@ -210,7 +221,9 @@ export function useAvatar({ user, extras, toast, toastErr }){
         status = req?.[kind] || 'denied'
       }
       if (status === 'granted' || status === 'limited') return true
-      toastErr.value = { open: true, msg: `Permiso de ${kind === 'camera' ? 'cámara' : 'fotos'} denegado.` }
+
+      // Si sigue denegado (caso Android con “no volver a preguntar”)
+      await openSettingsIfBlocked(kind, toastErr)
       return false
     }catch(e){
       console.error(e)
@@ -325,8 +338,7 @@ export function useAvatar({ user, extras, toast, toastErr }){
     if (pendingPreview.value) URL.revokeObjectURL(pendingPreview.value)
     pendingPreview.value = ''
     pendingFile.value = null
-    // 👇 NO volver a resolver aquí; ya tenemos tempAvatarUrl correcto
-    // resolveAvatarUrl()
+    // NO resolver aquí; tempAvatarUrl ya es correcto
   }
 
   async function savePendingAvatar(){
@@ -355,7 +367,6 @@ export function useAvatar({ user, extras, toast, toastErr }){
         memCache.set(k, { signedUrl: signed, exp })
         localStorage.setItem(k, JSON.stringify({ path, signedUrl: signed, exp }))
 
-        // 👇 MUY IMPORTANTE: actualizar la fuente (extras) para que futuras resoluciones usen el nuevo path
         if (extras?.value) extras.value.avatar_url = path
 
         window.dispatchEvent(new CustomEvent('avatar-updated', {
