@@ -1,7 +1,7 @@
 // src/composables/useAvatar.js
 import { ref, computed, watchEffect } from 'vue'
 import { Capacitor } from '@capacitor/core'
-import { App } from '@capacitor/app'
+import { App } from '@capacitor/app' // 👈 NUEVO
 import { Camera, CameraSource, CameraResultType } from '@capacitor/camera'
 import {
   createSignedUrl,
@@ -24,7 +24,7 @@ export const defaultImage = 'https://i.pravatar.cc/200?img=64'
 // Helpers de plataforma
 const isAndroid = () => Capacitor.getPlatform() === 'android'
 
-function warmup(src) {
+function warmup(src){
   try {
     const img = new Image()
     img.decoding = 'async'
@@ -52,11 +52,13 @@ function clearUserAvatarCache(uid) {
   } catch {}
 }
 
-/* ======= PERMISOS: versión separada cámara / galería ======= */
+const PERM_FLAG = 'avatar.perms.v1'
 
-// 👇 Si el permiso quedó “bloqueado”, ofrece abrir Ajustes
-async function openSettingsIfBlocked(kind, toastErr) {
+// 👇 si el permiso quedó “bloqueado” (no vuelve a preguntar), ofrece abrir Ajustes
+async function openSettingsIfBlocked(kind, toastErr){
   if (!isAndroid()) return
+  // En Android no hay “limited”, solo granted/denied; si el usuario tildó "no volver a preguntar",
+  // Camera.requestPermissions volverá a devolver "denied". En ese caso, ofrecemos abrir Ajustes.
   toastErr.value = {
     open: true,
     msg: `Necesitas habilitar el permiso de ${kind === 'camera' ? 'Cámara' : 'Fotos'} en Ajustes.`,
@@ -64,22 +66,23 @@ async function openSettingsIfBlocked(kind, toastErr) {
   try { await App.openSettings() } catch {}
 }
 
-// 👇 Maneja permiso individual según tipo: 'camera' o 'photos'
-async function ensurePermission(kind, toastErr) {
+async function requestRuntimePermissionsIfFirstTime(toastErr) {
+  if (!Capacitor.isNativePlatform()) return true
   try {
-    const current = await Camera.checkPermissions()
-    let status = current?.[kind] || 'prompt'
-
-    if (status !== 'granted' && status !== 'limited') {
-      const req = await Camera.requestPermissions({ permissions: [kind] })
-      status = req?.[kind] || 'denied'
+    const already = localStorage.getItem(PERM_FLAG)
+    if (!already) {
+      const res = await Camera.requestPermissions({ permissions: ['camera', 'photos'] })
+      const ok =
+        (res?.camera === 'granted' || res?.camera === 'limited') &&
+        (res?.photos === 'granted' || res?.photos === 'limited')
+      if (!ok) {
+        // si aquí ya quedó “denied” en Android, ofrecemos abrir Ajustes
+        await openSettingsIfBlocked('camera', toastErr)
+        return false
+      }
+      localStorage.setItem(PERM_FLAG, '1')
     }
-
-    if (status === 'granted' || status === 'limited') return true
-
-    // Si sigue denegado (caso Android con “no volver a preguntar”)
-    await openSettingsIfBlocked(kind, toastErr)
-    return false
+    return true
   } catch (e) {
     console.error(e)
     toastErr.value = { open: true, msg: 'No fue posible solicitar permisos.' }
@@ -87,7 +90,7 @@ async function ensurePermission(kind, toastErr) {
   }
 }
 
-export function useAvatar({ user, extras, toast, toastErr }) {
+export function useAvatar({ user, extras, toast, toastErr }){
   const { user: authUser } = useAuthUser()
 
   const uploading = ref(false)
@@ -113,7 +116,7 @@ export function useAvatar({ user, extras, toast, toastErr }) {
   const tempPreview = ref('')
   const initialCoords = ref(null)
 
-  function closeCropper() {
+  function closeCropper(){
     cropModalOpen.value = false
     tempPreview.value = ''
     initialCoords.value = null
@@ -122,106 +125,129 @@ export function useAvatar({ user, extras, toast, toastErr }) {
   const actionButtons = [
     { text: 'Cámara', handler: pickFromCamera },
     { text: 'Galería', handler: pickFromGallery },
-    { text: 'Cancelar', role: 'cancel' },
+    { text: 'Cancelar', role: 'cancel' }
   ]
 
   /* ====== Resolver URL (rápido y sin bloquear) ====== */
   let resolveToken = 0
 
-  async function resolveAvatarUrl() {
+  async function resolveAvatarUrl(){
     if (pendingFile.value) return
     const myToken = ++resolveToken
 
-    try {
+    try{
       const raw = (extras.value.avatar_url || '').trim()
       const uid = authUser.value?.id || ''
 
-      if (!raw) {
+      if (!raw){
         tempAvatarUrl.value = ''
         avatarReady.value = true
         return
       }
 
-      if (/^https?:\/\//i.test(raw)) {
+      if (/^https?:\/\//i.test(raw)){
         tempAvatarUrl.value = raw
         avatarReady.value = true
         warmup(raw)
         return
       }
 
-      if (uid) {
-        const k = cacheKeyFor(uid, raw)
-        const now = Math.floor(Date.now() / 1000)
+      if (uid){
+        const k   = cacheKeyFor(uid, raw)
+        const now = Math.floor(Date.now()/1000)
 
         const mem = memCache.get(k)
-        if (mem && mem.exp - now > CACHE_GRACE_SECONDS) {
+        if (mem && (mem.exp - now) > CACHE_GRACE_SECONDS){
           tempAvatarUrl.value = mem.signedUrl
-          avatarReady.value = true
+          avatarReady.value   = true
           warmup(mem.signedUrl)
           return
         }
 
         const cachedRaw = localStorage.getItem(k)
-        if (cachedRaw) {
-          try {
+        if (cachedRaw){
+          try{
             const cached = JSON.parse(cachedRaw)
-            if (cached?.signedUrl && cached?.exp && cached.exp - now > CACHE_GRACE_SECONDS) {
+            if (cached?.signedUrl && cached?.exp && (cached.exp - now) > CACHE_GRACE_SECONDS){
               tempAvatarUrl.value = cached.signedUrl
-              avatarReady.value = true
+              avatarReady.value   = true
               memCache.set(k, { signedUrl: cached.signedUrl, exp: cached.exp })
               warmup(cached.signedUrl)
               return
             }
-          } catch {}
+          }catch{}
         }
 
         let signed = await signIfNeeded(raw)
         if (myToken !== resolveToken) return
-        if (signed) {
+        if (signed){
           signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
           tempAvatarUrl.value = signed
-          avatarReady.value = true
-          const exp = Math.floor(Date.now() / 1000) + SIGN_TTL_SECONDS
+          avatarReady.value   = true
+          const exp = Math.floor(Date.now()/1000) + SIGN_TTL_SECONDS
           memCache.set(k, { signedUrl: signed, exp })
           localStorage.setItem(k, JSON.stringify({ path: raw, signedUrl: signed, exp }))
           warmup(signed)
         } else {
           tempAvatarUrl.value = ''
-          avatarReady.value = true
+          avatarReady.value   = true
         }
         return
       }
 
       let signed = await signIfNeeded(raw)
       if (myToken !== resolveToken) return
-      if (signed) {
+      if (signed){
         signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
         tempAvatarUrl.value = signed
         warmup(signed)
-      } else {
+      }else{
         tempAvatarUrl.value = ''
       }
       avatarReady.value = true
-    } catch (e) {
+    }catch(e){
       console.error(e)
       if (!avatarReady.value) avatarReady.value = true
     }
   }
 
+  /* ======== Permisos ======== */
+  async function ensurePermission(kind){
+    try{
+      const current = await Camera.checkPermissions()
+      let status = current?.[kind] || 'prompt'
+      if (status !== 'granted' && status !== 'limited'){
+        const req = await Camera.requestPermissions({ permissions: [kind] })
+        status = req?.[kind] || 'denied'
+      }
+      if (status === 'granted' || status === 'limited') return true
+
+      // Si sigue denegado (caso Android con “no volver a preguntar”)
+      await openSettingsIfBlocked(kind, toastErr)
+      return false
+    }catch(e){
+      console.error(e)
+      toastErr.value = { open: true, msg: 'No fue posible solicitar permisos.' }
+      return false
+    }
+  }
+
   /* ===== Edición de avatar ===== */
-  async function openEditOptions() {
+  async function openEditOptions () {
+    const ok = await requestRuntimePermissionsIfFirstTime(toastErr)
+    if (!ok) return
     avatarModalOpen.value = false
     await Promise.resolve()
     actionOpen.value = true
   }
 
-  async function pickFromCamera() {
+  async function pickFromCamera(){
     actionOpen.value = false
     await Promise.resolve()
-    if (Capacitor.isNativePlatform()) {
-      const ok = await ensurePermission('camera', toastErr) // ✅ solo cámara
+    if (Capacitor.isNativePlatform()){
+      const ok = await ensurePermission('camera')
       if (!ok) return
-      try {
+      try{
         const photo = await Camera.getPhoto({
           source: CameraSource.Camera,
           resultType: CameraResultType.DataUrl,
@@ -229,52 +255,46 @@ export function useAvatar({ user, extras, toast, toastErr }) {
           correctOrientation: true,
           width: 1024,
         })
-        if (photo?.dataUrl) {
-          tempPreview.value = photo.dataUrl
-          cropModalOpen.value = true
-        }
-      } catch (e) {
+        if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
+      }catch(e){
         if (e?.message && e.message !== 'User cancelled photos app') {
           toastErr.value = { open: true, msg: 'No se pudo abrir la cámara.' }
         }
       }
-    } else {
+    }else{
       cameraInput.value?.click()
     }
   }
 
-  async function pickFromGallery() {
+  async function pickFromGallery(){
     actionOpen.value = false
     await Promise.resolve()
-    if (Capacitor.isNativePlatform()) {
-      const ok = await ensurePermission('photos', toastErr) // ✅ solo galería
+    if (Capacitor.isNativePlatform()){
+      const ok = await ensurePermission('photos')
       if (!ok) return
-      try {
+      try{
         const photo = await Camera.getPhoto({
           source: CameraSource.Photos,
           resultType: CameraResultType.DataUrl,
           quality: 85,
           width: 1024,
         })
-        if (photo?.dataUrl) {
-          tempPreview.value = photo.dataUrl
-          cropModalOpen.value = true
-        }
-      } catch (e) {
+        if (photo?.dataUrl){ tempPreview.value = photo.dataUrl; cropModalOpen.value = true }
+      }catch(e){
         if (e?.message && e.message !== 'User cancelled photos app') {
           toastErr.value = { open: true, msg: 'No se pudo abrir la galería.' }
         }
       }
-    } else {
+    }else{
       fileInput.value?.click()
     }
   }
 
-  async function onFileChange(ev) {
+  async function onFileChange(ev){
     const file = ev.target.files?.[0]
     ev.target.value = ''
     if (!file) return
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/')){
       toastErr.value = { open: true, msg: 'Selecciona una imagen válida.' }
       return
     }
@@ -282,7 +302,7 @@ export function useAvatar({ user, extras, toast, toastErr }) {
     tempPreview.value = dataUrl
     cropModalOpen.value = true
   }
-  function fileToDataUrl(file) {
+  function fileToDataUrl(file){
     return new Promise((res, rej) => {
       const fr = new FileReader()
       fr.onload = () => res(fr.result)
@@ -291,21 +311,21 @@ export function useAvatar({ user, extras, toast, toastErr }) {
     })
   }
 
-  async function confirmCrop() {
+  async function confirmCrop(){
     const c = cropperRef.value
     if (!c) return
     const { canvas } = c.getResult({
       size: { width: 512, height: 512 },
       format: 'image/png',
-      fillColor: 'transparent',
+      fillColor: 'transparent'
     })
-    if (!canvas) {
-      toastErr.value = { open: true, msg: 'No se pudo generar la imagen' }
+    if (!canvas){
+      toastErr.value = { open:true, msg:'No se pudo generar la imagen' }
       return
     }
-    const blob = await new Promise((r) => canvas.toBlob(r, 'image/png', 0.92))
-    if (!blob) {
-      toastErr.value = { open: true, msg: 'No se pudo generar la imagen' }
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png', 0.92))
+    if (!blob){
+      toastErr.value = { open:true, msg:'No se pudo generar la imagen' }
       return
     }
     pendingFile.value = new File([blob], `avatar_${Date.now()}.png`, { type: 'image/png' })
@@ -314,22 +334,23 @@ export function useAvatar({ user, extras, toast, toastErr }) {
     toast.value = { open: true, msg: 'Vista previa lista. Guarda para aplicar.' }
   }
 
-  function discardPending() {
+  function discardPending(){
     if (pendingPreview.value) URL.revokeObjectURL(pendingPreview.value)
     pendingPreview.value = ''
     pendingFile.value = null
+    // NO resolver aquí; tempAvatarUrl ya es correcto
   }
 
-  async function savePendingAvatar() {
+  async function savePendingAvatar(){
     const uid = authUser.value?.id || ''
     if (!pendingFile.value || !uid) return
     isSavingAvatar.value = true
-    try {
+    try{
       const file = pendingFile.value
       const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
       const path = `${uid}/${Date.now()}.${ext}`
 
-      const sizeMB = file.size / (1024 * 1024)
+      const sizeMB = file.size / (1024*1024)
       if (sizeMB > MAX_MB) throw new Error(`La imagen final supera ${MAX_MB} MB.`)
 
       await uploadAvatar(AVATAR_BUCKET, path, file)
@@ -338,21 +359,19 @@ export function useAvatar({ user, extras, toast, toastErr }) {
       clearUserAvatarCache(uid)
 
       let signed = await signIfNeeded(path)
-      if (signed) {
+      if (signed){
         signed = `${signed}${signed.includes('?') ? '&' : '?'}t=${Date.now()}`
         tempAvatarUrl.value = signed
-        const exp = Math.floor(Date.now() / 1000) + SIGN_TTL_SECONDS
+        const exp = Math.floor(Date.now()/1000) + SIGN_TTL_SECONDS
         const k = cacheKeyFor(uid, path)
         memCache.set(k, { signedUrl: signed, exp })
         localStorage.setItem(k, JSON.stringify({ path, signedUrl: signed, exp }))
 
         if (extras?.value) extras.value.avatar_url = path
 
-        window.dispatchEvent(
-          new CustomEvent('avatar-updated', {
-            detail: { userId: uid, path, signedUrl: signed },
-          }),
-        )
+        window.dispatchEvent(new CustomEvent('avatar-updated', {
+          detail: { userId: uid, path, signedUrl: signed }
+        }))
 
         warmup(signed)
       } else {
@@ -361,42 +380,25 @@ export function useAvatar({ user, extras, toast, toastErr }) {
 
       discardPending()
       toast.value = { open: true, msg: 'Avatar guardado' }
-    } catch (e) {
+    }catch(e){
       console.error(e)
       toastErr.value = { open: true, msg: e?.message || 'No se pudo guardar el avatar' }
-    } finally {
+    }finally{
       isSavingAvatar.value = false
     }
   }
 
   // Reaccionar a cambios (uid o avatar_url)
-  watchEffect(() => {
-    resolveAvatarUrl()
-  })
+  watchEffect(() => { resolveAvatarUrl() })
 
   return {
-    defaultImage,
-    uploading,
-    isSavingAvatar,
-    avatarReady,
-    avatarPreview,
-    avatarModalOpen,
-    actionOpen,
-    actionButtons,
-    cropModalOpen,
-    cropperRef,
-    tempPreview,
-    initialCoords,
-    fileInput,
-    cameraInput,
-    openEditOptions,
-    pickFromCamera,
-    pickFromGallery,
-    onFileChange,
-    closeCropper,
-    confirmCrop,
-    discardPending,
-    savePendingAvatar,
+    defaultImage, uploading, isSavingAvatar,
+    avatarReady, avatarPreview, avatarModalOpen,
+    actionOpen, actionButtons,
+    cropModalOpen, cropperRef, tempPreview, initialCoords,
+    fileInput, cameraInput,
+    openEditOptions, pickFromCamera, pickFromGallery, onFileChange,
+    closeCropper, confirmCrop, discardPending, savePendingAvatar,
     pendingFile,
   }
 }
