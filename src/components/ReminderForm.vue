@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { IonItem, IonLabel, IonInput, IonNote, IonButton, IonSelect, IonSelectOption, IonIcon } from '@ionic/vue'
 import { personOutline, repeatOutline, calendarOutline, timeOutline, chatbubbleOutline } from 'ionicons/icons'
 import '@/theme/ExpenseForm.css'
@@ -76,7 +76,7 @@ const props = defineProps({
   initial: { type: Object, default: null },
 })
 const loading = computed(() => props.loading)
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'dirty-change'])
 
 // Icons
 const personIcon = personOutline
@@ -92,6 +92,44 @@ const fechaFin = ref('')
 const minEndDate = ref(new Date().toISOString().slice(0, 10))
 const hora = ref('')
 const comentario = ref('')
+
+const baseline = ref(null)
+const isDirty = ref(null)
+let syncingFromProps = false
+
+function snapshotCurrent() {
+  return {
+    nombre: String(nombre.value ?? ''),
+    frecuencia: frecuencia.value,
+    intervaloDias: frecuencia.value === 'custom' ? Number(intervaloDias.value ?? 2) : null,
+    fechaFin: fechaFin.value || '',
+    hora: normalizeTimeString((hora.value || '').toString().trim()),
+    comentario: String(comentario.value ?? ''),
+  }
+}
+
+function setDirty(next) {
+  const flag = !!next
+  if (isDirty.value === flag) return
+  isDirty.value = flag
+  emit('dirty-change', flag)
+}
+
+function updateDirty() {
+  if (syncingFromProps) return
+  if (!baseline.value) return
+  const current = snapshotCurrent()
+  const same =
+    current.nombre === baseline.value.nombre &&
+    current.frecuencia === baseline.value.frecuencia &&
+    current.intervaloDias === baseline.value.intervaloDias &&
+    current.fechaFin === baseline.value.fechaFin &&
+    current.hora === baseline.value.hora &&
+    current.comentario === baseline.value.comentario
+  setDirty(!same)
+}
+
+watch([nombre, frecuencia, intervaloDias, fechaFin, hora, comentario], updateDirty)
 
 const nameError = ref('')
 const freqError = ref('')
@@ -169,15 +207,34 @@ function emitSubmit() {
 
 // Rellenar valores iniciales (edición)
 watch(() => props.initial, (val) => {
-  if (!val) return
-  nombre.value = val.nombre ?? ''
-  frecuencia.value = val.frecuencia ?? 'daily'
-  intervaloDias.value = Math.max(Number(val.intervaloDias ?? 3), 3)
-  fechaFin.value = (val.fechaFin && String(val.fechaFin) >= minEndDate.value) ? val.fechaFin : minEndDate.value
-  hora.value = normalizeTimeString(val.hora ?? '') || ''
-  comentario.value = val.comentario ?? ''
+  syncingFromProps = true
+  if (val) {
+    nombre.value = val.nombre ?? ''
+    frecuencia.value = val.frecuencia ?? 'daily'
+    intervaloDias.value = Math.max(Number(val.intervaloDias ?? 3), 3)
+    fechaFin.value = (val.fechaFin && String(val.fechaFin) >= minEndDate.value) ? val.fechaFin : minEndDate.value
+    hora.value = normalizeTimeString(val.hora ?? '') || ''
+    comentario.value = val.comentario ?? ''
+  } else {
+    nombre.value = ''
+    frecuencia.value = 'daily'
+    intervaloDias.value = 2
+    fechaFin.value = ''
+    hora.value = ''
+    comentario.value = ''
+  }
   nameError.value = freqError.value = intervalError.value = endDateError.value = timeError.value = ''
+  baseline.value = snapshotCurrent()
+  setDirty(false)
+  syncingFromProps = false
 }, { immediate: true })
+
+onMounted(() => {
+  if (!baseline.value) {
+    baseline.value = snapshotCurrent()
+    setDirty(false)
+  }
+})
 
 defineExpose({
   submit: () => { emitSubmit() },
@@ -189,6 +246,8 @@ defineExpose({
     hora.value = ''
     comentario.value = ''
     nameError.value = freqError.value = intervalError.value = endDateError.value = timeError.value = ''
+    baseline.value = snapshotCurrent()
+    setDirty(false)
   },
 })
 

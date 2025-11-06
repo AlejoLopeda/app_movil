@@ -7,12 +7,19 @@ import { Capacitor } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 
-// File Opener opcional
-let FileOpener = null
-try {
-  FileOpener = (await import('@capacitor-community/file-opener')).FileOpener
-} catch (_) {
-  // plugin no instalado; usaremos Share como fallback
+// File Opener opcional (lazy). Evita top-level await en builds legacy.
+let fileOpenerCached = null
+let fileOpenerLoaded = false
+async function loadFileOpener () {
+  if (fileOpenerLoaded) return fileOpenerCached
+  fileOpenerLoaded = true
+  try {
+    const mod = await import('@capacitor-community/file-opener')
+    fileOpenerCached = mod?.FileOpener || null
+  } catch {
+    fileOpenerCached = null
+  }
+  return fileOpenerCached
 }
 
 const nfCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -148,8 +155,9 @@ export async function saveNative(doc, name) {
   const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path })
 
   try {
-    if (FileOpener) {
-      await FileOpener.open({ filePath: uri, contentType: 'application/pdf' })
+    const opener = await loadFileOpener()
+    if (opener) {
+      await opener.open({ filePath: uri, contentType: 'application/pdf' })
     } else {
       await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
     }
