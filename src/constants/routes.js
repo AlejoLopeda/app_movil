@@ -10,4 +10,5 @@ export const MAIN_ROUTES = [
     '/historico/ambos',
     '/perfil',
     '/balance',
+    '/reporte',
 ]
