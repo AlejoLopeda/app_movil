@@ -105,9 +105,36 @@
         </button>
       </div>
 
+      <!-- NUEVO: Reportes - dos botones (Regresar + Descargar PDF) -->
+      <div v-else-if="isReportPage" class="nav-cta">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :disabled="canDownloadEnabled"
+          :aria-disabled="canDownloadEnabled || isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating || canDownloadEnabled }"
+        >
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          :disabled="!canDownloadEnabled"
+          @click="emitDownload"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+          :aria-disabled="!canDownloadEnabled || isNavigating"
+        >
+          <ion-icon :icon="downloadOutline" />
+          <span>DESCARGAR</span>
+        </button>
+      </div>
+
       <!-- HISTÓRICO (LISTAS): Back /balance + Ingreso + Gasto + Ambos (icon-only) -->
       <nav v-else-if="isHistoryListPage" class="nav nav--history">
-        <!-- Back a /balance -->
         <button
           type="button"
           class="nav-btn icon-only"
@@ -119,7 +146,6 @@
           <ion-icon :icon="chevronBackOutline" />
         </button>
 
-        <!-- Ingreso -->
         <button
           type="button"
           class="nav-btn"
@@ -132,7 +158,6 @@
           <span>INGRESO</span>
         </button>
 
-        <!-- Gasto -->
         <button
           type="button"
           class="nav-btn"
@@ -145,7 +170,6 @@
           <span>GASTO</span>
         </button>
 
-        <!-- Ambos (icon-only) -->
         <button
           type="button"
           class="nav-btn icon-only"
@@ -252,15 +276,15 @@
 import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
-  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add
+  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add, downloadOutline
 } from 'ionicons/icons'
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
-  isMainRoute, isAddPage, isProfilePage, isRemindersPage,
+  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isReportPage,
   isHistoryListPage, isMonthlyArea, isGoalsPage,
-  historyTab, activeTab, canSaveEnabled,
-  goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
+  historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
+  goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
   goAddGoal,
   goOrToggleIncome, goOrToggleExpense,
   toastOpen, toastMsg, isNavigating,
@@ -268,3 +292,14 @@ const {
 </script>
 
 <style src="../theme/BottomBar.css"></style>
+
+<style>
+.bottom-fixed{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483647 !important;
+  pointer-events: auto;
+}
+</style>

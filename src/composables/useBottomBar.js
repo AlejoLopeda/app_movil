@@ -16,6 +16,11 @@ export function useBottomBar() {
   const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
+  // NUEVO: Reportes (/reporte o /reportes)
+  const isReportPage      = computed(() =>
+    route.path === '/reporte' || route.path === '/reportes' || route.path.startsWith('/reportes/')
+  )
+
   // Listas histórico
   const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
   const isHistoryListPage = computed(() => /\/historico\//.test(route.path))
@@ -55,6 +60,13 @@ export function useBottomBar() {
   onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
   onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
   watch(isProfilePage, now => { if (!now) canSaveEnabled.value = false })
+
+  /* ===== /reporte: habilitar descarga ===== */
+  const canDownloadEnabled = ref(false)
+  function handleCanDownload(ev){ canDownloadEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
+  onMounted(() => window.addEventListener('report-can-download', handleCanDownload))
+  onUnmounted(() => window.removeEventListener('report-can-download', handleCanDownload))
+  watch(isReportPage, now => { if (!now) canDownloadEnabled.value = false })
 
   /* ===== Feedback ===== */
   const toastOpen = ref(false)
@@ -121,6 +133,9 @@ export function useBottomBar() {
   function go(path){ navigate(path, { replace:false }) }
   function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
 
+  // NUEVO: disparar descarga desde navbar en /reporte
+  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
+
   function goDashboard(){
     // Desde Add/Edit vuelve a balance o recordatorios según caso
     const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/balance'
@@ -163,11 +178,11 @@ export function useBottomBar() {
   return {
     // estado
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
-    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage,
-    historyTab, activeTab, canSaveEnabled,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isReportPage,
+    historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
     // navegación/acciones
-    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
+    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
     goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
     goAddGoal, goOrToggleIncome, goOrToggleExpense,
 
