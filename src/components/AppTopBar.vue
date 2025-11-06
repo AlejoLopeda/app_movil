@@ -156,7 +156,17 @@ async function onStorage(e){
 }
 
 async function onEdit(){ menuOpen.value=false; try{ await router.push('/perfil') }catch{} }
-function onReport(){ menuOpen.value=false; emit('report') }
+
+/* ✅ SOLO se ajustó este método para redirigir */
+async function onReport(){
+  menuOpen.value=false
+  emit('report')
+  try {
+    await router.push('/reporte')
+  } catch (e) {
+    console.error('Error al navegar a /reporte:', e)
+  }
+}
 
 const logoutMsg = ref('No se pudo cerrar la app. Intenta de nuevo.')
 async function onLogout(){
@@ -169,14 +179,11 @@ async function onLogout(){
   }catch(e){ console.error('close app error:', e); logoutMsg.value='No se pudo cerrar la app. Intenta de nuevo.'; logoutErrorOpen.value=true }
 }
 
-/* ✅ Ajuste para que el speed-dial nunca quede pegado al avatar
-   (recalcula altura real del header justo antes de abrir el menú) */
+/* ✅ Ajuste para que el speed-dial nunca quede pegado al avatar */
 function handleUserMenu(){
   if (isProfilePage.value) return
-  // Recalcular altura del header y actualizar la variable CSS usada por el menú
   nextTick(() => {
     applyTopbarHeight()
-    // doble raf por si Ionic está terminando un reflow del header
     requestAnimationFrame(applyTopbarHeight)
   })
   toggleUserMenu()
