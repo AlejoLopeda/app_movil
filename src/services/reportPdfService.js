@@ -3,8 +3,32 @@ import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
 pdfMake.vfs = pdfFonts.vfs
 
-const nfCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+// Capacitor (para guardar/abrir en móvil)
+import { Filesystem, Directory } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 
+// Carga perezosa de File Opener (opcional)
+let fileOpenerCached = null
+let fileOpenerLoaded = false
+async function loadFileOpener () {
+  if (fileOpenerLoaded) return fileOpenerCached
+  fileOpenerLoaded = true
+  try {
+    const mod = await import('@capacitor-community/file-opener')
+    fileOpenerCached = mod?.FileOpener || null
+  } catch {
+    fileOpenerCached = null
+  }
+  return fileOpenerCached
+}
+
+const nfCOP = new Intl.NumberFormat('es-CO', {
+  style: 'currency', currency: 'COP', maximumFractionDigits: 0
+})
+
+/* =============================
+ *  Construcción del documento
+ * ============================= */
 export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses }) {
   const balance = (incomes || 0) - (expenses || 0)
   const status =
@@ -44,7 +68,9 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           }
         ]
       },
+
       { text: `Período: ${periodLabel}`, margin: [0, 8, 0, 16], color: '#0b3a43' },
+
       {
         table: { widths: ['*', 120], body: rows },
         layout: {
@@ -53,16 +79,20 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           vLineColor: () => '#cfd8dc'
         }
       },
+
       {
         stack: [
           { text: 'Resumen', style: 'h2', margin: [0, 16, 0, 6] },
-          { ul: [
-            `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
-            `Gastos del período: ${nfCOP.format(expenses || 0)}`,
-            `Balance: ${nfCOP.format(balance)}`
-          ] }
+          {
+            ul: [
+              `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
+              `Gastos del período: ${nfCOP.format(expenses || 0)}`,
+              `Balance: ${nfCOP.format(balance)}`
+            ]
+          }
         ]
       },
+
       { text: advice, margin: [0, 18, 0, 0], color: balance >= 0 ? '#2e7d32' : '#c62828' }
     ],
     styles: {
@@ -76,6 +106,9 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
   }
 }
 
+/* ===== Helpers de generación (para previsualizar/guardar) ===== */
+
+// Blob (útil para iframe / pdf.js)
 export function makePdfBlob (docDefinition) {
   return new Promise((resolve, reject) => {
     try { pdfMake.createPdf(docDefinition).getBlob((blob) => resolve(blob)) }
@@ -83,6 +116,7 @@ export function makePdfBlob (docDefinition) {
   })
 }
 
+// Data URL (útil para web)
 export function makePdfDataUrl (docDefinition) {
   return new Promise((resolve, reject) => {
     try { pdfMake.createPdf(docDefinition).getDataUrl((url) => resolve(url)) }
@@ -90,12 +124,58 @@ export function makePdfDataUrl (docDefinition) {
   })
 }
 
+// Nombre de archivo estandarizado
+export function makeFileName (kind) {
+  const slug =
+    kind === 'DIARIO'   ? 'reporte-diario' :
+    kind === 'SEMANAL'  ? 'reporte-semanal' :
+    'reporte-mensual'
+  return `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
+}
+
+// Web: descarga directa
+export function downloadWeb (doc, name) {
+  pdfMake.createPdf(doc).download(name)
+}
+
+// Nativo: guardar en Documentos y abrir/compartir
+export async function saveNative (doc, name) {
+  // Base64 “puro” (sin encabezado data:)
+  const base64 = await new Promise((resolve, reject) => {
+    try { pdfMake.createPdf(doc).getBase64(data => resolve(data)) }
+    catch (e) { reject(e) }
+  })
+
+  const path = `reports/${name}`
+
+  // Escribe en Documents (crea la subcarpeta con recursive)
+  await Filesystem.writeFile({
+    path,
+    data: base64,
+    directory: Directory.Documents,
+    recursive: true
+  })
+
+  const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path })
+
+  // Intenta abrir con File Opener; si no está, comparte
+  try {
+    const opener = await loadFileOpener()
+    if (opener) {
+      await opener.open({ filePath: uri, contentType: 'application/pdf' })
+    } else {
+      await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
+    }
+  } catch {
+    await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
+  }
+
+  return uri
+}
+
+/* ===== Compat: API antigua que solo descargaba (web) ===== */
 export function downloadReportPdf (opts) {
   const doc = buildReportDoc(opts)
-  const slug =
-    opts.kind === 'DIARIO'   ? 'reporte-diario' :
-    opts.kind === 'SEMANAL'  ? 'reporte-semanal' :
-    'reporte-mensual'
-  const name = `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
-  pdfMake.createPdf(doc).download(name)
+  const name = makeFileName(opts.kind)
+  downloadWeb(doc, name)
 }
