@@ -57,46 +57,30 @@
 
       <ion-toast :is-open="toast.open" :message="toast.msg" :duration="2200" color="success" @didDismiss="toast.open=false"/>
 
-      <!-- ========== PREVISUALIZACIÓN ========== -->
+      <!-- ========== MODAL PREVIEW ========== -->
       <ion-modal :is-open="previewOpen" @didDismiss="closePreview">
         <div class="preview-modal">
           <div class="preview-header">
-            <h3>{{ modalTitle }}</h3>
-            <div class="spacer"></div>
-            <ion-button size="small" fill="outline" @click="downloadFromPreview" :disabled="loading">
-              {{ isNative ? 'Guardar como PDF' : 'Descargar PDF' }}
-            </ion-button>
-            <ion-button size="small" fill="solid" @click="closePreview">Cerrar</ion-button>
+            <div class="preview-title">
+              <strong>Vista previa – {{ previewTitle }}</strong>
+            </div>
+            <div class="preview-actions">
+              <ion-button size="small" fill="outline" @click="downloadCurrent" :disabled="downloading">
+                {{ downloading ? 'GUARDANDO…' : 'DESCARGAR PDF' }}
+              </ion-button>
+              <ion-button size="small" @click="closePreview">CERRAR</ion-button>
+            </div>
           </div>
 
-          <!-- Web: PDF real embebido -->
-          <iframe v-if="!isNative" class="pdf-frame" :src="previewSrc" title="Vista previa PDF"></iframe>
-
-          <!-- Nativo: HTML preview semánticamente equivalente -->
-          <div v-else class="native-preview">
-            <h4 class="h1">REPORTE {{ currentKind }}</h4>
-            <div class="period">Período: {{ periodLabel }}</div>
-
-            <table class="tbl">
-              <thead><tr><th>Concepto</th><th class="ar">Valor</th></tr></thead>
-              <tbody>
-                <tr><td>Ingresos</td><td class="ar">{{ money(incomes) }}</td></tr>
-                <tr><td>Gastos</td><td class="ar">{{ money(expenses) }}</td></tr>
-                <tr class="bold">
-                  <td>{{ balanceStatus }}</td>
-                  <td class="ar">{{ money(balance) }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <h5 class="h2">Resumen</h5>
-            <ul class="ul">
-              <li>Ingresos del período: {{ money(incomes) }}</li>
-              <li>Gastos del período: {{ money(expenses) }}</li>
-              <li>Balance: {{ money(balance) }}</li>
-            </ul>
-
-            <p :class="['advice', balance >= 0 ? 'ok' : 'bad']">{{ adviceText }}</p>
+          <div class="preview-body">
+            <div v-if="previewLoading" class="preview-spinner">Cargando…</div>
+            <iframe
+              v-else
+              class="preview-frame"
+              :src="previewUrl"
+              frameborder="0"
+              sandbox="allow-same-origin allow-scripts"
+            ></iframe>
           </div>
         </div>
       </ion-modal>
@@ -106,21 +90,19 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Capacitor } from '@capacitor/core'
 import {
   IonPage, IonContent, IonItem, IonLabel, IonInput, IonButton, IonNote, IonToast, IonModal
 } from '@ionic/vue'
+import { Capacitor } from '@capacitor/core'
+import { Filesystem } from '@capacitor/filesystem'
 import AppTopBar from '@/components/AppTopBar.vue'
+
 import { getTotals } from '@/services/transactionsService'
-import {
-  buildReportDoc, makeDataUrl, downloadWeb, saveNative, makeFileName
-} from '@/services/reportPdfService'
+import { buildReportDoc, makePdfBlob, downloadReportPdf } from '@/services/reportPdfService'
 
 const loading = ref(false)
 const err = ref('')
 const toast = ref({ open: false, msg: '' })
-
-const isNative = Capacitor.isNativePlatform()
 
 // ====== Diario ======
 const todayISO = new Date().toISOString().slice(0, 10)
@@ -139,9 +121,7 @@ function humanRange (from, to) {
   const [y1,m1,d1] = from.split('-'); const [y2,m2,d2] = to.split('-')
   return `${d1}/${m1}/${y1} – ${d2}/${m2}/${y2}`
 }
-function humanDay (d) {
-  const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`
-}
+function humanDay (d) { const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}` }
 function monthBounds (ym) {
   const [y, m] = ym.split('-').map(n=>Number(n))
   const first = new Date(y, m-1, 1)
@@ -150,91 +130,115 @@ function monthBounds (ym) {
   return { from: toISO(first), to: toISO(last) }
 }
 
-// ====== Estado de previsualización ======
-const previewOpen  = ref(false)
-const previewSrc   = ref('')  // solo web (data URL)
-const currentDoc   = ref(null)
-const currentKind  = ref('')  // DIARIO/SEMANAL/MENSUAL
-const periodLabel  = ref('')
-const modalTitle   = computed(() => `Vista previa – ${currentKind.value}`)
+/* ===== PREVIEW STATE ===== */
+const previewOpen    = ref(false)
+const previewLoading = ref(false)
+const previewUrl     = ref('')      // blob:url
+const previewBlob    = ref(null)    // Blob para descargar en móvil
+const previewTitle   = ref('')      // DIARIO/SEMANAL/MENSUAL
+const downloading    = ref(false)
 
-// Datos usados en preview nativa (HTML)
-const incomes = ref(0)
-const expenses = ref(0)
-const balance = computed(() => (incomes.value || 0) - (expenses.value || 0))
-const nf = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
-const money = v => nf.format(v || 0)
-const balanceStatus = computed(() =>
-  balance.value > 0 ? 'SALDO POSITIVO' :
-  balance.value < 0 ? 'SALDO NEGATIVO' : 'SALDO NEUTRO'
-)
-const adviceText = computed(() =>
-  balance.value > 0
-    ? '¡Bien! Mantén el control: considera ahorrar un % de tu excedente.'
-    : balance.value < 0
-      ? 'Atención: revisa tus gastos y fija límites para equilibrar tus cuentas.'
-      : 'Vas justo. Un pequeño ajuste en gastos o un ingreso extra mejorará tu balance.'
-)
+function revokePreview () {
+  try { if (previewUrl.value) URL.revokeObjectURL(previewUrl.value) } catch {}
+  previewUrl.value = ''
+  previewBlob.value = null
+}
+function closePreview () { revokePreview(); previewOpen.value = false }
 
-function closePreview(){ previewOpen.value = false; previewSrc.value = ''; currentDoc.value = null }
-
-// ====== Generate handlers ======
+/* ===== Handlers de generación (abre preview) ===== */
 async function genDaily(){
-  await generate({ kind:'DIARIO', from: day.value, to: day.value, periodLabel: humanDay(day.value) })
+  await openPreview({ kind:'DIARIO', from: day.value, to: day.value, periodLabel: humanDay(day.value) })
 }
 async function genWeekly(){
   if (!validWeek.value) return
-  await generate({ kind:'SEMANAL', from: weekFrom.value, to: weekTo.value, periodLabel: humanRange(weekFrom.value, weekTo.value) })
+  await openPreview({ kind:'SEMANAL', from: weekFrom.value, to: weekTo.value, periodLabel: humanRange(weekFrom.value, weekTo.value) })
 }
 async function genMonthly(){
   if (!validMonth.value) return
   const { from, to } = monthBounds(month.value)
   const [y, m] = month.value.split('-')
   const monthName = new Date(Number(y), Number(m)-1, 1).toLocaleString('es-CO', { month: 'long', year: 'numeric' })
-  await generate({ kind:'MENSUAL', from, to, periodLabel: monthName.charAt(0).toUpperCase() + monthName.slice(1) })
+  await openPreview({ kind:'MENSUAL', from, to, periodLabel: monthName.charAt(0).toUpperCase() + monthName.slice(1) })
 }
 
-async function generate({ kind, from, to, periodLabel: pLabel }){
+async function openPreview({ kind, from, to, periodLabel }){
   loading.value = true
   err.value = ''
+  revokePreview()
+  previewOpen.value = true
+  previewLoading.value = true
+  previewTitle.value  = kind
+
   try{
-    const totals = await getTotals({ from, to })
-    const doc = buildReportDoc({ kind, periodLabel: pLabel, from, to, ...totals })
-
-    currentDoc.value  = doc
-    currentKind.value = kind
-    periodLabel.value = pLabel
-    incomes.value  = totals.incomes
-    expenses.value = totals.expenses
-
-    if (!isNative) {
-      // Web: data URL para embeber en iframe
-      previewSrc.value = await makeDataUrl(doc)
-    }
-
-    previewOpen.value = true
+    const { incomes, expenses } = await getTotals({ from, to })
+    const doc = buildReportDoc({ kind, periodLabel, from, to, incomes, expenses })
+    const blob = await makePdfBlob(doc)             // ✅ Blob (se ve en iOS/Android webview)
+    previewBlob.value = blob
+    previewUrl.value  = URL.createObjectURL(blob)   // ✅ Mostrar en iframe
   }catch(e){
     console.error(e)
     err.value = e?.message || 'No se pudo generar el reporte.'
+    previewOpen.value = false
   }finally{
+    previewLoading.value = false
     loading.value = false
   }
 }
 
-async function downloadFromPreview(){
-  if (!currentDoc.value) return
-  const name = makeFileName(currentKind.value)
-  try{
-    if (isNative) {
-      await saveNative(currentDoc.value, name)
-      toast.value = { open: true, msg: 'PDF guardado.' }
-    } else {
-      downloadWeb(currentDoc.value, name)
+/* ===== Descargar el PDF actual ===== */
+async function downloadCurrent(){
+  if (!previewBlob.value) return
+  const slug =
+    previewTitle.value === 'DIARIO'  ? 'reporte-diario' :
+    previewTitle.value === 'SEMANAL' ? 'reporte-semanal' : 'reporte-mensual'
+  const filename = `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
+
+  // WEB → usa la descarga nativa de pdfMake (misma definición reconstruida)
+  if (!Capacitor.isNativePlatform()){
+    try {
+      // reutilizamos la URL actual: solo abrimos en nueva pestaña (también descarga desde visor)
+      const a = document.createElement('a')
+      a.href = previewUrl.value
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch {
+      // fallback: descarga directa reconstruyendo doc
+      downloadReportPdf({ kind: previewTitle.value, periodLabel: '', from:'', to:'', incomes:0, expenses:0 })
     }
-  }catch(e){
-    console.error(e)
-    err.value = e?.message || 'No se pudo guardar/descargar el reporte.'
+    return
   }
+
+  // NATIVO → guardar en Documents usando Filesystem (Capacitor)
+  try{
+    downloading.value = true
+    const base64 = await blobToBase64(previewBlob.value) // "data:application/pdf;base64,AAA..."
+    const b64 = base64.split(',')[1] || base64
+
+    const { uri } = await Filesystem.writeFile({
+      path: filename,
+      data: b64,
+      directory: FilesystemDirectory.Documents,
+      recursive: true
+    })
+
+    toast.value = { open: true, msg: `PDF guardado en Documentos.` }
+  }catch(e){
+    console.error('save pdf error', e)
+    toast.value = { open: true, msg: 'No se pudo guardar el PDF' }
+  }finally{
+    downloading.value = false
+  }
+}
+
+function blobToBase64 (blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }
 </script>
 
@@ -261,25 +265,28 @@ async function downloadFromPreview(){
 .col { --padding-start: 0; }
 .btn { --background: #0b3a43; margin-top: 8px; }
 
-/* Modal */
-.preview-modal { padding: 12px; display: flex; flex-direction: column; height: 100%; }
-.preview-header { display: flex; align-items: center; gap: 8px; }
-.preview-header .spacer { flex: 1; }
-.pdf-frame { width: 100%; height: calc(100vh - 110px); border: none; }
-
-/* Preview nativo (HTML) */
-.native-preview { padding: 8px 2px 16px; }
-.h1 { color:#0b3a43; font-size: 18px; margin: 6px 0 8px; }
-.h2 { color:#0b3a43; font-size: 15px; margin: 16px 0 8px; }
-.period { color:#0b3a43; margin-bottom: 12px; }
-.tbl { width:100%; border-collapse: collapse; }
-.tbl th, .tbl td { border:1px solid #cfd8dc; padding:8px; }
-.tbl thead th { background:#e9f3f5; color:#0b3a43; }
-.tbl .ar { text-align:right; }
-.tbl .bold td { font-weight: 700; }
-.ul { margin:0; padding-left: 20px; }
-.advice { margin-top: 12px; }
-.advice.ok { color:#2e7d32; }
-.advice.bad { color:#c62828; }
+/* ===== Preview modal ===== */
+.preview-modal { display:flex; flex-direction:column; width:100%; height:100%; background:#fff; }
+.preview-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 12px 8px; border-bottom:1px solid #e6eef1;
+}
+.preview-title { color:#0b3a43; font-weight:800; }
+.preview-actions :deep(button) { margin-left:8px; }
+.preview-body { padding:8px; height:100%; display:grid; }
+.preview-frame {
+  width:100%;
+  height: calc(100vh - 160px); /* se adapta a pantallas pequeñas */
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  background:#f6f9fb;
+}
+.preview-spinner {
+  display:grid; place-items:center;
+  width:100%; height: calc(100vh - 160px);
+  color:#0b3a43; font-weight:600;
+}
 </style>
+
 
