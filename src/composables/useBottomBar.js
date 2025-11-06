@@ -59,7 +59,12 @@ export function useBottomBar() {
   function handleCanSave(ev){ canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
   onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
   onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
-  watch(isProfilePage, now => { if (!now) canSaveEnabled.value = false })
+  watch([isProfilePage, isEditReminderPage], ([profile, edit]) => {
+    if (!profile && !edit) canSaveEnabled.value = false
+  })
+  watch(isEditReminderPage, now => {
+    if (now) canSaveEnabled.value = false
+  })
 
   /* ===== /reporte: habilitar descarga ===== */
   const canDownloadEnabled = ref(false)

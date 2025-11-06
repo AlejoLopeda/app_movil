@@ -18,9 +18,10 @@
           type="button"
           class="cta-btn"
           @click="emitAccept"
-          :aria-disabled="isNavigating"
+          :disabled="isEditReminderPage && !canSaveEnabled"
+          :aria-disabled="isNavigating || (isEditReminderPage && !canSaveEnabled)"
           :data-busy="isNavigating"
-          :class="{ 'is-locked': isNavigating }"
+          :class="{ 'is-locked': isNavigating || (isEditReminderPage && !canSaveEnabled) }"
         >
           <ion-icon :icon="checkmarkOutline" />
           <span>ACEPTAR</span>
@@ -281,7 +282,7 @@ import {
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
-  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isReportPage,
+  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage, isReportPage,
   isHistoryListPage, isMonthlyArea, isGoalsPage,
   historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
   goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,

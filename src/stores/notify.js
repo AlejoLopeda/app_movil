@@ -5,11 +5,13 @@ export const notification = reactive({
   open: false,
   message: '',
   color: 'primary',
+  position: 'top',
 })
 
-export function showToast(message, color = 'primary') {
+export function showToast(message, color = 'primary', position = 'top') {
   notification.message = message || ''
   notification.color = color || 'primary'
+  notification.position = position || 'top'
   notification.open = true
 }
 
