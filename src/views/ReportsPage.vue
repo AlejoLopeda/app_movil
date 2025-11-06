@@ -57,13 +57,11 @@
 
       <ion-toast :is-open="toast.open" :message="toast.msg" :duration="2200" color="success" @didDismiss="toast.open=false"/>
 
-      <!-- ========== MODAL PREVIEW ========== -->
+      <!-- ===== MODAL PREVIEW ===== -->
       <ion-modal :is-open="previewOpen" @didDismiss="closePreview">
         <div class="preview-modal">
           <div class="preview-header">
-            <div class="preview-title">
-              <strong>Vista previa – {{ previewTitle }}</strong>
-            </div>
+            <div class="preview-title"><strong>Vista previa – {{ previewTitle }}</strong></div>
             <div class="preview-actions">
               <ion-button size="small" fill="outline" @click="downloadCurrent" :disabled="downloading">
                 {{ downloading ? 'GUARDANDO…' : 'DESCARGAR PDF' }}
@@ -74,13 +72,21 @@
 
           <div class="preview-body">
             <div v-if="previewLoading" class="preview-spinner">Cargando…</div>
+
+            <!-- IFRAME para web / móviles que soporten PDF en WebView -->
             <iframe
-              v-else
+              v-show="!previewLoading && previewMode === 'iframe'"
               class="preview-frame"
               :src="previewUrl"
+              type="application/pdf"
               frameborder="0"
-              sandbox="allow-same-origin allow-scripts"
             ></iframe>
+
+            <!-- Fallback para Android WebView: botón para abrir con visor nativo -->
+            <div v-show="!previewLoading && previewMode === 'fallback'" class="fallback">
+              <p>Tu dispositivo no puede mostrar PDFs dentro de la app.</p>
+              <ion-button @click="openInSystemViewer" class="btn">ABRIR EN VISOR DEL SISTEMA</ion-button>
+            </div>
           </div>
         </div>
       </ion-modal>
@@ -89,16 +95,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import {
   IonPage, IonContent, IonItem, IonLabel, IonInput, IonButton, IonNote, IonToast, IonModal
 } from '@ionic/vue'
 import { Capacitor } from '@capacitor/core'
-import { Filesystem } from '@capacitor/filesystem'
-import AppTopBar from '@/components/AppTopBar.vue'
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 
+import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
-import { buildReportDoc, makePdfBlob, downloadReportPdf } from '@/services/reportPdfService'
+import { buildReportDoc, makePdfBlob, makePdfDataUrl, downloadReportPdf } from '@/services/reportPdfService'
 
 const loading = ref(false)
 const err = ref('')
@@ -114,7 +121,7 @@ const weekTo   = ref(todayISO)
 const validWeek = computed(() => !!weekFrom.value && !!weekTo.value && weekFrom.value <= weekTo.value)
 
 // ====== Mensual ======
-const month = ref(todayISO.slice(0,7)) // "YYYY-MM"
+const month = ref(todayISO.slice(0,7))
 const validMonth = computed(() => /^\d{4}-\d{2}$/.test(month.value || ''))
 
 function humanRange (from, to) {
@@ -133,15 +140,17 @@ function monthBounds (ym) {
 /* ===== PREVIEW STATE ===== */
 const previewOpen    = ref(false)
 const previewLoading = ref(false)
-const previewUrl     = ref('')      // blob:url
-const previewBlob    = ref(null)    // Blob para descargar en móvil
+const previewUrl     = ref('')      // data: o blob: para iframe
+const previewBlob    = ref(null)    // Blob para guardar/compartir
 const previewTitle   = ref('')      // DIARIO/SEMANAL/MENSUAL
+const previewMode    = ref('iframe')// 'iframe' | 'fallback'
 const downloading    = ref(false)
 
 function revokePreview () {
-  try { if (previewUrl.value) URL.revokeObjectURL(previewUrl.value) } catch {}
+  try { if (previewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(previewUrl.value) } catch {}
   previewUrl.value = ''
   previewBlob.value = null
+  previewMode.value = 'iframe'
 }
 function closePreview () { revokePreview(); previewOpen.value = false }
 
@@ -172,16 +181,68 @@ async function openPreview({ kind, from, to, periodLabel }){
   try{
     const { incomes, expenses } = await getTotals({ from, to })
     const doc = buildReportDoc({ kind, periodLabel, from, to, incomes, expenses })
-    const blob = await makePdfBlob(doc)             // ✅ Blob (se ve en iOS/Android webview)
-    previewBlob.value = blob
-    previewUrl.value  = URL.createObjectURL(blob)   // ✅ Mostrar en iframe
+
+    // 1) Intento DataURL (mejor compatibilidad en algunos WebViews)
+    let url = ''
+    try {
+      url = await makePdfDataUrl(doc) // "data:application/pdf;base64,..."
+    } catch {}
+    // 2) Si falla, intento Blob URL
+    if (!url) {
+      const blob = await makePdfBlob(doc)
+      previewBlob.value = blob
+      url = URL.createObjectURL(blob)
+    } else {
+      // también guardo blob por si el usuario quiere descargar/compartir
+      const b = await makePdfBlob(doc)
+      previewBlob.value = b
+    }
+
+    previewUrl.value = url
+
+    // Pequeña espera y verificación: si el WebView no renderiza PDF, vamos a fallback
+    await nextTick()
+    setTimeout(() => {
+      // simple chequeo: si Android nativo, forzamos fallback porque muchos WebViews no soportan PDF
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+        previewMode.value = 'fallback'
+      } else {
+        previewMode.value = 'iframe'
+      }
+      previewLoading.value = false
+    }, 200)
   }catch(e){
     console.error(e)
     err.value = e?.message || 'No se pudo generar el reporte.'
     previewOpen.value = false
   }finally{
-    previewLoading.value = false
     loading.value = false
+  }
+}
+
+/* ===== Abrir en visor del sistema (fallback Android/iOS) ===== */
+async function openInSystemViewer () {
+  try {
+    if (!previewBlob.value) return
+    const base64 = await blobToBase64(previewBlob.value) // "data:application/pdf;base64,AAA..."
+    const b64 = base64.split(',')[1] || base64
+
+    const filename = `preview-${Date.now()}.pdf`
+    const { uri } = await Filesystem.writeFile({
+      path: filename,
+      data: b64,
+      directory: Directory.Cache,
+      encoding: Encoding.BASE64,
+      recursive: true
+    })
+    await Share.share({
+      files: [uri],
+      title: 'Reporte (PDF)',
+      dialogTitle: 'Abrir con…'
+    })
+  } catch (e) {
+    console.error('openInSystemViewer error', e)
+    toast.value = { open: true, msg: 'No se pudo abrir el visor del sistema' }
   }
 }
 
@@ -193,37 +254,29 @@ async function downloadCurrent(){
     previewTitle.value === 'SEMANAL' ? 'reporte-semanal' : 'reporte-mensual'
   const filename = `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
 
-  // WEB → usa la descarga nativa de pdfMake (misma definición reconstruida)
+  // WEB → descarga directa
   if (!Capacitor.isNativePlatform()){
-    try {
-      // reutilizamos la URL actual: solo abrimos en nueva pestaña (también descarga desde visor)
-      const a = document.createElement('a')
-      a.href = previewUrl.value
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-    } catch {
-      // fallback: descarga directa reconstruyendo doc
-      downloadReportPdf({ kind: previewTitle.value, periodLabel: '', from:'', to:'', incomes:0, expenses:0 })
-    }
+    const a = document.createElement('a')
+    a.href = previewUrl.value
+    a.download = filename
+    document.body.appendChild(a); a.click(); a.remove()
     return
   }
 
-  // NATIVO → guardar en Documents usando Filesystem (Capacitor)
+  // NATIVO → guardar en Documents (visible para compartir más tarde)
   try{
     downloading.value = true
-    const base64 = await blobToBase64(previewBlob.value) // "data:application/pdf;base64,AAA..."
+    const base64 = await blobToBase64(previewBlob.value)
     const b64 = base64.split(',')[1] || base64
 
-    const { uri } = await Filesystem.writeFile({
+    await Filesystem.writeFile({
       path: filename,
       data: b64,
-      directory: FilesystemDirectory.Documents,
+      directory: Directory.Documents,
+      encoding: Encoding.BASE64,
       recursive: true
     })
-
-    toast.value = { open: true, msg: `PDF guardado en Documentos.` }
+    toast.value = { open: true, msg: 'PDF guardado en Documentos.' }
   }catch(e){
     console.error('save pdf error', e)
     toast.value = { open: true, msg: 'No se pudo guardar el PDF' }
@@ -265,7 +318,7 @@ function blobToBase64 (blob) {
 .col { --padding-start: 0; }
 .btn { --background: #0b3a43; margin-top: 8px; }
 
-/* ===== Preview modal ===== */
+/* Preview modal */
 .preview-modal { display:flex; flex-direction:column; width:100%; height:100%; background:#fff; }
 .preview-header {
   display:flex; justify-content:space-between; align-items:center;
@@ -276,7 +329,7 @@ function blobToBase64 (blob) {
 .preview-body { padding:8px; height:100%; display:grid; }
 .preview-frame {
   width:100%;
-  height: calc(100vh - 160px); /* se adapta a pantallas pequeñas */
+  height: calc(100vh - 160px);
   border: none;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0,0,0,.08);
@@ -286,6 +339,11 @@ function blobToBase64 (blob) {
   display:grid; place-items:center;
   width:100%; height: calc(100vh - 160px);
   color:#0b3a43; font-weight:600;
+}
+.fallback {
+  display:grid; place-items:center; gap:12px;
+  width:100%; height: calc(100vh - 160px);
+  color:#0b3a43;
 }
 </style>
 

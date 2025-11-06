@@ -5,7 +5,6 @@ pdfMake.vfs = pdfFonts.vfs
 
 const nfCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
-/** Construye el docDefinition de pdfMake */
 export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses }) {
   const balance = (incomes || 0) - (expenses || 0)
   const status =
@@ -45,9 +44,7 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           }
         ]
       },
-
       { text: `Período: ${periodLabel}`, margin: [0, 8, 0, 16], color: '#0b3a43' },
-
       {
         table: { widths: ['*', 120], body: rows },
         layout: {
@@ -56,25 +53,16 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           vLineColor: () => '#cfd8dc'
         }
       },
-
       {
-        columns: [
-          {
-            width: '*',
-            stack: [
-              { text: 'Resumen', style: 'h2', margin: [0, 16, 0, 6] },
-              {
-                ul: [
-                  `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
-                  `Gastos del período: ${nfCOP.format(expenses || 0)}`,
-                  `Balance: ${nfCOP.format(balance)}`
-                ]
-              }
-            ]
-          }
+        stack: [
+          { text: 'Resumen', style: 'h2', margin: [0, 16, 0, 6] },
+          { ul: [
+            `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
+            `Gastos del período: ${nfCOP.format(expenses || 0)}`,
+            `Balance: ${nfCOP.format(balance)}`
+          ] }
         ]
       },
-
       { text: advice, margin: [0, 18, 0, 0], color: balance >= 0 ? '#2e7d32' : '#c62828' }
     ],
     styles: {
@@ -88,24 +76,20 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
   }
 }
 
-/** Helpers para generar binarios (útiles en móvil para preview en <iframe>) */
 export function makePdfBlob (docDefinition) {
   return new Promise((resolve, reject) => {
-    try {
-      pdfMake.createPdf(docDefinition).getBlob((blob) => resolve(blob))
-    } catch (e) { reject(e) }
+    try { pdfMake.createPdf(docDefinition).getBlob((blob) => resolve(blob)) }
+    catch (e) { reject(e) }
   })
 }
 
 export function makePdfDataUrl (docDefinition) {
   return new Promise((resolve, reject) => {
-    try {
-      pdfMake.createPdf(docDefinition).getDataUrl((url) => resolve(url))
-    } catch (e) { reject(e) }
+    try { pdfMake.createPdf(docDefinition).getDataUrl((url) => resolve(url)) }
+    catch (e) { reject(e) }
   })
 }
 
-/** Descarga directa (útil para WEB) */
 export function downloadReportPdf (opts) {
   const doc = buildReportDoc(opts)
   const slug =
@@ -115,4 +99,3 @@ export function downloadReportPdf (opts) {
   const name = `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
   pdfMake.createPdf(doc).download(name)
 }
-
