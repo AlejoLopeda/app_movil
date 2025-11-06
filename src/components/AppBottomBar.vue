@@ -1,5 +1,5 @@
 ﻿<template>
-  <div v-show="isMainRoute" class="bottom-fixed">
+  <div v-show="isMainRoute" class="bottom-fixed" :class="{ 'report-active': isReportPage }">
     <ion-toolbar class="bottombar" :class="{ 'is-busy': isNavigating }">
       <!-- CTA: crear/editar -->
       <div v-if="isAddPage" class="nav-cta">
@@ -294,12 +294,21 @@ const {
 <style src="../theme/BottomBar.css"></style>
 
 <style>
-.bottom-fixed{
+.bottom-fixed {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2147483647 !important;
   pointer-events: auto;
+}
+
+/* 🔹 Solo en reportes la navbar va delante del modal */
+.bottom-fixed.report-active {
+  z-index: 2147483647 !important;
+}
+
+/* 🔹 En las demás pantallas mantiene el z-index normal */
+.bottom-fixed:not(.report-active) {
+  z-index: 999 !important;
 }
 </style>
