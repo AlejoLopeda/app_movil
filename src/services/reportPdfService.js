@@ -1,13 +1,22 @@
-// src/services/reportPdfService.js
+// ANDROID ONLY – servicio PDF
 import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
 pdfMake.vfs = pdfFonts.vfs
 
-// Capacitor (guardar/abrir/compartir en móvil)
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 
-// Carga perezosa de File Opener (opcional)
+// pdf.js (lazy) para render en canvas
+let pdfjsLib = null
+async function ensurePdfJs () {
+  if (pdfjsLib) return pdfjsLib
+  pdfjsLib = await import('pdfjs-dist')
+  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.mjs?url')).default
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
+  return pdfjsLib
+}
+
+// File Opener (lazy)
 let fileOpenerCached = null
 let fileOpenerLoaded = false
 async function loadFileOpener () {
@@ -16,9 +25,7 @@ async function loadFileOpener () {
   try {
     const mod = await import('@capacitor-community/file-opener')
     fileOpenerCached = mod?.FileOpener || null
-  } catch {
-    fileOpenerCached = null
-  }
+  } catch { fileOpenerCached = null }
   return fileOpenerCached
 }
 
@@ -26,16 +33,10 @@ const nfCOP = new Intl.NumberFormat('es-CO', {
   style: 'currency', currency: 'COP', maximumFractionDigits: 0
 })
 
-/* =============================
- *  Construcción del documento
- * ============================= */
+/* ========== Documento ========== */
 export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses }) {
   const balance = (incomes || 0) - (expenses || 0)
-  const status =
-    balance > 0 ? 'SALDO POSITIVO' :
-    balance < 0 ? 'SALDO NEGATIVO' :
-    'SALDO NEUTRO'
-
+  const status = balance > 0 ? 'SALDO POSITIVO' : balance < 0 ? 'SALDO NEGATIVO' : 'SALDO NEUTRO'
   const advice =
     balance > 0
       ? '¡Bien! Mantén el control: considera ahorrar un % de tu excedente.'
@@ -43,27 +44,21 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
         ? 'Atención: revisa tus gastos y fija límites para equilibrar tus cuentas.'
         : 'Vas justo. Un pequeño ajuste en gastos o un ingreso extra mejorará tu balance.'
 
-  const headerTitle = `REPORTE ${kind}`
-
   return {
     pageSize: 'A4',
     pageMargins: [36, 48, 36, 48],
     content: [
       {
         columns: [
-          { text: headerTitle, style: 'h1' },
-          {
-            stack: [
+          { text: `REPORTE ${kind}`, style: 'h1' },
+          { stack: [
               { text: 'Finanzas App', style: 'brand' },
               { text: new Date().toLocaleString('es-CO'), style: 'tiny', color: '#777' }
-            ],
-            alignment: 'right'
+            ], alignment: 'right'
           }
         ]
       },
-
       { text: `Período: ${periodLabel}`, margin: [0, 8, 0, 16], color: '#0b3a43' },
-
       {
         table: {
           widths: ['*', 120],
@@ -80,20 +75,16 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           vLineColor: () => '#cfd8dc'
         }
       },
-
       {
         stack: [
           { text: 'Resumen', style: 'h2', margin: [0, 16, 0, 6] },
-          {
-            ul: [
-              `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
-              `Gastos del período: ${nfCOP.format(expenses || 0)}`,
-              `Balance: ${nfCOP.format(balance)}`
-            ]
-          }
+          { ul: [
+            `Ingresos del período: ${nfCOP.format(incomes || 0)}`,
+            `Gastos del período: ${nfCOP.format(expenses || 0)}`,
+            `Balance: ${nfCOP.format(balance)}`
+          ] }
         ]
       },
-
       { text: advice, margin: [0, 18, 0, 0], color: balance >= 0 ? '#2e7d32' : '#c62828' }
     ],
     styles: {
@@ -107,52 +98,53 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
   }
 }
 
-/* ===== Helpers ===== */
-
-// Nombre de archivo estandarizado
+/* ========== Helpers ========== */
 export function makeFileName (kind) {
-  const slug =
-    kind === 'DIARIO'   ? 'reporte-diario' :
-    kind === 'SEMANAL'  ? 'reporte-semanal' :
-    'reporte-mensual'
+  const slug = kind === 'DIARIO' ? 'reporte-diario'
+    : kind === 'SEMANAL' ? 'reporte-semanal'
+    : 'reporte-mensual'
   return `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
 }
 
-// Data URL (para embeber en web)
-export function makeDataUrl (doc) {
+// Blob del PDF (para pdf.js)
+export function buildPdfBlob (doc) {
   return new Promise((resolve, reject) => {
-    try {
-      pdfMake.createPdf(doc).getDataUrl(url => resolve(url))
-    } catch (e) { reject(e) }
+    try { pdfMake.createPdf(doc).getBlob(resolve) } catch (e) { reject(e) }
   })
 }
 
-// WEB: descarga directa
-export function downloadWeb (doc, name) {
-  pdfMake.createPdf(doc).download(name)
+// Render de la 1ª página al <canvas> (preview real)
+export async function renderPdfToCanvas ({ doc, canvas, maxWidth = 900 }) {
+  await ensurePdfJs()
+  const blob = await buildPdfBlob(doc)
+  const url  = URL.createObjectURL(blob)
+
+  const pdf = await pdfjsLib.getDocument({ url }).promise
+  const page = await pdf.getPage(1)
+
+  const base = page.getViewport({ scale: 1 })
+  const parentW = canvas?.parentElement?.clientWidth || base.width
+  const scale = Math.min(maxWidth, parentW) / base.width
+  const viewport = page.getViewport({ scale })
+
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+
+  URL.revokeObjectURL(url)
+  return blob
 }
 
-// NATIVO: guardar en Documentos y abrir/compartir
+// Guardar en Documentos y abrir/compartir
 export async function saveNative (doc, name) {
-  // Base64 “puro” (sin prefijo data:)
   const base64 = await new Promise((resolve, reject) => {
-    try { pdfMake.createPdf(doc).getBase64(data => resolve(data)) }
-    catch (e) { reject(e) }
+    try { pdfMake.createPdf(doc).getBase64(data => resolve(data)) } catch (e) { reject(e) }
   })
 
   const path = `reports/${name}`
-
-  // Escribir en Documents (crea carpeta si no existe)
-  await Filesystem.writeFile({
-    path,
-    data: base64,
-    directory: Directory.Documents,
-    recursive: true
-  })
-
+  await Filesystem.writeFile({ path, data: base64, directory: Directory.Documents, recursive: true })
   const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path })
 
-  // Intentar abrir con File-Opener; si no, compartir
   try {
     const opener = await loadFileOpener()
     if (opener) {
@@ -163,13 +155,5 @@ export async function saveNative (doc, name) {
   } catch {
     await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
   }
-
   return uri
-}
-
-/* ===== Compat: llamada antigua (descargar en web) ===== */
-export function downloadReportPdf (opts) {
-  const doc = buildReportDoc(opts)
-  const name = makeFileName(opts.kind)
-  downloadWeb(doc, name)
 }

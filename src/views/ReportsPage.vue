@@ -57,54 +57,23 @@
 
       <ion-toast :is-open="toast.open" :message="toast.msg" :duration="2200" color="success" @didDismiss="toast.open=false"/>
 
-      <!-- ===== MODAL PREVISUALIZACIÓN ===== -->
+      <!-- ===== MODAL PREVISUALIZACIÓN (solo Android) ===== -->
       <ion-modal :is-open="previewOpen" @didDismiss="closePreview">
         <div class="preview-modal">
           <div class="preview-header">
             <div class="preview-title"><strong>Vista previa – {{ currentKind }}</strong></div>
             <div class="preview-actions">
               <ion-button size="small" fill="outline" @click="downloadFromPreview" :disabled="loading">
-                {{ isNative ? 'GUARDAR COMO PDF' : 'DESCARGAR PDF' }}
+                GUARDAR / ABRIR PDF
               </ion-button>
               <ion-button size="small" @click="closePreview">CERRAR</ion-button>
             </div>
           </div>
 
-          <!-- Web: PDF real embebido -->
-          <iframe
-            v-if="!isNative"
-            class="preview-frame"
-            :src="previewSrc"
-            title="Vista previa PDF"
-          ></iframe>
-
-          <!-- Nativo: previsualización HTML equivalente -->
-          <div v-else class="native-preview">
-            <h4 class="h1">REPORTE {{ currentKind }}</h4>
-            <div class="period">Período: {{ periodLabel }}</div>
-
-            <table class="tbl">
-              <thead>
-                <tr><th>Concepto</th><th class="ar">Valor</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Ingresos</td><td class="ar">{{ money(incomes) }}</td></tr>
-                <tr><td>Gastos</td><td class="ar">{{ money(expenses) }}</td></tr>
-                <tr class="bold">
-                  <td>{{ balanceStatus }}</td>
-                  <td class="ar">{{ money(balance) }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <h5 class="h2">Resumen</h5>
-            <ul class="ul">
-              <li>Ingresos del período: {{ money(incomes) }}</li>
-              <li>Gastos del período: {{ money(expenses) }}</li>
-              <li>Balance: {{ money(balance) }}</li>
-            </ul>
-
-            <p :class="['advice', balance >= 0 ? 'ok' : 'bad']">{{ adviceText }}</p>
+          <!-- Render real con pdf.js -->
+          <div class="native-preview">
+            <canvas ref="pdfCanvas" class="pdf-canvas"></canvas>
+            <p class="hint">Renderizado con visor interno (pdf.js)</p>
           </div>
         </div>
       </ion-modal>
@@ -113,22 +82,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Capacitor } from '@capacitor/core'
+import { ref, computed, nextTick } from 'vue'
 import {
   IonPage, IonContent, IonItem, IonLabel, IonInput, IonButton, IonNote, IonToast, IonModal
 } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
-import {
-  buildReportDoc, makeDataUrl, downloadWeb, saveNative, makeFileName
-} from '@/services/reportPdfService'
+import { buildReportDoc, renderPdfToCanvas, saveNative, makeFileName } from '@/services/reportPdfService'
 
 const loading = ref(false)
 const err = ref('')
 const toast = ref({ open: false, msg: '' })
-
-const isNative = Capacitor.isNativePlatform()
 
 // Fechas
 const todayISO = new Date().toISOString().slice(0, 10)
@@ -152,46 +116,21 @@ function monthBounds (ym) {
   return { from: toISO(first), to: toISO(last) }
 }
 
-// Estado de preview
+// Preview
 const previewOpen  = ref(false)
-const previewSrc   = ref('')       // solo web (data URL)
-const currentDoc   = ref(null)     // definición pdfmake
-const currentKind  = ref('')       // DIARIO/SEMANAL/MENSUAL
-const periodLabel  = ref('')
-
-// Datos para preview nativa
-const incomes = ref(0)
-const expenses = ref(0)
-const balance = computed(() => (incomes.value || 0) - (expenses.value || 0))
-const nf = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
-const money = (v) => nf.format(v || 0)
-const balanceStatus = computed(() =>
-  balance.value > 0 ? 'SALDO POSITIVO' :
-  balance.value < 0 ? 'SALDO NEGATIVO' : 'SALDO NEUTRO'
-)
-const adviceText = computed(() =>
-  balance.value > 0
-    ? '¡Bien! Mantén el control: considera ahorrar un % de tu excedente.'
-    : balance.value < 0
-      ? 'Atención: revisa tus gastos y fija límites para equilibrar tus cuentas.'
-      : 'Vas justo. Un pequeño ajuste en gastos o un ingreso extra mejorará tu balance.'
-)
+const currentDoc   = ref(null)
+const currentKind  = ref('')
+const pdfCanvas    = ref(null)
 
 function closePreview () {
   previewOpen.value = false
-  previewSrc.value = ''
   currentDoc.value = null
 }
 
 // Handlers
-async function genDaily(){
-  await generate({ kind:'DIARIO', from: day.value, to: day.value, periodLabel: humanDay(day.value) })
-}
-async function genWeekly(){
-  if (!validWeek.value) return
-  await generate({ kind:'SEMANAL', from: weekFrom.value, to: weekTo.value, periodLabel: humanRange(weekFrom.value, weekTo.value) })
-}
-async function genMonthly(){
+async function genDaily()   { await generate({ kind:'DIARIO',  from: day.value, ...{ to: day.value, periodLabel: humanDay(day.value) } }) }
+async function genWeekly()  { if (validWeek.value) await generate({ kind:'SEMANAL', from: weekFrom.value, to: weekTo.value, periodLabel: humanRange(weekFrom.value, weekTo.value) }) }
+async function genMonthly() {
   if (!validMonth.value) return
   const { from, to } = monthBounds(month.value)
   const [y, m] = month.value.split('-')
@@ -199,25 +138,17 @@ async function genMonthly(){
   await generate({ kind:'MENSUAL', from, to, periodLabel: monthName.charAt(0).toUpperCase() + monthName.slice(1) })
 }
 
-async function generate({ kind, from, to, periodLabel: pLabel }){
-  loading.value = true
-  err.value = ''
+async function generate({ kind, from, to, periodLabel }){
+  loading.value = true; err.value = ''
   try{
     const totals = await getTotals({ from, to })
-    const doc = buildReportDoc({ kind, periodLabel: pLabel, from, to, ...totals })
-
+    const doc = buildReportDoc({ kind, periodLabel, from, to, ...totals })
     currentDoc.value  = doc
     currentKind.value = kind
-    periodLabel.value = pLabel
-    incomes.value  = totals.incomes
-    expenses.value = totals.expenses
-
-    if (!isNative) {
-      // Web: DataURL para el iframe
-      previewSrc.value = await makeDataUrl(doc)
-    }
 
     previewOpen.value = true
+    await nextTick()
+    await renderPdfToCanvas({ doc, canvas: pdfCanvas.value }) // ← previsualización real
   }catch(e){
     console.error(e)
     err.value = e?.message || 'No se pudo generar el reporte.'
@@ -228,17 +159,12 @@ async function generate({ kind, from, to, periodLabel: pLabel }){
 
 async function downloadFromPreview(){
   if (!currentDoc.value) return
-  const name = makeFileName(currentKind.value)
   try{
-    if (isNative) {
-      await saveNative(currentDoc.value, name)
-      toast.value = { open: true, msg: 'PDF guardado.' }
-    } else {
-      downloadWeb(currentDoc.value, name)
-    }
+    await saveNative(currentDoc.value, makeFileName(currentKind.value))
+    toast.value = { open: true, msg: 'PDF guardado / abierto.' }
   }catch(e){
     console.error(e)
-    err.value = e?.message || 'No se pudo guardar/descargar el reporte.'
+    err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
   }
 }
 </script>
@@ -246,63 +172,28 @@ async function downloadFromPreview(){
 <style scoped>
 .report-content { --background: #f5fbfc; }
 .screen { padding: 16px; display: grid; place-items: start; }
-.card {
-  width: 100%;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  padding: 16px;
-}
+.card { width: 100%; background: #fff; border-radius: 18px; box-shadow: 0 6px 18px rgba(0,0,0,.06); padding: 16px; }
 .title { margin: 6px 0 12px; color: #0b3a43; font-weight: 800; font-size: 20px; text-align: center; }
 .block { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #d0e3e6; }
 .block h3 { margin: 0 0 6px; color: #0b3a43; font-weight: 700; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .col { --padding-start: 0; }
 
-/* Inputs blancos */
-.white-input {
-  --background: #fff;
-  --color: #000;
-  --placeholder-color: #444;
-  border-radius: 10px;
-  padding: 8px;
-}
+/* Inputs */
+.white-input { --background: #fff; --color: #000; --placeholder-color: #444; border-radius: 10px; padding: 8px; }
 .input-item { --background: transparent; margin-bottom: 6px; }
 
-/* Botones verdes con texto blanco */
-.btn {
-  --background: #0b3a43;
-  --color: #fff;
-  font-weight: 600;
-  margin-top: 8px;
-}
+/* Botones */
+.btn { --background: #0b3a43; --color: #fff; font-weight: 600; margin-top: 8px; }
 
 /* Modal preview */
 .preview-modal { display:flex; flex-direction:column; width:100%; height:100%; background:#fff; }
 .preview-header { display:flex; justify-content:space-between; align-items:center; padding:12px 12px 8px; border-bottom:1px solid #e6eef1; }
 .preview-title { color:#0b3a43; font-weight:800; }
 .preview-actions :deep(button) { margin-left:8px; }
-.preview-frame {
-  width:100%;
-  height: calc(100vh - 160px);
-  border:none;
-  border-radius:12px;
-  box-shadow:0 4px 16px rgba(0,0,0,.08);
-  background:#f6f9fb;
-}
 
-/* Preview nativa (HTML) */
+/* Canvas pdf.js */
 .native-preview { padding: 12px 4px 18px; }
-.h1 { color:#0b3a43; font-size: 18px; margin: 6px 0 8px; font-weight: 800; }
-.h2 { color:#0b3a43; font-size: 15px; margin: 16px 0 8px; font-weight: 700; }
-.period { color:#0b3a43; margin-bottom: 12px; }
-.tbl { width:100%; border-collapse: collapse; }
-.tbl th, .tbl td { border:1px solid #cfd8dc; padding:8px; }
-.tbl thead th { background:#e9f3f5; color:#0b3a43; }
-.tbl .ar { text-align:right; }
-.tbl .bold td { font-weight: 700; }
-.ul { margin:0; padding-left: 20px; }
-.advice { margin-top: 12px; }
-.advice.ok { color:#2e7d32; }
-.advice.bad { color:#c62828; }
+.pdf-canvas { width: 100%; height: auto; border-radius: 12px; background: #f6fbff; box-shadow: 0 4px 16px rgba(0,0,0,.06); }
+.hint { text-align:center; opacity:.6; margin-top:.5rem; }
 </style>
