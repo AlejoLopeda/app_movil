@@ -3,7 +3,7 @@ import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
 pdfMake.vfs = pdfFonts.vfs
 
-// Capacitor (para guardar/abrir en móvil)
+// Capacitor (guardar/abrir/compartir en móvil)
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 
@@ -45,13 +45,6 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
 
   const headerTitle = `REPORTE ${kind}`
 
-  const rows = [
-    [{ text: 'Concepto', style: 'th' }, { text: 'Valor', style: 'th', alignment: 'right' }],
-    ['Ingresos', { text: nfCOP.format(incomes || 0), alignment: 'right' }],
-    ['Gastos',   { text: nfCOP.format(expenses || 0), alignment: 'right' }],
-    [{ text: status, bold: true }, { text: nfCOP.format(balance), alignment: 'right', bold: true }]
-  ]
-
   return {
     pageSize: 'A4',
     pageMargins: [36, 48, 36, 48],
@@ -72,7 +65,15 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
       { text: `Período: ${periodLabel}`, margin: [0, 8, 0, 16], color: '#0b3a43' },
 
       {
-        table: { widths: ['*', 120], body: rows },
+        table: {
+          widths: ['*', 120],
+          body: [
+            [{ text: 'Concepto', style: 'th' }, { text: 'Valor', style: 'th', alignment: 'right' }],
+            ['Ingresos', { text: nfCOP.format(incomes || 0), alignment: 'right' }],
+            ['Gastos',   { text: nfCOP.format(expenses || 0), alignment: 'right' }],
+            [{ text: status, bold: true }, { text: nfCOP.format(balance), alignment: 'right', bold: true }]
+          ]
+        },
         layout: {
           fillColor: (row) => (row === 0 ? '#e9f3f5' : null),
           hLineColor: () => '#cfd8dc',
@@ -106,23 +107,7 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
   }
 }
 
-/* ===== Helpers de generación (para previsualizar/guardar) ===== */
-
-// Blob (útil para iframe / pdf.js)
-export function makePdfBlob (docDefinition) {
-  return new Promise((resolve, reject) => {
-    try { pdfMake.createPdf(docDefinition).getBlob((blob) => resolve(blob)) }
-    catch (e) { reject(e) }
-  })
-}
-
-// Data URL (útil para web)
-export function makePdfDataUrl (docDefinition) {
-  return new Promise((resolve, reject) => {
-    try { pdfMake.createPdf(docDefinition).getDataUrl((url) => resolve(url)) }
-    catch (e) { reject(e) }
-  })
-}
+/* ===== Helpers ===== */
 
 // Nombre de archivo estandarizado
 export function makeFileName (kind) {
@@ -133,14 +118,23 @@ export function makeFileName (kind) {
   return `${slug}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`
 }
 
-// Web: descarga directa
+// Data URL (para embeber en web)
+export function makeDataUrl (doc) {
+  return new Promise((resolve, reject) => {
+    try {
+      pdfMake.createPdf(doc).getDataUrl(url => resolve(url))
+    } catch (e) { reject(e) }
+  })
+}
+
+// WEB: descarga directa
 export function downloadWeb (doc, name) {
   pdfMake.createPdf(doc).download(name)
 }
 
-// Nativo: guardar en Documentos y abrir/compartir
+// NATIVO: guardar en Documentos y abrir/compartir
 export async function saveNative (doc, name) {
-  // Base64 “puro” (sin encabezado data:)
+  // Base64 “puro” (sin prefijo data:)
   const base64 = await new Promise((resolve, reject) => {
     try { pdfMake.createPdf(doc).getBase64(data => resolve(data)) }
     catch (e) { reject(e) }
@@ -148,7 +142,7 @@ export async function saveNative (doc, name) {
 
   const path = `reports/${name}`
 
-  // Escribe en Documents (crea la subcarpeta con recursive)
+  // Escribir en Documents (crea carpeta si no existe)
   await Filesystem.writeFile({
     path,
     data: base64,
@@ -158,7 +152,7 @@ export async function saveNative (doc, name) {
 
   const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path })
 
-  // Intenta abrir con File Opener; si no está, comparte
+  // Intentar abrir con File-Opener; si no, compartir
   try {
     const opener = await loadFileOpener()
     if (opener) {
@@ -173,7 +167,7 @@ export async function saveNative (doc, name) {
   return uri
 }
 
-/* ===== Compat: API antigua que solo descargaba (web) ===== */
+/* ===== Compat: llamada antigua (descargar en web) ===== */
 export function downloadReportPdf (opts) {
   const doc = buildReportDoc(opts)
   const name = makeFileName(opts.kind)
