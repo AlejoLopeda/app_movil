@@ -5,29 +5,31 @@ import {
   resolveMonthRange
 } from '@/services/monthlySummaryService'
 import {
-  presetCategories as presetExpenseCategories,
-  additionalCategories as extraExpenseCategories,
-  resolveCategory as resolveExpenseCategory
-} from '@/services/expenseService'
-import {
-  presetCategories as presetIncomeCategories,
-  additionalCategories as extraIncomeCategories,
-  resolveCategory as resolveIncomeCategory
-} from '@/services/incomeService'
+  INCOME_PRESET,
+  INCOME_EXTRA,
+  INCOME_SPECIAL,
+  EXPENSE_PRESET,
+  EXPENSE_EXTRA,
+  findIncomeCategory,
+  findExpenseCategory,
+} from '@/constants/categories'
 
-const EXPENSE_COLORS = ['#0d3f48', '#236a73', '#498a92', '#f4a259', '#9b3d3d', '#5c677d', '#8c2155', '#3c6e71']
-const INCOME_COLORS  = ['#2a9d8f', '#3c91e6', '#2f9c95', '#4caf50', '#8bc34a', '#5bc0be', '#6c91bf']
+// Único set de colores para evitar repeticiones entre ingresos y gastos
+const PALETTE = [
+  '#3c91e6', '#2a9d8f', '#f4a259', '#8c2155', '#5c677d',
+  '#3c6e71', '#9b3d3d', '#2f9c95', '#4caf50', '#8bc34a',
+  '#5bc0be', '#6c91bf', '#ff7f50', '#8e44ad', '#e67e22',
+  '#27ae60', '#16a085', '#2980b9', '#c0392b', '#7f8c8d'
+]
 
-const BASE_INCOME_CATEGORIES = Object.freeze(
-  [
-    ...presetIncomeCategories(),
-    ...extraIncomeCategories(),
-    resolveIncomeCategory('saldo_inicial')
-  ].filter(Boolean)
-)
+const BASE_INCOME_CATEGORIES = Object.freeze([
+  ...INCOME_PRESET,
+  ...INCOME_EXTRA,
+  ...INCOME_SPECIAL,
+])
 const BASE_EXPENSE_CATEGORIES = Object.freeze([
-  ...presetExpenseCategories(),
-  ...extraExpenseCategories()
+  ...EXPENSE_PRESET,
+  ...EXPENSE_EXTRA,
 ])
 
 const FALLBACK_CATEGORY = {
@@ -40,26 +42,35 @@ function buildColorCache(categories, palette) {
   categories.forEach((item, index) => cache.set(item.key, palette[index % palette.length]))
   return cache
 }
-const colorCaches = {
-  income:  buildColorCache(BASE_INCOME_CATEGORIES,  INCOME_COLORS),
-  expense: buildColorCache(BASE_EXPENSE_CATEGORIES, EXPENSE_COLORS)
+// Cache global por clave de categoría (sin importar el tipo)
+function buildGlobalColorCache() {
+  const cache = new Map()
+  const seenKeys = []
+  ;[...BASE_INCOME_CATEGORIES, ...BASE_EXPENSE_CATEGORIES].forEach((item) => {
+    if (!item?.key || cache.has(item.key)) return
+    const idx = seenKeys.length % PALETTE.length
+    cache.set(item.key, PALETTE[idx])
+    seenKeys.push(item.key)
+  })
+  return cache
 }
-function colorFor(type, key) {
-  const cache = colorCaches[type]
-  if (cache?.has(key)) return cache.get(key)
-  const palette = type === 'income' ? INCOME_COLORS : EXPENSE_COLORS
-  const color = palette[(cache?.size || 0) % palette.length] ?? palette[0]
-  cache?.set(key, color)
+const colorCache = buildGlobalColorCache()
+function colorForKey(key) {
+  if (!key) return '#888888'
+  if (colorCache.has(key)) return colorCache.get(key)
+  const nextIndex = colorCache.size % PALETTE.length
+  const color = PALETTE[nextIndex]
+  colorCache.set(key, color)
   return color
 }
 function labelFor(type, key) {
   if (!key) return FALLBACK_CATEGORY[type].label
-  const resolver = type === 'income' ? resolveIncomeCategory : resolveExpenseCategory
+  const resolver = type === 'income' ? findIncomeCategory : findExpenseCategory
   return resolver(key)?.label ?? FALLBACK_CATEGORY[type].label
 }
 function baseCategoriesFor(type) {
   const list = type === 'income' ? BASE_INCOME_CATEGORIES : BASE_EXPENSE_CATEGORIES
-  return list.map(item => ({ key: item.key, label: item.label, type, color: colorFor(type, item.key) }))
+  return list.map(item => ({ key: item.key, label: item.label, type, color: colorForKey(item.key) }))
 }
 function mapRecord(type, record) {
   const rawKey = record.category ?? null
@@ -127,7 +138,7 @@ export function useMonthlySummary(options = {}) {
     return grouped.map(item => {
       acc += item.amount
       const percentage = grandTotal > 0 ? (item.amount / grandTotal) * 100 : 0
-      return { ...item, percentage, color: colorFor(item.type, item.key), cumulative: acc }
+      return { ...item, percentage, color: colorForKey(item.key), cumulative: acc }
     })
   })
 
@@ -141,7 +152,7 @@ export function useMonthlySummary(options = {}) {
     if (includeExpenses) baseCategoriesFor('expense').forEach(it => { if (!seen.has(it.key)) seen.set(it.key, it) })
     records.value.forEach(it => {
       if (!seen.has(it.category)) {
-        seen.set(it.category, { key: it.category, label: it.categoryLabel, type: it.type, color: colorFor(it.type, it.category) })
+        seen.set(it.category, { key: it.category, label: it.categoryLabel, type: it.type, color: colorForKey(it.category) })
       }
     })
     return Array.from(seen.values())
