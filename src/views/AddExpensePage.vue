@@ -1,6 +1,6 @@
 <template>
   <ion-page class="expense-page">
-    <!-- ✅ usa la misma topbar que el Dashboard -->
+    <!-- ✅ misma topbar -->
     <app-top-bar :title="pageTitle" />
 
     <ion-content
@@ -12,9 +12,9 @@
         <TransactionForm
           ref="formRef"
           class="expense-form"
-          mode="expense"          
+          mode="expense"
           :loading="loading"
-          :show-submit="false"    
+          :show-submit="false"
           @submit="handleSubmit"
         />
       </section>
@@ -38,7 +38,7 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import { useAddExpense } from '@/composables/useAddExpense'
 import TransactionForm from '@/components/TransactionForm.vue'
-import { getCurrentUserId } from '@/services/expenseService'
+import { useAuthUser } from '@/composables/useAuthUser'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
@@ -46,6 +46,7 @@ const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || 'GASTOS')
 
 const { loading, saveExpense } = useAddExpense()
+const { userId } = useAuthUser()
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -54,7 +55,7 @@ function showToast(message, color = 'primary') {
 
 const formRef = ref(null)
 
-/* ✅ eventos desde la navbar inferior, igual que en ingresos */
+/* ✅ eventos desde la navbar inferior */
 function onBottomAccept() {
   formRef.value?.submit?.()
 }
@@ -76,11 +77,16 @@ async function handleSubmit(payload) {
   if (res.ok) {
     showToast('Gasto guardado', 'success')
     formRef.value?.reset?.()
-    setTimeout(() => router.replace('/dashboard'), 450) // 👈 igual que ingresos
+    setTimeout(() => router.replace('/balance'), 450)
     return
   }
-  const userId = await getCurrentUserId()
-  console.error('[Guardar gasto][error]', { userId, timestamp: new Date().toISOString(), error: res })
+
+  console.error('[Guardar gasto][error]', {
+    userId: userId(),
+    timestamp: new Date().toISOString(),
+    error: res
+  })
+
   if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesión e inténtalo de nuevo', 'danger')
   else if (res.reason === 'rls') showToast('Tu usuario no tiene permiso para guardar en gastos', 'danger')
   else showToast('No se pudo guardar el gasto. Intenta de nuevo', 'danger')

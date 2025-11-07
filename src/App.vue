@@ -10,7 +10,7 @@
       :is-open="notification.open"
       :message="notification.message"
       :color="notification.color"
-      position="top"
+      :position="notification.position || 'top'"
       duration="2600"
       @didDismiss="notification.open=false"
     />
@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { IonApp, IonRouterOutlet } from '@ionic/vue'
+import { IonApp, IonRouterOutlet, IonToast } from '@ionic/vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AppBottomBar from '@/components/AppBottomBar.vue'
 import NotificationBanner from '@/components/NotificationBanner.vue'
@@ -40,5 +40,9 @@ useReminderNotifications()
 /* Reserva espacio para TODO ion-content */
 .has-global-bottom-bar ion-content{
   --padding-bottom: var(--bottom-bar-offset);
+}
+
+.reminder-toast{
+  --margin-bottom: calc(var(--bottom-bar-offset, 0px) + 12px);
 }
 </style>

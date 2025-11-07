@@ -48,7 +48,7 @@ ion-menu.side-menu::part(backdrop) {
   left: 0;
   width: var(--menu-width);
   height: var(--notch-height);
-  background: #000;
+  background: transparent; /* quitar la franja negra */
   z-index: 10001;
   pointer-events: none;
 }

@@ -8,12 +8,7 @@
             <h2 class="monthly-header__title">Panel de Metas</h2>
             <p class="monthly-header__subtitle">Gestiona tu ahorro por meta</p>
           </div>
-          <div class="monthly-actions">
-            <ion-button @click="goToCreate">
-              <ion-icon slot="start" :icon="addOutline" />
-              CREAR
-            </ion-button>
-          </div>
+          <!-- Acción CREAR movida al bottom bar; se elimina el botón superior -->
         </header>
 
         <div v-if="loading" class="monthly-spinner">
@@ -51,10 +46,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { IonPage, IonContent, IonButton, IonSpinner, IonIcon, IonToast } from '@ionic/vue'
-import { addOutline } from 'ionicons/icons'
+import { IonPage, IonContent, IonSpinner, IonToast, onIonViewWillEnter } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
 import GoalListItem from '@/components/GoalListItem.vue'
 import { useGoals } from '@/composables/useGoals'
@@ -68,9 +62,17 @@ const transactionsMap = ref(new Map())
 const toast = ref({ open: false, message: '', color: 'primary' })
 function openToast(message, color='primary'){ toast.value = { open: true, message, color } }
 
-onMounted(refresh)
+onMounted(() => {
+  refresh()
+  window.addEventListener('data:goals-changed', refresh)
+})
 
-function goToCreate(){ router.push('/metas/nueva') }
+onUnmounted(() => {
+  window.removeEventListener('data:goals-changed', refresh)
+})
+
+onIonViewWillEnter(() => { refresh().catch(() => {}) })
+
 function goToEdit(id){ router.push(`/metas/${id}/editar`) }
 function goToDelete(id){ router.push(`/metas/${id}/eliminar`) }
 

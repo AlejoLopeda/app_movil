@@ -19,7 +19,15 @@
 
         <div v-if="items.length" class="reminders-list">
 
-          <div v-for="r in items" :key="r.id" class="expense-form__card reminder-card">
+          <div
+            v-for="r in items"
+            :key="r.id"
+            class="expense-form__card reminder-card"
+            role="button"
+            tabindex="0"
+            @click="onDetails(r)"
+            @keyup.enter="onDetails(r)"
+          >
 
             <div class="reminder-header">
 
@@ -33,19 +41,27 @@
 
               <div class="reminder-actions">
 
-                <ion-button fill="clear" size="small" @click="onDetails(r)" aria-label="Ver detalles">
-
-                  <ion-icon :icon="informationCircleOutline" />
-
-                </ion-button>
-
-                <ion-button fill="clear" size="small" @click="onEdit(r)" aria-label="Editar">
+                <ion-button
+                  class="action-btn action-btn--edit"
+                  fill="solid"
+                  size="small"
+                  @click.stop="onEdit(r)"
+                  aria-label="Editar"
+                  title="Editar"
+                >
 
                   <ion-icon :icon="createOutline" />
 
                 </ion-button>
 
-                <ion-button fill="clear" size="small" color="danger" @click="onDeleteAsk(r)" aria-label="Eliminar">
+                <ion-button
+                  class="action-btn action-btn--delete"
+                  fill="solid"
+                  size="small"
+                  @click.stop="onDeleteAsk(r)"
+                  aria-label="Eliminar"
+                  title="Eliminar"
+                >
 
                   <ion-icon :icon="trashOutline" />
 
@@ -88,6 +104,8 @@
               </div>
 
             </div>
+
+            <div class="reminder-tap-hint">Toca para ver más detalles</div>
 
           </div>
 
@@ -163,15 +181,16 @@
 
             </p>
 
-            <p v-if="details.item?.comment" class="modal-line">
+            <div v-if="details.item?.comment" class="modal-line modal-line--comment">
 
               <ion-icon :icon="chatbubbleOutline" class="meta-icon" />
 
-              <strong>Comentario:</strong>
+              <div class="modal-col">
+                <strong>Comentario:</strong>
+                <p class="meta-text comment-text">{{ details.item?.comment }}</p>
+              </div>
 
-              <span class="meta-text">{{ details.item?.comment }}</span>
-
-            </p>
+            </div>
 
           </div>
 
@@ -181,27 +200,32 @@
 
 
 
-      <ion-alert
-
+      <ion-modal
         :is-open="confirm.open"
-
-        header="Eliminar recordatorio"
-
-        css-class="reminders-alert"
-
-        message="Â¿Seguro que deseas eliminarlo?"
-
-        :buttons="[
-
-          { text: 'Cancelar', role: 'cancel', handler: () => confirm.open=false },
-
-          { text: 'Eliminar', role: 'destructive', handler: onDeleteDo, cssClass: 'alert-btn--danger' }
-
-        ]"
-
-        @didDismiss="confirm.open=false"
-
-      />
+        css-class="reminder-confirm-modal"
+        @didDismiss="onDeleteCancel"
+      >
+        <div class="reminder-confirm-card">
+          <h3 class="reminder-confirm-title">Eliminar recordatorio</h3>
+          <p class="reminder-confirm-message">¿Seguro que deseas eliminarlo?</p>
+          <div class="reminder-confirm-actions">
+            <ion-button
+              class="confirm-btn confirm-btn--cancel"
+              fill="solid"
+              @click="onDeleteCancel"
+            >
+              Cancelar
+            </ion-button>
+            <ion-button
+              class="confirm-btn confirm-btn--danger"
+              fill="solid"
+              @click="onDeleteDo"
+            >
+              Eliminar
+            </ion-button>
+          </div>
+        </div>
+      </ion-modal>
 
 
 
@@ -228,15 +252,16 @@
 
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonAlert, IonToast } from '@ionic/vue'
+import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonAlert, IonModal, IonToast } from '@ionic/vue'
 import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline, notificationsOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
 import { cancelSchedulesForReminder, debugTestNotification, ensurePermission, isNativeLN } from '@/lib/localNotifications'
+import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -245,7 +270,17 @@ const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || "Recordatorios")
 
 const { items, load } = useReminders()
-onMounted(load)
+onMounted(() => {
+  load()
+  try {
+    window.addEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
+onBeforeUnmount(() => {
+  try {
+    window.removeEventListener('reminders:changed', onRemindersChanged)
+  } catch {}
+})
 onIonViewWillEnter(load)
 
 function labelFrecuencia(r) {
@@ -315,6 +350,7 @@ async function onDeleteDo() {
 
 const toast = ref({ open: false, message: "", color: "primary" })
 </script>
+
 
 
 

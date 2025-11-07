@@ -11,6 +11,20 @@ export default defineConfig({
     vue(),
     legacy()
   ],
+  server: {
+    // Mitiga errores EBUSY en Windows/antivirus/OneDrive usando polling
+    // y esperando a que el archivo termine de escribirse antes de reaccionar.
+    watch: {
+      usePolling: true,
+      interval: 200,
+      awaitWriteFinish: {
+        stabilityThreshold: 500,
+        pollInterval: 100,
+      } as any,
+    },
+    // Si el overlay molesta, cámbialo a false
+    hmr: { overlay: true },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

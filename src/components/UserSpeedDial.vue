@@ -4,15 +4,13 @@
     <div
       v-if="open"
       class="user-speed-overlay"
-      :style="overlayStyle"
       @click="$emit('close')"
     ></div>
 
-    <!-- Speed-dial flotante (misma UI que antes) -->
+    <!-- Speed-dial flotante -->
     <div
       v-if="open"
       class="user-speed"
-      :style="speedStyle"
       @click.self="$emit('close')"
     >
       <ion-button
@@ -53,26 +51,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { IonButton, IonIcon } from '@ionic/vue'
 import { createOutline, documentTextOutline, logOutOutline } from 'ionicons/icons'
 
-const props = defineProps({
-  open: { type: Boolean, default: false },
-  /** alto de tu toolbar (por defecto 56px en Ionic) */
-  toolbarHeight: { type: Number, default: 56 },
-  /** pequeño margen extra para separar el speed-dial de la toolbar */
-  topGap: { type: Number, default: 4 }
+defineProps({
+  open: { type: Boolean, default: false }
 })
 defineEmits(['close', 'edit', 'report', 'logout'])
-
-/** El overlay empieza justo debajo de la toolbar (respetando safe-area) */
-const overlayStyle = computed(() => ({
-  top: `calc(var(--ion-safe-area-top) + ${props.toolbarHeight}px)`
-}))
-
-/** El speed-dial se coloca un pelín más abajo para que no “pegue” con la barra */
-const speedStyle = computed(() => ({
-  top: `calc(env(safe-area-inset-top) + ${props.toolbarHeight + props.topGap}px)`
-}))
 </script>

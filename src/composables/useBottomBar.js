@@ -1,0 +1,197 @@
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { MAIN_ROUTES } from '@/constants/routes'
+
+export function useBottomBar() {
+  const route  = useRoute()
+  const router = useRouter()
+
+  /* ===== Qué mostrar ===== */
+  const isMainRoute       = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p)))
+  const isAddIncomePage   = computed(() => route.path === '/ingresos/nuevo')
+  const isAddExpensePage  = computed(() => route.path === '/gastos/nuevo')
+  const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
+  const isEditReminderPage= computed(() => route.name === 'EditReminder')
+  const isRemindersPage   = computed(() => route.path === '/recordatorios')
+  const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
+  const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
+
+  // NUEVO: Reportes (/reporte o /reportes)
+  const isReportPage      = computed(() =>
+    route.path === '/reporte' || route.path === '/reportes' || route.path.startsWith('/reportes/')
+  )
+
+  // Listas histórico
+  const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
+  const isHistoryListPage = computed(() => /\/historico\//.test(route.path))
+
+  // Balance mensual está en /balance
+  const isMonthlyBothPage = computed(() => route.path === '/balance')
+  const isMonthlyArea     = computed(() =>
+    route.path.startsWith('/ingresos') ||
+    route.path.startsWith('/gastos')   ||
+    route.path.startsWith('/balance')
+  )
+  const isBalancePage     = computed(() => route.path === '/balance')
+
+  const isAddPage = computed(() =>
+    isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value
+  )
+
+  const historyTab = computed(() => {
+    if (route.path.startsWith('/historico/ingresos')) return 'income'
+    if (route.path.startsWith('/historico/gastos'))   return 'expense'
+    if (route.path.startsWith('/historico/ambos'))    return 'both'
+    const q = String(route.query.tab || 'income')
+    return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
+  })
+
+  const activeTab = computed(() => {
+    if (route.path.startsWith('/ingresos'))  return 'ingresos'
+    if (route.path.startsWith('/gastos'))    return 'gastos'
+    if (route.path.startsWith('/historico')) return 'historico'
+    if (route.path === '/balance')           return 'balance'
+    return ''
+  })
+
+  /* ===== /perfil: habilitar acción ===== */
+  const canSaveEnabled = ref(false)
+  function handleCanSave(ev){ canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
+  onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
+  onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
+  watch([isProfilePage, isEditReminderPage], ([profile, edit]) => {
+    if (!profile && !edit) canSaveEnabled.value = false
+  })
+  watch(isEditReminderPage, now => {
+    if (now) canSaveEnabled.value = false
+  })
+
+  /* ===== /reporte: habilitar descarga ===== */
+  const canDownloadEnabled = ref(false)
+  function handleCanDownload(ev){ canDownloadEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
+  onMounted(() => window.addEventListener('report-can-download', handleCanDownload))
+  onUnmounted(() => window.removeEventListener('report-can-download', handleCanDownload))
+  watch(isReportPage, now => { if (!now) canDownloadEnabled.value = false })
+
+  /* ===== Feedback ===== */
+  const toastOpen = ref(false)
+  const toastMsg  = ref('')
+  function fail(msg = 'No se pudo abrir la sección. Intenta de nuevo.'){
+    toastMsg.value  = msg
+    toastOpen.value = true
+  }
+
+  /* ===== Guard / navegación optimizada ===== */
+  const isNavigating = ref(false)
+  let lastTapTs = 0
+  let clearBusyTimer = 0
+  let removeAfterEach = null
+
+  function setBusy(v){
+    isNavigating.value = v
+    clearTimeout(clearBusyTimer)
+    if (!v) return
+    // “failsafe” por si afterEach no se dispara (errores, etc.)
+    clearBusyTimer = setTimeout(() => { isNavigating.value = false }, 800)
+  }
+
+  // Libera bloqueo apenas termina una navegación
+  onMounted(() => {
+    removeAfterEach = router.afterEach(() => {
+      isNavigating.value = false
+      clearTimeout(clearBusyTimer)
+    })
+  })
+  onUnmounted(() => {
+    if (removeAfterEach) removeAfterEach()
+  })
+
+  /** throttle ligero para evitar dobles-tap */
+  function throttled(){ 
+    const now = performance.now()
+    if (now - lastTapTs < 150) return true
+    lastTapTs = now
+    return false
+  }
+
+  async function navigate(target, { replace = false } = {}){
+    if (!target) return
+    if (throttled()) return
+    // evita navegaciones redundantes (incluye query/hash)
+    if (route.fullPath === target) return
+    if (isNavigating.value) return
+    setBusy(true)
+    try {
+      if (replace) await router.replace(target)
+      else         await router.push(target)
+    } catch (e) {
+      // no mostrar error si fue cancelación/same route
+      // pero deja feedback si el router explotó
+      fail()
+    } finally {
+      // afterEach normalmente lo limpia primero; esto es backup instantáneo
+      setBusy(false)
+    }
+  }
+
+  /* ===== Helpers ===== */
+  function go(path){ navigate(path, { replace:false }) }
+  function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
+
+  // NUEVO: disparar descarga desde navbar en /reporte
+  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
+
+  function goDashboard(){
+    // Desde Add/Edit vuelve a balance o recordatorios según caso
+    const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/balance'
+    navigate(target, { replace:true })
+    // avisos para pantallas que escuchan estos eventos
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+  }
+
+  function goAddReminder(){ navigate('/recordatorios/nuevo') }
+  function goAddGoal(){ navigate('/metas/nueva') }
+  function goHistory(){ navigate('/historico/ambos') }
+
+  // Balance mensual
+  function goMonthlyIncome(){ navigate('/ingresos',  { replace:true }) }
+  function goMonthlyExpense(){ navigate('/gastos',   { replace:true }) }
+  function goMonthlyBoth(){ navigate('/balance',     { replace:true }) }
+
+  // Volver a /balance (desde histórico)
+  function goBalance(){ navigate('/balance', { replace:true }) }
+
+  // Cambiar pestaña histórico (listas)
+  function setHistoryTab(mode){
+    const target =
+      mode === 'income'  ? '/historico/ingresos' :
+      mode === 'expense' ? '/historico/gastos'   :
+                            '/historico/ambos'
+    if (route.fullPath !== target) navigate(target, { replace:true })
+  }
+
+  /* ===== Toggle de botones (Ingreso/Gasto ↔ Balance) ===== */
+  function goOrToggleIncome(){
+    if (route.path.startsWith('/ingresos')) navigate('/balance', { replace:true })
+    else                                    navigate('/ingresos', { replace:true })
+  }
+  function goOrToggleExpense(){
+    if (route.path.startsWith('/gastos')) navigate('/balance', { replace:true })
+    else                                  navigate('/gastos', { replace:true })
+  }
+
+  return {
+    // estado
+    isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isReportPage,
+    historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
+
+    // navegación/acciones
+    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
+    goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
+    goAddGoal, goOrToggleIncome, goOrToggleExpense,
+
+    // feedback/ui
+    toastOpen, toastMsg, isNavigating,
+  }
+}

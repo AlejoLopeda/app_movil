@@ -1,249 +1,271 @@
-.monthly-page {
-  --monthly-background: #f7f9fc;
-  --background: var(--monthly-background);
-  --ion-background-color: var(--monthly-background);
-  background: var(--monthly-background);
-  --monthly-accent: #0d3f48;
-  --monthly-accent-contrast: #ffffff;
-  color: #0b2c33;
-}
+ q q/* ===== Fondo blanco global (también en dark) ===== */
+:host{ --ion-background-color: var(--page-bg, #ffffff); }
+.monthly-section{ background: var(--page-bg, #ffffff) !important; }
+.monthly-page, .monthly-content{ --background: var(--page-bg, #ffffff) !important; background: var(--page-bg, #ffffff) !important; }
 
-.monthly-content {
+/* ==== Anti-overflow móvil dentro del panel ==== */
+html, body, ion-content, .monthly-section { overflow-x:hidden; }
+.monthly-section, .monthly-card, .monthly-header__controls, .monthly-filter-btn{ box-sizing:border-box; }
+
+/* ============ Layout base y separación con top/bottom bars ============ */
+.monthly-section{
+  /* Reduce spacing between the fixed topbar and the monthly card to avoid
+    a very large white gap on small screens. These values are conservative
+    and still respect the safe area on iOS. */
+  --app-topbar-height: 48px;
+  --bottom-bar-height: 84px;
+  --monthly-top-extra: 6px;
+
+  /* Keep only the safe-area + small extra padding here and pull the card
+    slightly up so it visually sits under the topbar without a large white
+    block. The card uses a negative margin so the layout doesn't hide
+    behind a fixed topbar while removing the big gap. */
+  padding-top: calc(var(--ion-safe-area-top, 0px) + var(--monthly-top-extra));
+  padding-bottom: calc(var(--bottom-bar-height) + var(--ion-safe-area-bottom, 0px) - 12px);
+  padding-left: 0;
+  padding-right: 0;
+
   display: grid;
-  gap: 24px;
+  place-items: start center;
+  width: 100%;
+  max-width: 100vw;       /* evita desbordes laterales */
+  border: none !important;
+  background: none !important;
 }
 
-.monthly-section {
-  display: grid;
-  gap: 24px;
-}
-
-.monthly-header {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.monthly-header__title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #000000;
-}
-
-.monthly-header__controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
+/* ============ Card contenedora estilo Historial ============ */
+.monthly-card{
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  /* pull card up a bit so it visually hugs the topbar; adjust if needed */
+  margin-top: -12px;
+  background: var(--card-bg, #ffffff);
+  border: none;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(13, 63, 72, 0.12);
-  box-shadow: 0 16px 34px -28px rgba(13, 63, 72, 0.55);
+  box-shadow: var(--card-shadow, 0 16px 34px -24px rgba(16,28,33,.18));
+  padding: 18px 14px;
+  overflow: hidden;       /* oculta sombras internas que se salgan */
 }
 
-.monthly-header__toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.94);
+/* ============ Header ============ */
+.monthly-header{ display:flex; flex-direction:column; gap: 12px; padding: 0 4px; }
+.monthly-card .monthly-header__title,
+.monthly-header h2,
+h2.monthly-header__title{
+  font-size:1.25rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+  /* Force the app accent (brand green) for monthly headings so the
+     'Resumen mensual' / 'Panel de metas' headings keep the app green
+     color in light mode while still honoring the variable in dark mode. */
+  color: var(--accent, var(--app-topbar-bg, #0d3f48)) !important;
+}
+.monthly-card .monthly-header__subtitle,
+.monthly-header p,
+p.monthly-header__subtitle{ 
+  margin-top:4px; font-size:.9rem; font-weight:600;
+  /* Subtitle should visually match the header color (app green) as requested */
+  color: var(--accent, var(--app-topbar-bg, #0d3f48)) !important;
 }
 
-.monthly-header__subtitle {
-  margin-top: 4px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #041c21;
-}
-
-.monthly-summary-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.monthly-summary-card {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(13, 63, 72, 0.92), rgba(13, 63, 72, 0.8));
-  color: #ffffff;
-  box-shadow: 0 16px 36px -24px rgba(13, 63, 72, 0.65);
-}
-
-.monthly-summary-card--expense {
-  background: linear-gradient(135deg, #a63a50, #f07167);
-}
-
-.monthly-summary-card--income {
-  background: linear-gradient(135deg, #2a9d8f, #4caf50);
-}
-
-.monthly-summary-card__label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.9;
-}
-
-.monthly-summary-card__value {
-  margin-top: 8px;
-  font-size: clamp(1.5rem, 4vw, 2.1rem);
-  font-weight: 800;
-}
-
-.monthly-summary-card__meta {
-  margin-top: 6px;
-  font-size: 0.85rem;
-  opacity: 0.85;
-}
-
-.monthly-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.monthly-filter-btn {
-  --monthly-filter-border: rgba(13, 63, 72, 0.28);
+/* Controles en “pill” clara — flex-wrap para móvil */
+.monthly-header__controls{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:10px;
   border-radius: 999px;
-  padding: 10px 18px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  border: 2px solid var(--monthly-filter-border);
-  background: rgba(255, 255, 255, 0.9);
-  color: #0b2c33;
-  box-shadow: 0 12px 26px -22px rgba(13, 63, 72, 0.7);
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease,
-    box-shadow 0.2s ease, color 0.2s ease;
+  background:#ffffff;
+  border: 1px solid rgba(0,0,0,.08);     /* línea suave */
+  box-shadow: 0 10px 24px -18px rgba(16,28,33,.18);
+  width: 100%;
 }
 
-.monthly-filter-btn:hover,
-.monthly-filter-btn:focus-visible {
-  background: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 18px 32px -26px rgba(13, 63, 72, 0.6);
+/* Botón Categorías largo y blanco */
+.monthly-filter-btn{
+  --monthly-filter-border: rgba(0,0,0,.12);
+  display:flex; align-items:center; gap:10px;
+  border-radius:999px; padding:10px 18px;
+  font-weight:800; letter-spacing:.04em;
+  border:2px solid var(--monthly-filter-border);
+  background:#ffffff; color:#0b2c33;
+  box-shadow:0 12px 26px -22px rgba(16,28,33,.18);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.monthly-filter-btn--cats{
+  flex: 1 1 70%;        /* ocupa la mayor parte en móvil */
+  min-width: 220px;
+  justify-content: center;
+}
+.monthly-filter-btn--clear{ white-space: nowrap; }
+.monthly-filter-btn:hover{ transform: translateY(-1px); box-shadow:0 16px 30px -22px rgba(16,28,33,.26); }
+.monthly-filter-btn ion-icon{ font-size:18px; }
+
+/* Toggle alineado a la derecha cuando hay salto de línea */
+.monthly-header__toggle{
+  display:flex; align-items:center; gap:10px;
+  font-weight:700; color:#0b2c33;
+  margin-left:auto;           /* empuja hacia la derecha */
+  flex: 1 1 auto;
 }
 
-.monthly-filter-btn.active {
-  background: var(--monthly-accent);
-  color: var(--monthly-accent-contrast);
-  border-color: var(--monthly-filter-border);
-  box-shadow: 0 20px 36px -26px rgba(13, 63, 72, 0.65);
+/* ===== Ajustes específicos móvil para que NO se corte nada ===== */
+@media (max-width: 430px){
+  .monthly-card{ border-radius:16px; padding:14px 12px; }
+  .monthly-header__controls{ gap:8px; padding:8px; }
+  .monthly-filter-btn{ padding:9px 14px; }
+  .monthly-filter-btn--cats{ min-width: 0; flex: 1 1 100%; } /* fila completa */
+  .monthly-header__toggle{ justify-content:flex-end; flex: 1 1 100%; }
 }
 
-.monthly-filter-btn--all {
-  --monthly-filter-border: rgba(13, 63, 72, 0.38);
+/* ============ Chips bajo el header ============ */
+.monthly-chips{ display:flex; flex-wrap:wrap; gap:10px; padding:6px 8px 0; }
+.monthly-chips .chip{
+  background:#eef4f6; color:#10252a;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:10px; padding:6px 10px; font-size:12px; font-weight:700;
 }
 
-.monthly-empty {
-  padding: 30px 20px;
-  text-align: center;
-  border-radius: 18px;
-  background: rgba(13, 63, 72, 0.05);
-  font-weight: 600;
+/* ============ Gráfica centrada ============ */
+.monthly-chart{ margin-top: 8px; }
+.monthly-chart :deep(.monthly-chart__pie-wrapper){
+  display:grid; place-items:center; padding: 8px 0;
+}
+.monthly-chart :deep(.monthly-chart__pie){
+  width: clamp(220px, 72vw, 340px);  /* no se desborda en móvil */
+  aspect-ratio: 1/1; border-radius:50%;
+  box-shadow: 0 8px 22px rgba(16,28,33,.12);
+  max-width: 100%;
+}
+.monthly-chart :deep(.monthly-chart__bars){
+  max-width:760px; margin: 0 auto;
+  width: 100%;
 }
 
-.monthly-actions {
-  display: grid;
-  gap: 12px;
+/* ===== Leyenda (tablita) centrada y MÁS separada del botón de acciones ===== */
+.monthly-chart :deep(.monthly-chart__legend){
+  max-width:760px;
+  margin: 12px auto 24px;   /* + aire respecto al botón */
+  display:grid; gap:10px;
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+@media(min-width:480px){
+  .monthly-chart :deep(.monthly-chart__legend){ grid-template-columns: 1fr 1fr; }
+}
+@media(min-width:880px){
+  .monthly-chart :deep(.monthly-chart__legend){ grid-template-columns: 1fr 1fr 1fr; }
+}
+.monthly-chart :deep(.monthly-chart__legend-item){
+  background:#ffffff;
+  color:#0b2c33;
+  border:2px solid rgba(13,63,72,.16);
+  box-shadow:0 10px 26px -22px rgba(16,28,33,.14);
 }
 
-.monthly-actions ion-button {
-  --border-radius: 14px;
-  --background: var(--monthly-accent);
-  --background-activated: #174a52;
-  --color: #ffffff;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  height: 52px;
+/* ============ Resumen (cards) ============ */
+.monthly-summary-grid{
+  display:grid; gap:16px; grid-template-columns: 1fr; padding: 6px 4px 0;
+}
+@media(min-width:720px){
+  .monthly-summary-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+.monthly-summary-card{
+  padding:18px 20px; border-radius:18px;
+  background: linear-gradient(135deg, rgba(13,63,72,.92), rgba(13,63,72,.8));
+  color:#ffffff; box-shadow:0 16px 36px -24px rgba(16,28,33,.22);
+}
+.monthly-summary-card--income{ background: linear-gradient(135deg, #2a9d8f, #4caf50); }
+.monthly-summary-card--expense{ background: linear-gradient(135deg, #a63a50, #f07167); }
+.monthly-summary-card__label{ font-size:.85rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; opacity:.95; }
+.monthly-summary-card__value{ margin-top:8px; font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight:800; }
+.monthly-summary-card__meta{ margin-top:6px; font-size:.85rem; opacity:.95; }
+
+/* ============ Acciones centradas ============ */
+.monthly-actions{
+  display:grid; gap:16px; max-width:520px; margin: 16px auto 0;
+  width: 100%;
+}
+.monthly-actions ion-button{
+  --border-radius:14px; --background:#0b3a43; --background-activated:#174a52; --color:#fff;
+  font-weight:800; letter-spacing:.05em; height:52px;
+}
+.monthly-actions ion-button.secondary{
+  --background:#ffffff; --color:#0b3a43;
+  --border-color: rgba(13,63,72,.12); --border-style: solid; --border-width: 2px;
 }
 
-.monthly-actions ion-button.secondary {
-  --background: #ffffff;
-  --color: var(--monthly-accent);
-  --border-color: rgba(13, 63, 72, 0.12);
-  --border-style: solid;
-  --border-width: 2px;
+/* ============ Estados / mensajes ============ */
+.monthly-spinner{ display:grid; place-items:center; padding:24px 0; }
+.monthly-feedback{ font-weight:700; text-align:center; }
+.monthly-empty{
+  padding:22px 16px; text-align:center; border-radius:14px;
+  background: rgba(13,63,72,.06); font-weight:700; margin-top: 8px;
+}
+.monthly-error{
+  padding:14px 16px; border-radius:14px;
+  background: rgba(234,84,85,.16); color:#8c1c13; font-weight:700;
 }
 
-.monthly-error {
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(234, 84, 85, 0.16);
-  color: #8c1c13;
-  font-weight: 600;
+/* ============ Modal categorías (mismo look Historial) ============ */
+.cat-modal{ background:#ffffff; color:#10252a; padding:16px; }
+.cat-modal header h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; letter-spacing:.02em; }
+.cat-modal header p{ margin:0 0 8px 0; color:#4a6168; font-weight:600; }
+.cat-modal .cat-grid{
+  display:grid; gap:10px; grid-template-columns: repeat(2, minmax(0,1fr));
+  margin:12px 0 10px;
 }
-
-.monthly-feedback {
-  font-weight: 600;
-  text-align: center;
+@media(min-width:390px){ .cat-modal .cat-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media(min-width:560px){ .cat-modal .cat-grid{ grid-template-columns: repeat(4, minmax(0,1fr)); } }
+.cat-modal .cat-chip{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  height:40px; padding:0 12px; white-space:nowrap;
+  border-radius:12px; background:#f0f6f7; color:#10252a;
+  font-weight:800; font-size:12.5px; border:1px solid rgba(0,0,0,.08);
+  transition: background .2s ease, color .2s ease, transform .08s ease;
 }
-
-@media (min-width: 720px) {
-  .monthly-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .monthly-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.cat-modal .cat-chip ion-icon{ font-size:18px; }
+.cat-modal .cat-chip.active{ background:#0b3a43; color:#ffffff; }
+.cat-modal .cat-chip:active{ transform: translateY(1px); }
+.cat-modal .actions-row{
+  display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; padding:0 8px;
 }
+.cat-modal .close-row{ display:flex; justify-content:center; margin-top:10px; padding:0 8px; }
+.cat-modal .actions-row ion-button,
+.cat-modal .close-row ion-button,
+.cat-modal .btn-primary{
+  width:100%; height:40px; margin:0;
+  --background:#0b3a43; --color:#fff; --border-radius:14px; --box-shadow:0 6px 20px rgba(11,58,67,.18);
+  font-weight:800; letter-spacing:.02em; text-transform:uppercase;
+}
+.cat-modal .actions-row ion-button:hover,
+.cat-modal .close-row ion-button:hover{ filter:brightness(1.06); }
+.cat-modal .actions-row ion-button:active,
+.cat-modal .close-row ion-button:active{ transform:translateY(1px); filter:brightness(.96); }
+@media(max-width:420px){ .cat-modal .actions-row{ grid-template-columns:1fr; gap:10px; } }
 
-@media (prefers-color-scheme: dark) {
-  .monthly-header__controls {
-    background: rgba(4, 19, 24, 0.82);
-    border-color: rgba(224, 242, 249, 0.2);
-    box-shadow: 0 20px 38px -30px rgba(0, 0, 0, 0.72);
+/* ============ Dark mode (mantener blancos solicitados) ============ */
+@media (prefers-color-scheme: dark){
+  .monthly-section{ background:#ffffff !important; }
+  .monthly-page, .monthly-content{ --background:#ffffff !important; background:#ffffff !important; }
+  .monthly-card{ background:#ffffff; border-color: rgba(0,0,0,.08); }
+  .monthly-header__title{ color:#072026; }
+  .monthly-header__subtitle{ color:#072026; }
+  .monthly-header__controls{
+    background:#ffffff; border-color: rgba(0,0,0,.08);
+    box-shadow: 0 10px 24px -18px rgba(16,28,33,.18);
   }
-
-  .monthly-header__toggle {
-    color: rgba(224, 242, 249, 0.9);
+  .monthly-filter-btn{
+    --monthly-filter-border: rgba(0,0,0,.12);
+    background:#ffffff; color:#0b2c33;
+    box-shadow:0 12px 26px -22px rgba(16,28,33,.18);
   }
-
-  .monthly-header__title {
-    color: rgba(224, 242, 249, 0.96);
+  .monthly-chips .chip{
+    background:#eef4f6; color:#10252a; border-color: rgba(0,0,0,.08);
   }
-
-  .monthly-header__subtitle {
-    color: rgba(224, 242, 249, 0.72);
+  .monthly-chart :deep(.monthly-chart__legend-item){
+    background:#ffffff; color:#0b2c33; border-color: rgba(13,63,72,.16);
   }
-
-  .monthly-filter-btn {
-    --monthly-filter-border: rgba(224, 242, 249, 0.28);
-    background: rgba(4, 19, 24, 0.75);
-    color: rgba(224, 242, 249, 0.92);
-    box-shadow: 0 14px 30px -24px rgba(0, 0, 0, 0.7);
-  }
-
-  .monthly-filter-btn:hover,
-  .monthly-filter-btn:focus-visible {
-    background: rgba(4, 19, 24, 0.9);
-  }
-
-  .monthly-filter-btn.active {
-    background: rgba(224, 242, 249, 0.92);
-    color: #0d3f48;
-  }
-
-  .monthly-filter-btn--all {
-    --monthly-filter-border: rgba(224, 242, 249, 0.45);
-  }
-
-  .monthly-empty {
-    background: rgba(224, 242, 249, 0.12);
-  }
-
-  .monthly-error {
-    background: rgba(234, 84, 85, 0.22);
-    color: #ffb3b5;
-  }
-
-  .monthly-summary-card--income,
-  .monthly-summary-card--expense,
-  .monthly-summary-card {
-    box-shadow: 0 16px 42px -28px rgba(0, 0, 0, 0.62);
+  .cat-modal{ background:#ffffff; color:#10252a; }
+  .cat-modal header p{ color:#4a6168; }
+  .cat-modal .cat-chip{
+    background:#f0f6f7; color:#10252a; border-color: rgba(0,0,0,.08);
   }
 }
