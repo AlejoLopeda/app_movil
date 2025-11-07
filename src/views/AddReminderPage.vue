@@ -22,33 +22,55 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonToast } from '@ionic/vue'
+import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { useAddReminder } from '@/composables/useAddReminder'
+import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
 const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
+const ionRouter = useIonRouter()
 
 const { loading, saveReminder } = useAddReminder()
 const formRef = ref(null)
-
 const toast = ref({ open: false, message: '', color: 'primary' })
-function showToast(message, color = 'primary') {
-  toast.value = { open: true, message, color }
+
+function buildUrl(query) {
+  if (!query || Object.keys(query).length === 0) return '/recordatorios'
+  const params = new URLSearchParams(query)
+  return `/recordatorios?${params.toString()}`
+}
+
+async function goToReminders(query = undefined) {
+  const url = buildUrl(query || {})
+  const navigated = ionRouter.navigate(url, 'back', 'replace')
+  if (navigated) return
+  try {
+    await router.replace({ path: '/recordatorios', query })
+  } catch {
+    try { await router.push({ path: '/recordatorios', query }) } catch {
+      window.location.href = url
+    }
+  }
 }
 
 async function handleSubmit(payload) {
   const res = await saveReminder(payload)
   if (res.ok) {
-    // Redirigir al panel de recordatorios mostrando confirmación en la lista
-    await router.replace({ name: 'Recordatorios', query: { toast: 'created' } })
+    showGlobalToast('Recordatorio creado', 'success', 'bottom')
+    await goToReminders({ toast: 'created' })
     return
   }
-  if (res.reason === 'unauthorized') showToast('No autorizado. Inicia sesión e inténtalo de nuevo', 'danger')
-  else if (res.reason === 'rls') showToast('Tu usuario no tiene permiso para guardar recordatorios', 'danger')
-  else showToast('No se pudo crear el recordatorio. Intenta de nuevo', 'danger')
+  if (res.reason === 'busy') return
+  const message =
+    res.reason === 'unauthorized'
+      ? 'No autorizado. Inicia sesión e inténtalo de nuevo'
+      : res.reason === 'rls'
+        ? 'Tu usuario no tiene permiso para guardar recordatorios'
+        : 'No se pudo crear el recordatorio. Intenta de nuevo'
+  showGlobalToast(message, 'danger', 'bottom')
 }
 
 // Bottom bar events (special mode): back and accept

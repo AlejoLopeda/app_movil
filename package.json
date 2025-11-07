@@ -26,6 +26,7 @@
     "@ionic/vue-router": "^8.0.0",
     "@supabase/supabase-js": "^2.79.0",
     "ionicons": "^7.0.0",
+    "pdfjs-dist": "^5.4.394",
     "pdfmake": "^0.2.20",
     "vue": "^3.3.0",
     "vue-advanced-cropper": "^2.8.9",
