@@ -8,6 +8,13 @@
 
     <ion-content class="reminders-content ion-padding" fullscreen style="--padding-top: var(--ion-safe-area-top);">
 
+      <div style="display:flex; gap:.5rem; margin-bottom: .75rem; align-items:center;">
+        <ion-button size="small" color="tertiary" @click="onTestNotifications" aria-label="Probar notificaciones">
+          <ion-icon :icon="notificationsOutline" />
+          &nbsp;Probar notificaciones
+        </ion-button>
+      </div>
+
       <section>
 
         <div v-if="items.length" class="reminders-list">
@@ -249,11 +256,11 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonToast } from '@ionic/vue'
-import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
+import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonAlert, IonModal, IonToast } from '@ionic/vue'
+import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline, notificationsOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
-import { cancelSchedulesForReminder } from '@/lib/localNotifications'
+import { cancelSchedulesForReminder, debugTestNotification, ensurePermission, isNativeLN } from '@/lib/localNotifications'
 import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
@@ -299,25 +306,42 @@ function onEdit(item) {
   router.push({ name: 'EditReminder', params: { id: item.id } })
 }
 
+async function onTestNotifications() {
+  try {
+    if (!isNativeLN()) {
+      showToast('Solo disponible en dispositivo', 'warning')
+      return
+    }
+    const perm = await ensurePermission()
+    if (!perm?.granted) {
+      showToast('Concede permiso de notificaciones y reintenta', 'danger')
+      return
+    }
+    const res = await debugTestNotification(3000)
+    if (res?.ok) {
+      showToast('Notificación de prueba en 3s', 'success')
+    } else {
+      showToast('No se pudo programar la prueba', 'danger')
+    }
+  } catch {
+    showToast('Fallo al probar notificaciones', 'danger')
+  }
+}
+
 const confirm = ref({ open: false, item: null })
 function onDeleteAsk(item) {
   confirm.value = { open: true, item }
 }
 
-function onDeleteCancel() {
-  confirm.value = { open: false, item: null }
-}
-
 async function onDeleteDo() {
   const item = confirm.value.item
-  onDeleteCancel()
+  confirm.value.open = false
   if (!item) return
   try {
     await deactivateReminder(item.id)
     await load()
     try { await cancelSchedulesForReminder(item.id) } catch {}
     showToast("Recordatorio eliminado", "success")
-    showGlobalToast('Recordatorio eliminado correctamente', 'success', 'bottom')
     try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'deleted', id: item.id } })) } catch {}
   } catch (e) {
     showToast("No se pudo eliminar", "danger")
@@ -325,35 +349,8 @@ async function onDeleteDo() {
 }
 
 const toast = ref({ open: false, message: "", color: "primary" })
-
-function clearToastQuery() {
-  if (!route?.query || route.query.toast === undefined) return
-  const { toast: _ignored, ...rest } = route.query
-  router.replace({ query: { ...rest } })
-}
-
-watch(
-  () => route.query.toast,
-  (action) => {
-    if (action === 'created') {
-      showToast('Recordatorio creado', 'success')
-      clearToastQuery()
-    } else if (action === 'updated') {
-      showToast('Recordatorio actualizado', 'success')
-      clearToastQuery()
-    }
-  },
-  { immediate: true }
-)
-
-// Refrescar y mostrar toast al volver desde crear/editar
-function onRemindersChanged(ev) {
-  load()
-  const action = ev?.detail?.action
-  if (action === 'created') showToast('Recordatorio creado', 'success')
-  else if (action === 'updated') showToast('Recordatorio actualizado', 'success')
-}
 </script>
+
 
 
 

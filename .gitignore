@@ -32,3 +32,38 @@ npm-debug.log*
 /www
 .env
 .vscode/extensions.json
+
+
+# Android Studio / Android (Gradle)
+# IntelliJ/Android Studio project files
+*.iml
+*.ipr
+*.iws
+
+# Android Studio project settings (inside android/)
+android/.idea/
+android/**/.idea/
+
+# Gradle build cache and outputs
+android/.gradle/
+android/**/.gradle/
+android/**/build/
+
+# Native/NDK build folders
+android/**/.externalNativeBuild/
+android/**/.cxx/
+
+# Device captures and profiling
+android/**/captures/
+
+# Local SDK/NDK path config (do not commit)
+android/local.properties
+android/**/local.properties
+
+# Keystores (keep out of VCS)
+android/**/*.jks
+android/**/*.keystore
+
+# Omitir por completo el proyecto nativo de Android
+# (si prefieres versionarlo, elimina esta línea)
+/android/

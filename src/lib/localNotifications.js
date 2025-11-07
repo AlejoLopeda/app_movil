@@ -5,135 +5,161 @@
 
 import { Capacitor } from '@capacitor/core'
 
+// Dynamic import to avoid bundling in web
 async function getPlugin() {
   if (!isNativeLN()) return null
   try {
-    // Use vite-ignore so dev server doesn't try to prebundle when not installed
     const mod = await import(/* @vite-ignore */ '@capacitor/local-notifications')
     return mod?.LocalNotifications ?? null
-  } catch (e) {
-    // Not installed or not available; fall back to shims
+  } catch {
     return null
   }
 }
 
-function toNotiId(id) {
-  const n = Number(id)
-  if (Number.isInteger(n) && n >= 0) return n
-  // Simple stable hash for non-numeric IDs
-  const s = String(id)
-  let h = 0
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0
+// Ensure default Android channel exists (safe no-op on iOS/web)
+export async function ensureDefaultChannel() {
+  const LN = await getPlugin(); if (!LN) return
+  try {
+    // Id must be stable; name is user-visible in system settings
+    await LN.createChannel({
+      id: 'reminders',
+      name: 'Recordatorios',
+      description: 'Recordatorios programados',
+      importance: 4, // IMPORTANCE_HIGH
+      visibility: 1, // VISIBILITY_PUBLIC
+      sound: undefined,
+      lights: true,
+      vibration: true,
+    })
+  } catch {}
+}
+
+// Simple immediate test: schedule a notification for a few seconds ahead
+export async function debugTestNotification(delayMs = 3000) {
+  const LN = await getPlugin(); if (!LN) return { ok: false, reason: 'no-plugin' }
+  try {
+    const perm = await ensurePermission()
+    if (!perm.granted) return { ok: false, reason: 'no-permission' }
+  } catch {}
+  try { await ensureDefaultChannel() } catch {}
+  const when = new Date(Date.now() + Math.max(1000, delayMs))
+  const id = toNotiId('debug:' + when.toISOString())
+  try {
+    await LN.schedule({ notifications: [{ id, title: 'Prueba de notificaciones', body: 'Si ves esto, la integración local funciona', channelId: 'reminders', schedule: { at: when } }] })
+    return { ok: true, id, when }
+  } catch (e) {
+    return { ok: false, reason: 'schedule-failed', error: e }
   }
+}
+
+export async function listPendingNotifications() {
+  const LN = await getPlugin(); if (!LN) return []
+  try { const res = await LN.getPending(); return res?.notifications || [] } catch { return [] }
+}
+
+function toNotiId(s) {
+  const str = String(s)
+  let h = 0
+  for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0 }
   return Math.abs(h) || 1
 }
 
-function parseTimeHHmm(time) {
-  if (!time || typeof time !== 'string') return { h: 9, m: 0 }
-  const [hh, mm] = time.split(':').map((x) => parseInt(x, 10))
-  const h = Number.isFinite(hh) ? hh : 9
-  const m = Number.isFinite(mm) ? mm : 0
-  return { h, m }
+function parseTime(time) {
+  const [hh, mm] = String(time || '09:00').split(':').map(v => parseInt(v, 10))
+  return { h: Number.isFinite(hh) ? hh : 9, m: Number.isFinite(mm) ? mm : 0 }
 }
 
+function atDate(base, time) {
+  const { h, m } = parseTime(time)
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m, 0, 0)
+}
+
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+function addMonths(d, n) { const x = new Date(d); x.setMonth(x.getMonth() + n); return x }
+function lastDayOfMonth(y,m){ return new Date(y, m+1, 0).getDate() }
+
 export function isNativeLN() {
-  try {
-    return Capacitor.isNativePlatform()
-  } catch {
-    return false
-  }
+  try { return Capacitor.isNativePlatform() } catch { return false }
 }
 
 export async function ensurePermission() {
-  // Native: try Capacitor plugin
-  const LN = await getPlugin()
-  if (LN) {
-    try {
-      const status = await LN.checkPermissions()
-      const display = status?.display || status?.receive || status?.status
-      if (display === 'granted') return { granted: true }
-      const req = await LN.requestPermissions()
-      const d2 = req?.display || req?.receive || req?.status
-      return { granted: d2 === 'granted' }
-    } catch {
-      // fall through to web
+  const LN = await getPlugin(); if (!LN) return { granted: false }
+  try {
+    const s = await LN.checkPermissions()
+    if ((s?.display || s?.receive || s?.status) === 'granted') return { granted: true }
+    const r = await LN.requestPermissions()
+    return { granted: (r?.display || r?.receive || r?.status) === 'granted' }
+  } catch { return { granted: false } }
+}
+
+export async function checkPermission() {
+  const LN = await getPlugin(); if (!LN) return { granted: false }
+  try {
+    const s = await LN.checkPermissions()
+    return { granted: (s?.display || s?.receive || s?.status) === 'granted' }
+  } catch { return { granted: false } }
+}
+
+function buildOccurrences(rem) {
+  const now = new Date()
+  const created = rem.created_at ? new Date(rem.created_at) : now
+  const end = rem.end_date ? atDate(new Date(rem.end_date), rem.time_at) : addDays(now, 90)
+  const occ = []
+  const push = d => { if (d.getTime() > now.getTime() + 5e3 && d <= end) occ.push(d) }
+  const freq = (rem.frequency || 'daily').toLowerCase()
+  const time = rem.time_at
+
+  if (freq === 'daily') {
+    let d = now
+    for (let i=0;i<120;i++){ push(atDate(d, time)); d = addDays(d,1) }
+    return occ
+  }
+  if (freq === 'weekly') {
+    let d = created
+    while (atDate(d, time) < now) d = addDays(d,7)
+    for (let i=0;i<26;i++){ push(atDate(d,time)); d = addDays(d,7) }
+    return occ
+  }
+  if (freq === 'monthly') {
+    const baseDay = created.getDate()
+    let y = now.getFullYear(), m = now.getMonth()
+    for (let i=0;i<12;i++){
+      const day = Math.min(baseDay, lastDayOfMonth(y,m))
+      push(new Date(y, m, day, parseTime(time).h, parseTime(time).m, 0, 0))
+      m++; if (m>11){ m=0; y++ }
     }
+    return occ
   }
-
-  // Web fallback using the Notifications API
-  try {
-    if (typeof Notification === 'undefined') return { granted: false }
-    const state = Notification.permission
-    if (state === 'granted') return { granted: true }
-    if (state === 'denied') return { granted: false, canAskAgain: false }
-    const res = await Notification.requestPermission().catch(() => 'denied')
-    return { granted: res === 'granted', canAskAgain: false }
-  } catch {
-    return { granted: false }
+  // custom
+  const N = Number(rem.interval_days) || 0
+  if (N>0){
+    let d = created
+    while (atDate(d, time) < now) d = addDays(d, N)
+    for (let i=0;i<60;i++){ push(atDate(d,time)); d = addDays(d,N) }
   }
+  return occ
 }
 
-export async function upsertSchedulesForReminder(_reminder) {
-  const r = _reminder || {}
-  const LN = await getPlugin()
-  if (!LN) return
-
-  // Build a repeating schedule when possible
-  const { h, m } = parseTimeHHmm(r.time_at)
-  const notiId = toNotiId(r.id)
-  const title = r.name || 'Recordatorio'
+export async function upsertSchedulesForReminder(rem) {
+  const LN = await getPlugin(); if (!LN) return
+  try { await cancelSchedulesForReminder(rem.id) } catch {}
+  const occ = buildOccurrences(rem)
+  if (!occ.length) return
+  const title = `Recordatorio: ${rem.name || 'Recordatorio'}`
   const body = 'Toca para ver tus recordatorios'
-
-  // Cancel any existing schedule for this reminder id first
-  try { await LN.cancel({ notifications: [{ id: notiId }] }) } catch {}
-
-  const frequency = (r.frequency || 'daily').toLowerCase()
-  const createdAt = r.created_at ? new Date(r.created_at) : new Date()
-
-  const schedule = { repeats: true }
-  if (frequency === 'daily') {
-    Object.assign(schedule, { every: 'day', on: { hour: h, minute: m } })
-  } else if (frequency === 'weekly') {
-    const jsDay = createdAt.getDay() // 0-6, Sun=0
-    const weekday = ((jsDay + 1) % 7) + 1 // 1-7, Sun=1
-    Object.assign(schedule, { every: 'week', on: { weekday, hour: h, minute: m } })
-  } else if (frequency === 'monthly') {
-    const day = createdAt.getDate()
-    Object.assign(schedule, { every: 'month', on: { day, hour: h, minute: m } })
-  } else if (frequency === 'custom') {
-    // Not natively supported by plugin as every N days; skip scheduling to avoid wrong cadence
-    console.warn('[localNotifications] Custom interval not supported natively; skipping schedule')
-    return
-  } else {
-    Object.assign(schedule, { every: 'day', on: { hour: h, minute: m } })
-  }
-
-  try {
-    await LN.schedule({
-      notifications: [
-        {
-          id: notiId,
-          title,
-          body,
-          schedule,
-          smallIcon: 'ic_stat_icon',
-        },
-      ],
-      allowWhileIdle: true,
-    })
-  } catch (e) {
-    console.warn('[localNotifications] schedule failed', e)
-  }
+  // Make sure channel exists on Android so notifications actually show
+  try { await ensureDefaultChannel() } catch {}
+  const notifications = occ.slice(0, 60).map(d => ({
+    id: toNotiId(rem.id + ':' + d.toISOString().slice(0,16)),
+    title,
+    body,
+    channelId: 'reminders',
+    schedule: { at: d },
+  }))
+  try { await LN.schedule({ notifications }) } catch {}
 }
 
-export async function cancelSchedulesForReminder(_reminderId) {
-  const LN = await getPlugin()
-  if (!LN) return
-  const id = toNotiId(_reminderId)
-  try {
-    await LN.cancel({ notifications: [{ id }] })
-  } catch (e) {
-    console.warn('[localNotifications] cancel failed', e)
-  }
+export async function cancelSchedulesForReminder(reminderId) {
+  const LN = await getPlugin(); if (!LN) return
+  try { await LN.cancel({ notifications: [{ id: toNotiId(String(reminderId)) }] }) } catch {}
 }
