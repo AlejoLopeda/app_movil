@@ -165,6 +165,10 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
 
+/* ✅ Para detectar plataforma y saber cuándo la app vuelve al frente */
+import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app'
+
 const loading = ref(false)
 const err = ref('')
 const toast = ref({ open: false, msg: '' })
@@ -180,6 +184,9 @@ const noticeIcon = computed(() => (
     : notice.value.type === 'error' ? alertCircleOutline
     : informationCircleOutline
 ))
+
+/* 📱 Notificación diferida para Android (cuando el visor pone la app detrás) */
+const pendingNotice = ref(null)
 
 // Fechas
 const todayISO = new Date().toISOString().slice(0, 10)
@@ -251,11 +258,21 @@ async function onBottomDownload(){
 onMounted(() => {
   setDownloadEnabled(false)
   window.addEventListener('bottom-download', onBottomDownload)
+
+  // 👇 Mostrar el banner pendiente cuando el usuario regresa del visor/compartidor
+  App.addListener('resume', () => {
+    if (pendingNotice.value) {
+      const { msg, type } = pendingNotice.value
+      pendingNotice.value = null
+      showNotice(msg, type, 2200)
+    }
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('bottom-download', onBottomDownload)
   setDownloadEnabled(false)
+  App.removeAllListeners?.() // opcional
 })
 
 // Handlers
@@ -312,8 +329,14 @@ async function downloadFromPreview () {
     })
     await saveNative(doc, makeFileName(currentKind.value))
 
-    // 🔔 Notificación interna (éxito)
-    showNotice('Reporte descargado correctamente', 'success')
+    // 🔔 Mostrar banner:
+    // - En Android, cuando volvamos del visor (resume)
+    // - En web/desktop, de inmediato
+    if (Capacitor.getPlatform?.() === 'android') {
+      pendingNotice.value = { msg: 'Reporte descargado correctamente', type: 'success' }
+    } else {
+      showNotice('Reporte descargado correctamente', 'success')
+    }
 
     // Mantengo tu toast (si se ve, perfecto; si no, no estorba)
     toast.value = { open: true, msg: 'PDF guardado / abierto.' }
@@ -322,7 +345,11 @@ async function downloadFromPreview () {
     err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
 
     // 🔔 Notificación interna (error)
-    showNotice('No se pudo descargar el reporte', 'error')
+    if (Capacitor.getPlatform?.() === 'android') {
+      pendingNotice.value = { msg: 'No se pudo descargar el reporte', type: 'error' }
+    } else {
+      showNotice('No se pudo descargar el reporte', 'error')
+    }
   }
 }
 </script>
@@ -381,12 +408,15 @@ async function downloadFromPreview () {
 .advice.bad { color:#c62828; }
 
 /* 🔔 Notificación interna (banner) */
+/* ✅ Ajustes para que se vea por encima de la navbar en móviles */
 .inapp-notice {
   position: fixed;
-  left: 12px;
-  right: 12px;
-  top: calc(env(safe-area-inset-top, 0px) + 8px);
-  z-index: 10000;
+  /* respetar bordes seguros (notch) */
+  left: max(8px, env(safe-area-inset-left, 0px));
+  right: max(8px, env(safe-area-inset-right, 0px));
+  /* usar el safe-area de Ionic + fallback */
+  top: calc(var(--ion-safe-area-top, 0px) + 8px);
+  z-index: 2147483647; /* por encima de cualquier header */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -395,7 +425,13 @@ async function downloadFromPreview () {
   background: #111;
   color: #fff;
   box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  transform: translateZ(0); /* forzar layer propio (Android WebView) */
 }
+/* Si el navegador soporta env() correctamente, priorízalo */
+@supports (top: env(safe-area-inset-top)) {
+  .inapp-notice { top: calc(env(safe-area-inset-top) + 8px); }
+}
+
 .inapp-notice.success { background: #104e27; } /* verde oscuro */
 .inapp-notice.error   { background: #7a1c1c; }  /* rojo oscuro */
 .inapp-notice.info    { background: #243447; }  /* azul gris */
