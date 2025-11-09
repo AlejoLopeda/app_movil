@@ -4,6 +4,19 @@
   <ion-page>
     <app-top-bar :title="'REPORTES'" />
 
+    <!-- 🔔 Notificación interna estilo Nequi (banner superior) -->
+    <transition name="slide-down">
+      <div
+        v-if="notice.open"
+        :class="['inapp-notice', notice.type]"
+        role="status"
+        aria-live="polite"
+      >
+        <ion-icon :icon="noticeIcon" class="ni" />
+        <span class="txt">{{ notice.msg }}</span>
+      </div>
+    </transition>
+
     <ion-content class="report-content" fullscreen>
       <div class="screen">
         <div class="card">
@@ -144,8 +157,10 @@ import {
   IonButton,
   IonNote,
   IonToast,
-  IonModal
+  IonModal,
+  IonIcon
 } from '@ionic/vue'
+import { checkmarkCircleOutline, alertCircleOutline, informationCircleOutline } from 'ionicons/icons'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
@@ -153,6 +168,18 @@ import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfSe
 const loading = ref(false)
 const err = ref('')
 const toast = ref({ open: false, msg: '' })
+
+// 🔔 Estado de notificación in-app (banner)
+const notice = ref({ open: false, type: 'info', msg: '' })
+function showNotice (msg, type = 'info', autoCloseMs = 2200) {
+  notice.value = { open: true, type, msg }
+  if (autoCloseMs > 0) setTimeout(() => { notice.value.open = false }, autoCloseMs)
+}
+const noticeIcon = computed(() => (
+  notice.value.type === 'success' ? checkmarkCircleOutline
+    : notice.value.type === 'error' ? alertCircleOutline
+    : informationCircleOutline
+))
 
 // Fechas
 const todayISO = new Date().toISOString().slice(0, 10)
@@ -284,10 +311,18 @@ async function downloadFromPreview () {
       expenses: expenses.value
     })
     await saveNative(doc, makeFileName(currentKind.value))
+
+    // 🔔 Notificación interna (éxito)
+    showNotice('Reporte descargado correctamente', 'success')
+
+    // Mantengo tu toast (si se ve, perfecto; si no, no estorba)
     toast.value = { open: true, msg: 'PDF guardado / abierto.' }
   } catch (e) {
     console.error(e)
     err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
+
+    // 🔔 Notificación interna (error)
+    showNotice('No se pudo descargar el reporte', 'error')
   }
 }
 </script>
@@ -345,4 +380,29 @@ async function downloadFromPreview () {
 .advice.ok { color:#2e7d32; }
 .advice.bad { color:#c62828; }
 
+/* 🔔 Notificación interna (banner) */
+.inapp-notice {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+.inapp-notice.success { background: #104e27; } /* verde oscuro */
+.inapp-notice.error   { background: #7a1c1c; }  /* rojo oscuro */
+.inapp-notice.info    { background: #243447; }  /* azul gris */
+.inapp-notice .ni  { font-size: 20px; }
+.inapp-notice .txt { font-weight: 600; }
+
+/* Animación: baja desde arriba */
+.slide-down-enter-active, .slide-down-leave-active { transition: all .25s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-12px); }
 </style>
