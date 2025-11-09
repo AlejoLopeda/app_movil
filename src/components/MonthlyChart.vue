@@ -36,7 +36,8 @@
       </button>
     </div>
 
-    <ul class="monthly-chart__legend">
+    <!-- Legend: keep mounted but hide on bars to preserve interactivity/state -->
+    <ul v-show="mode === 'pie'" class="monthly-chart__legend">
       <li v-for="item in items" :key="`legend-${item.key}`">
         <button
           type="button"
