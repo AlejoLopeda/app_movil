@@ -165,10 +165,6 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
 
-/* ✅ Para detectar plataforma y saber cuándo la app vuelve al frente */
-import { Capacitor } from '@capacitor/core'
-import { App } from '@capacitor/app'
-
 const loading = ref(false)
 const err = ref('')
 const toast = ref({ open: false, msg: '' })
@@ -184,9 +180,6 @@ const noticeIcon = computed(() => (
     : notice.value.type === 'error' ? alertCircleOutline
     : informationCircleOutline
 ))
-
-/* 📱 Notificación diferida para Android (cuando el visor pone la app detrás) */
-const pendingNotice = ref(null)
 
 // Fechas
 const todayISO = new Date().toISOString().slice(0, 10)
@@ -258,21 +251,14 @@ async function onBottomDownload(){
 onMounted(() => {
   setDownloadEnabled(false)
   window.addEventListener('bottom-download', onBottomDownload)
-
-  // 👇 Mostrar el banner pendiente cuando el usuario regresa del visor/compartidor
-  App.addListener('resume', () => {
-    if (pendingNotice.value) {
-      const { msg, type } = pendingNotice.value
-      pendingNotice.value = null
-      showNotice(msg, type, 2200)
-    }
-  })
+  /* 🆕 Calcula offset del header para posicionar el banner por debajo */
+  const h = document.querySelector('app-top-bar')?.getBoundingClientRect()?.bottom || 56
+  document.documentElement.style.setProperty('--report-top-offset', `${Math.round(h + 8)}px`)
 })
 
 onUnmounted(() => {
   window.removeEventListener('bottom-download', onBottomDownload)
   setDownloadEnabled(false)
-  App.removeAllListeners?.() // opcional
 })
 
 // Handlers
@@ -329,14 +315,8 @@ async function downloadFromPreview () {
     })
     await saveNative(doc, makeFileName(currentKind.value))
 
-    // 🔔 Mostrar banner:
-    // - En Android, cuando volvamos del visor (resume)
-    // - En web/desktop, de inmediato
-    if (Capacitor.getPlatform?.() === 'android') {
-      pendingNotice.value = { msg: 'Reporte descargado correctamente', type: 'success' }
-    } else {
-      showNotice('Reporte descargado correctamente', 'success')
-    }
+    // 🔔 Notificación interna (éxito)
+    showNotice('Reporte descargado correctamente', 'success')
 
     // Mantengo tu toast (si se ve, perfecto; si no, no estorba)
     toast.value = { open: true, msg: 'PDF guardado / abierto.' }
@@ -345,11 +325,7 @@ async function downloadFromPreview () {
     err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
 
     // 🔔 Notificación interna (error)
-    if (Capacitor.getPlatform?.() === 'android') {
-      pendingNotice.value = { msg: 'No se pudo descargar el reporte', type: 'error' }
-    } else {
-      showNotice('No se pudo descargar el reporte', 'error')
-    }
+    showNotice('No se pudo descargar el reporte', 'error')
   }
 }
 </script>
@@ -408,15 +384,14 @@ async function downloadFromPreview () {
 .advice.bad { color:#c62828; }
 
 /* 🔔 Notificación interna (banner) */
-/* ✅ Ajustes para que se vea por encima de la navbar en móviles */
 .inapp-notice {
   position: fixed;
-  /* respetar bordes seguros (notch) */
-  left: max(8px, env(safe-area-inset-left, 0px));
-  right: max(8px, env(safe-area-inset-right, 0px));
-  /* usar el safe-area de Ionic + fallback */
-  top: calc(var(--ion-safe-area-top, 0px) + 8px);
-  z-index: 2147483647; /* por encima de cualquier header */
+  left: 12px;
+  right: 12px;
+  /* Fallbacks: variable calculada -> safe-area -> altura típica */
+  top: var(--report-top-offset, calc(var(--ion-safe-area-top, 0px) + 64px));
+  /* por encima de la bottom bar en reportes */
+  z-index: 2147483647;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -425,13 +400,9 @@ async function downloadFromPreview () {
   background: #111;
   color: #fff;
   box-shadow: 0 10px 24px rgba(0,0,0,.18);
-  transform: translateZ(0); /* forzar layer propio (Android WebView) */
+  transform: translateZ(0);
+  pointer-events: none;
 }
-/* Si el navegador soporta env() correctamente, priorízalo */
-@supports (top: env(safe-area-inset-top)) {
-  .inapp-notice { top: calc(env(safe-area-inset-top) + 8px); }
-}
-
 .inapp-notice.success { background: #104e27; } /* verde oscuro */
 .inapp-notice.error   { background: #7a1c1c; }  /* rojo oscuro */
 .inapp-notice.info    { background: #243447; }  /* azul gris */
@@ -440,5 +411,5 @@ async function downloadFromPreview () {
 
 /* Animación: baja desde arriba */
 .slide-down-enter-active, .slide-down-leave-active { transition: all .25s ease; }
-.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-12px); }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translate3d(0,-12px,0); }
 </style>
