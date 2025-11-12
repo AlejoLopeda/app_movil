@@ -91,7 +91,7 @@ export function useBottomBar() {
     isNavigating.value = v
     clearTimeout(clearBusyTimer)
     if (!v) return
-    clearBusyTimer = setTimeout(() => { isNavigating.value = false }, 800)
+    clearBusyTimer = setTimeout(() => { isNavigating.value = false }, 250)
   }
 
   onMounted(() => {
