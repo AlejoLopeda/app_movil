@@ -106,16 +106,41 @@
         </button>
       </div>
 
-      <!-- NUEVO: Reportes - dos botones (Regresar + Descargar PDF) -->
-      <div v-else-if="isReportPage" class="nav-cta">
+      <!-- ✅ REPORTES (root): Regresar + PREVISUALIZAR -->
+      <div v-else-if="isReportRootPage" class="nav-cta">
         <button
           type="button"
           class="cta-btn"
           @click="goDashboard"
-          :disabled="canDownloadEnabled"
-          :aria-disabled="canDownloadEnabled || isNavigating"
+          :aria-disabled="isNavigating"
           :data-busy="isNavigating"
-          :class="{ 'is-locked': isNavigating || canDownloadEnabled }"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          @click="emitPreview"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+          :aria-disabled="isNavigating"
+        >
+          <ion-icon :icon="eyeOutline" />
+          <span>PREVISUALIZAR</span>
+        </button>
+      </div>
+
+      <!-- ✅ REPORTES (previsualización): Regresar + DESCARGAR -->
+      <div v-else-if="isReportPreviewPage" class="nav-cta">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
         >
           <ion-icon :icon="chevronBackOutline" />
         </button>
@@ -134,7 +159,7 @@
         </button>
       </div>
 
-      <!-- HISTÓRICO (LISTAS): Back /balance + Ingreso + Gasto + Ambos (icon-only) -->
+      <!-- HISTÓRICO (LISTAS) -->
       <nav v-else-if="isHistoryListPage" class="nav nav--history">
         <button
           type="button"
@@ -184,7 +209,7 @@
         </button>
       </nav>
 
-      <!-- BALANCE (/balance) + INGRESOS + GASTOS: misma nav + toggle -->
+      <!-- BALANCE (/balance) + INGRESOS + GASTOS -->
       <nav v-else-if="isMonthlyArea" class="nav nav--cta">
         <button
           type="button"
@@ -277,39 +302,21 @@
 import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
-  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add, downloadOutline
+  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add,
+  downloadOutline, eyeOutline
 } from 'ionicons/icons'
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
-  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage, isReportPage,
+  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage,
+  isReportPage, isReportRootPage, isReportPreviewPage,
   isHistoryListPage, isMonthlyArea, isGoalsPage,
   historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
   goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
-  goAddGoal,
+  goAddGoal, emitPreview,
   goOrToggleIncome, goOrToggleExpense,
   toastOpen, toastMsg, isNavigating,
 } = useBottomBar()
 </script>
 
 <style src="../theme/BottomBar.css"></style>
-
-<style>
-.bottom-fixed {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: auto;
-}
-
-/* 🔹 Solo en reportes la navbar va delante del modal */
-.bottom-fixed.report-active {
-  z-index: 2147483647 !important;
-}
-
-/* 🔹 En las demás pantallas mantiene el z-index normal */
-.bottom-fixed:not(.report-active) {
-  z-index: 999 !important;
-}
-</style>

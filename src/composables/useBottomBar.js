@@ -16,10 +16,10 @@ export function useBottomBar() {
   const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
-  // NUEVO: Reportes (/reporte o /reportes)
-  const isReportPage      = computed(() =>
-    route.path === '/reporte' || route.path === '/reportes' || route.path.startsWith('/reportes/')
-  )
+  // ===== Reportes
+  const isReportRootPage      = computed(() => route.path === '/reporte')
+  const isReportPreviewPage   = computed(() => route.path.startsWith('/reporte/previsualizacion'))
+  const isReportPage          = computed(() => isReportRootPage.value || isReportPreviewPage.value)
 
   // Listas histórico
   const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
@@ -66,12 +66,12 @@ export function useBottomBar() {
     if (now) canSaveEnabled.value = false
   })
 
-  /* ===== /reporte: habilitar descarga ===== */
+  /* ===== /reporte/previsualizacion: habilitar DESCARGAR ===== */
   const canDownloadEnabled = ref(false)
   function handleCanDownload(ev){ canDownloadEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
   onMounted(() => window.addEventListener('report-can-download', handleCanDownload))
   onUnmounted(() => window.removeEventListener('report-can-download', handleCanDownload))
-  watch(isReportPage, now => { if (!now) canDownloadEnabled.value = false })
+  watch(isReportPreviewPage, now => { if (!now) canDownloadEnabled.value = false })
 
   /* ===== Feedback ===== */
   const toastOpen = ref(false)
@@ -91,11 +91,9 @@ export function useBottomBar() {
     isNavigating.value = v
     clearTimeout(clearBusyTimer)
     if (!v) return
-    // “failsafe” por si afterEach no se dispara (errores, etc.)
     clearBusyTimer = setTimeout(() => { isNavigating.value = false }, 800)
   }
 
-  // Libera bloqueo apenas termina una navegación
   onMounted(() => {
     removeAfterEach = router.afterEach(() => {
       isNavigating.value = false
@@ -106,7 +104,6 @@ export function useBottomBar() {
     if (removeAfterEach) removeAfterEach()
   })
 
-  /** throttle ligero para evitar dobles-tap */
   function throttled(){ 
     const now = performance.now()
     if (now - lastTapTs < 150) return true
@@ -117,7 +114,6 @@ export function useBottomBar() {
   async function navigate(target, { replace = false } = {}){
     if (!target) return
     if (throttled()) return
-    // evita navegaciones redundantes (incluye query/hash)
     if (route.fullPath === target) return
     if (isNavigating.value) return
     setBusy(true)
@@ -125,11 +121,8 @@ export function useBottomBar() {
       if (replace) await router.replace(target)
       else         await router.push(target)
     } catch (e) {
-      // no mostrar error si fue cancelación/same route
-      // pero deja feedback si el router explotó
       fail()
     } finally {
-      // afterEach normalmente lo limpia primero; esto es backup instantáneo
       setBusy(false)
     }
   }
@@ -137,15 +130,21 @@ export function useBottomBar() {
   /* ===== Helpers ===== */
   function go(path){ navigate(path, { replace:false }) }
   function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
-
-  // NUEVO: disparar descarga desde navbar en /reporte
   function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
+  // PREVISUALIZAR (para /reporte)
+  function emitPreview(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview'))) }
 
+  // ✅ Volver: preview -> /reporte, /reporte -> /balance, otros casos como antes
   function goDashboard(){
-    // Desde Add/Edit vuelve a balance o recordatorios según caso
-    const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/balance'
+    let target = '/balance'
+    if (isAddReminderPage.value || isEditReminderPage.value) {
+      target = '/recordatorios'
+    } else if (isReportPreviewPage.value) {
+      target = '/reporte'
+    } else if (isReportRootPage.value) {
+      target = '/balance'
+    }
     navigate(target, { replace:true })
-    // avisos para pantallas que escuchan estos eventos
     Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
   }
 
@@ -153,15 +152,11 @@ export function useBottomBar() {
   function goAddGoal(){ navigate('/metas/nueva') }
   function goHistory(){ navigate('/historico/ambos') }
 
-  // Balance mensual
   function goMonthlyIncome(){ navigate('/ingresos',  { replace:true }) }
   function goMonthlyExpense(){ navigate('/gastos',   { replace:true }) }
   function goMonthlyBoth(){ navigate('/balance',     { replace:true }) }
-
-  // Volver a /balance (desde histórico)
   function goBalance(){ navigate('/balance', { replace:true }) }
 
-  // Cambiar pestaña histórico (listas)
   function setHistoryTab(mode){
     const target =
       mode === 'income'  ? '/historico/ingresos' :
@@ -170,7 +165,6 @@ export function useBottomBar() {
     if (route.fullPath !== target) navigate(target, { replace:true })
   }
 
-  /* ===== Toggle de botones (Ingreso/Gasto ↔ Balance) ===== */
   function goOrToggleIncome(){
     if (route.path.startsWith('/ingresos')) navigate('/balance', { replace:true })
     else                                    navigate('/ingresos', { replace:true })
@@ -183,13 +177,14 @@ export function useBottomBar() {
   return {
     // estado
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
-    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isReportPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage,
+    isReportPage, isReportRootPage, isReportPreviewPage,
     historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
     // navegación/acciones
     go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
     goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
-    goAddGoal, goOrToggleIncome, goOrToggleExpense,
+    goAddGoal, goOrToggleIncome, goOrToggleExpense, emitPreview,
 
     // feedback/ui
     toastOpen, toastMsg, isNavigating,
