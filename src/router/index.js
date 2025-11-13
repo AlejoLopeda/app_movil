@@ -22,6 +22,7 @@ import GoalCreatePage from '@/views/GoalCreatePage.vue'
 import GoalEditPage from '@/views/GoalEditPage.vue'
 import GoalDeleteConfirmPage from '@/views/GoalDeleteConfirmPage.vue'
 import ReportsPage from '../views/ReportsPage.vue'
+import ReportsPreview from '../views/ReportsPreview.vue'
 
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
@@ -58,6 +59,7 @@ const routes = [
   { path: '/recordatorios/:id/editar', name: 'EditReminder', component: EditReminderPage, meta: { requiresAuth: true, title: 'Editar Recordatorio' } },
   { path: '/terminos', name: 'Terms', component: TermsPage, meta: { title: 'Términos y Condiciones' } },
   { path: '/reporte', name: 'Report', component: ReportsPage, meta: { requiresAuth: true, title: 'Reportes' } },
+  { path: '/reporte/previsualizacion', name: 'Reportpreview', component: ReportsPreview, meta: { requiresAuth: true, title: 'Previsualización' } },
 ]
 
 const router = createRouter({

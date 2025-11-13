@@ -11,4 +11,5 @@ export const MAIN_ROUTES = [
     '/perfil',
     '/balance',
     '/reporte',
+    '/reporte/previsualizacion',
 ]
