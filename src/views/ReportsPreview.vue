@@ -49,12 +49,11 @@
         </div>
       </div>
 
-      <!-- ✅ Toast superior tipo banner -->
+      <!-- ✅ Toast estilo banner -->
       <ion-toast
         :is-open="toast.open"
         :message="toast.msg"
         :duration="2200"
-        position="top"
         :cssClass="['notice-toast', toastType]"
         @didDismiss="toast.open=false"
       />
@@ -70,13 +69,10 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
 
-/* === Helpers bottom bar === */
 function setDownloadEnabled(enabled) {
   window.dispatchEvent(new CustomEvent('report-can-download', { detail: { enabled: !!enabled } }))
 }
-async function onBottomDownload() {
-  await downloadFromPreview()
-}
+async function onBottomDownload() { await downloadFromPreview() }
 
 const route = useRoute()
 const router = useRouter()
@@ -162,7 +158,6 @@ watch(() => route.fullPath, async () => {
 
 async function downloadFromPreview() {
   try {
-    // Feedback rápido
     showToast('Descargando reporte…', 'success', 1200)
     await nextTick()
 
@@ -177,7 +172,6 @@ async function downloadFromPreview() {
 
     await saveNative(doc, makeFileName(currentKind.value))
 
-    // Confirmación y navegación inmediata (sin abrir visor nativo)
     showToast('Reporte descargado correctamente', 'success', 1200)
     requestAnimationFrame(() => router.replace('/reporte'))
   } catch (e) {
@@ -188,64 +182,4 @@ async function downloadFromPreview() {
 }
 </script>
 
-<style scoped>
-.preview-content {
-  --background: #f5fbfc;
-  overflow-y: hidden !important; /* 🚫 Sin scroll vertical */
-}
-
-.screen {
-  padding: 16px;
-  display: grid;
-  place-content: start center; /* centra horizontal */
-  min-height: 100%;
-  width: 100%;
-}
-
-.card {
-  width: 100%;
-  max-width: clamp(320px, 92vw, 520px);
-  margin: 8px auto 0;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  padding: 16px;
-}
-
-.head .title { margin: 6px 0 4px; color: #0b3a43; font-weight: 800; font-size: 18px; }
-.period { color:#0b3a43; margin-bottom: 12px; }
-.h2 { color:#0b3a43; font-size: 15px; margin: 16px 0 8px; font-weight: 700; }
-
-.tbl { width:100%; border-collapse: collapse; }
-.tbl th, .tbl td {
-  border:1px solid #cfd8dc; padding:8px;
-  color:#0b3a43;
-  font-variant-numeric: tabular-nums;
-}
-.tbl thead th { background:#e9f3f5; }
-.tbl .ar { text-align:right; }
-.tbl .bold td { font-weight: 700; }
-
-.ul { margin:0; padding-left: 20px; color: #0b3a43; }
-.ul li { color: #0b3a43; line-height: 1.4; margin: 2px 0; }
-.advice { margin-top: 12px; }
-.advice.ok { color:#2e7d32; }
-.advice.bad { color:#c62828; }
-
- /* ✅ Toast tipo banner superior */
-.notice-toast {
-  --background: #104e27;
-  --color: #fff;
-  --border-radius: 14px;
-  --box-shadow: 0 10px 24px rgba(0,0,0,.18);
-  --max-width: calc(100% - 24px);
-  --width: auto;
-  --start: 12px;
-  --end: 12px;
-  --top: calc(env(safe-area-inset-top, 0px) + 8px);
-  font-weight: 600;
-}
-.notice-toast.error { --background: #7a1c1c; }
-.notice-toast.success { --background: #104e27; }
-</style>
-
+<style scoped src="@/theme/Report.css"> </style>
