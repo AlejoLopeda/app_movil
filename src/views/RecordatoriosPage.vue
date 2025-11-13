@@ -208,7 +208,6 @@ import {
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
 import { cancelSchedulesForReminder } from '@/lib/localNotifications'
-import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -271,18 +270,16 @@ async function onDeleteDo() {
   if (!item) return
 
   try {
-    // 1) Desactivar en BD y recargar lista
     await deactivateReminder(item.id)
     await load()
 
-    // 2) Cancelar notificaciones EN SEGUNDO PLANO (sin await)
+    // cancelar notificaciones en segundo plano (sin await)
     try {
       cancelSchedulesForReminder(item.id)
     } catch {}
 
-    // 3) Feedback UI (esto ya no depende del plugin nativo)
-    showToast('Recordatorio eliminado', 'success')
-    showGlobalToast('Recordatorio eliminado correctamente', 'success', 'bottom')
+    // solo un toast (el local)
+    showToast('Recordatorio eliminado correctamente', 'success')
 
     try {
       window.dispatchEvent(
@@ -316,7 +313,6 @@ watch(
   { immediate: true }
 )
 
-// Refrescar y mostrar toast al volver desde crear/editar
 function onRemindersChanged(ev) {
   load()
   const action = ev?.detail?.action
@@ -324,13 +320,6 @@ function onRemindersChanged(ev) {
   else if (action === 'updated') showToast('Recordatorio actualizado', 'success')
 }
 </script>
-
-
-
-
-
-
-
 
 
 
