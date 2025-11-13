@@ -1,39 +1,17 @@
 ﻿// src/services/incomeService.js
 import { supabase } from '@/lib/supabaseClient'
 import { useAuthUser } from '@/composables/useAuthUser'
+import {
+  INCOME_PRESET,
+  INCOME_EXTRA,
+  INCOME_SPECIAL,
+  findIncomeCategory,
+} from '@/constants/categories'
 
-const DEFAULT_CATEGORIES = Object.freeze([
-  { key: 'salario', label: 'Salario' },
-  { key: 'regalos', label: 'Regalos' },
-  { key: 'pension', label: 'Pension' },
-])
-
-const ADDITIONAL_CATEGORIES = Object.freeze([
-  { key: 'comisiones', label: 'Comisiones' },
-  { key: 'propinas', label: 'Propinas' },
-  { key: 'reembolsos', label: 'Reembolsos' },
-  { key: 'ventas', label: 'Ventas' },
-  { key: 'mesada', label: 'Mesada' },
-  { key: 'otros', label: 'Otros' },
-])
-
-const SPECIAL_CATEGORIES = Object.freeze({
-  saldo_inicial: { key: 'saldo_inicial', label: 'Saldo inicial' },
-})
-
-export function presetCategories() {
-  return DEFAULT_CATEGORIES.map((item) => ({ ...item }))
-}
-export function additionalCategories() {
-  return ADDITIONAL_CATEGORIES.map((item) => ({ ...item }))
-}
+export function presetCategories() { return INCOME_PRESET.map(i => ({ ...i })) }
+export function additionalCategories() { return INCOME_EXTRA.map(i => ({ ...i })) }
 export function resolveCategory(key) {
-  return (
-    SPECIAL_CATEGORIES[key] ??
-    DEFAULT_CATEGORIES.find((item) => item.key === key) ??
-    ADDITIONAL_CATEGORIES.find((item) => item.key === key) ??
-    null
-  )
+  return findIncomeCategory(key)
 }
 
 /** ✅ sin request: usa auth global en memoria */

@@ -193,27 +193,32 @@
 
 
 
-      <ion-alert
-
+      <ion-modal
         :is-open="confirm.open"
-
-        header="Eliminar recordatorio"
-
-        css-class="reminders-alert"
-
-        message="&iquest;Seguro que deseas eliminarlo?"
-
-        :buttons="[
-
-          { text: 'Cancelar', role: 'cancel', handler: () => confirm.open=false },
-
-          { text: 'Eliminar', role: 'destructive', handler: onDeleteDo, cssClass: 'alert-btn--danger' }
-
-        ]"
-
-        @didDismiss="confirm.open=false"
-
-      />
+        css-class="reminder-confirm-modal"
+        @didDismiss="onDeleteCancel"
+      >
+        <div class="reminder-confirm-card">
+          <h3 class="reminder-confirm-title">Eliminar recordatorio</h3>
+          <p class="reminder-confirm-message">¿Seguro que deseas eliminarlo?</p>
+          <div class="reminder-confirm-actions">
+            <ion-button
+              class="confirm-btn confirm-btn--cancel"
+              fill="solid"
+              @click="onDeleteCancel"
+            >
+              Cancelar
+            </ion-button>
+            <ion-button
+              class="confirm-btn confirm-btn--danger"
+              fill="solid"
+              @click="onDeleteDo"
+            >
+              Eliminar
+            </ion-button>
+          </div>
+        </div>
+      </ion-modal>
 
 
 
@@ -240,15 +245,16 @@
 
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonAlert, IonToast } from '@ionic/vue'
+import { IonPage, IonContent, IonFab, IonFabButton, IonIcon, IonButton, IonModal, IonToast } from '@ionic/vue'
 import { add, createOutline, trashOutline, informationCircleOutline, timeOutline, calendarOutline, repeatOutline, closeOutline, chatbubbleOutline } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
 import { cancelSchedulesForReminder } from '@/lib/localNotifications'
+import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -298,15 +304,20 @@ function onDeleteAsk(item) {
   confirm.value = { open: true, item }
 }
 
+function onDeleteCancel() {
+  confirm.value = { open: false, item: null }
+}
+
 async function onDeleteDo() {
   const item = confirm.value.item
-  confirm.value.open = false
+  onDeleteCancel()
   if (!item) return
   try {
     await deactivateReminder(item.id)
     await load()
     try { await cancelSchedulesForReminder(item.id) } catch {}
     showToast("Recordatorio eliminado", "success")
+    showGlobalToast('Recordatorio eliminado correctamente', 'success', 'bottom')
     try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'deleted', id: item.id } })) } catch {}
   } catch (e) {
     showToast("No se pudo eliminar", "danger")
@@ -314,6 +325,26 @@ async function onDeleteDo() {
 }
 
 const toast = ref({ open: false, message: "", color: "primary" })
+
+function clearToastQuery() {
+  if (!route?.query || route.query.toast === undefined) return
+  const { toast: _ignored, ...rest } = route.query
+  router.replace({ query: { ...rest } })
+}
+
+watch(
+  () => route.query.toast,
+  (action) => {
+    if (action === 'created') {
+      showToast('Recordatorio creado', 'success')
+      clearToastQuery()
+    } else if (action === 'updated') {
+      showToast('Recordatorio actualizado', 'success')
+      clearToastQuery()
+    }
+  },
+  { immediate: true }
+)
 
 // Refrescar y mostrar toast al volver desde crear/editar
 function onRemindersChanged(ev) {

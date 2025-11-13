@@ -130,3 +130,11 @@
 .bottombar .nav-btn[disabled][data-busy="true"]{
   opacity:1 !important; filter:none !important;
 }
+
+/* Histórico: compactar icon-only */
+.nav--history .nav-btn.icon-only{
+  min-width: 48px;
+  width: 48px;
+  padding: 0;
+  justify-content: center;
+}

@@ -59,6 +59,20 @@
   padding-right: 4px;
 }
 
+/* Asegura que el símbolo "$" (slot start) quede centrado verticalmente */
+.expense-form__prefix {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  line-height: 36px;
+  color: #0d3f48;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-right: 4px;
+}
+
 .expense-form__input {
   font-weight: 600;
   color: #0d3f48;
