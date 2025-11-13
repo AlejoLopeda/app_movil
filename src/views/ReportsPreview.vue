@@ -162,8 +162,8 @@ watch(() => route.fullPath, async () => {
 
 async function downloadFromPreview() {
   try {
-    // 👇 Muestra feedback antes de invocar plugins nativos (Share/FileOpener pueden tapar la UI)
-    showToast('Descargando reporte…', 'success', 1800)
+    // Feedback rápido
+    showToast('Descargando reporte…', 'success', 1200)
     await nextTick()
 
     const doc = buildReportDoc({
@@ -177,16 +177,12 @@ async function downloadFromPreview() {
 
     await saveNative(doc, makeFileName(currentKind.value))
 
-    // ✅ Confirmación
-    showToast('Reporte descargado correctamente', 'success', 1600)
-
-    // ⏳ Pequeño delay para que el toast se vea y para no chocar con intents nativos
-    setTimeout(() => {
-      router.replace('/reporte')
-    }, 650)
+    // Confirmación y navegación inmediata (sin abrir visor nativo)
+    showToast('Reporte descargado correctamente', 'success', 1200)
+    requestAnimationFrame(() => router.replace('/reporte'))
   } catch (e) {
     console.error(e)
-    err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
+    err.value = e?.message || 'No se pudo guardar el PDF.'
     showToast('No se pudo descargar el reporte', 'error')
   }
 }
@@ -236,7 +232,7 @@ async function downloadFromPreview() {
 .advice.ok { color:#2e7d32; }
 .advice.bad { color:#c62828; }
 
-/* ✅ Toast tipo banner superior */
+ /* ✅ Toast tipo banner superior */
 .notice-toast {
   --background: #104e27;
   --color: #fff;
@@ -252,3 +248,4 @@ async function downloadFromPreview() {
 .notice-toast.error { --background: #7a1c1c; }
 .notice-toast.success { --background: #104e27; }
 </style>
+
