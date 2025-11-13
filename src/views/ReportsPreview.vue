@@ -49,13 +49,13 @@
         </div>
       </div>
 
-      <!-- ✅ Único aviso: Toast superior tipo banner -->
+      <!-- ✅ Toast superior tipo banner -->
       <ion-toast
         :is-open="toast.open"
         :message="toast.msg"
         :duration="2200"
-        :position="'top'"
-        :css-class="['notice-toast', toastType]"
+        position="top"
+        :cssClass="['notice-toast', toastType]"
         @didDismiss="toast.open=false"
       />
     </ion-content>
@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
@@ -162,6 +162,10 @@ watch(() => route.fullPath, async () => {
 
 async function downloadFromPreview() {
   try {
+    // 👇 Muestra feedback antes de invocar plugins nativos (Share/FileOpener pueden tapar la UI)
+    showToast('Descargando reporte…', 'success', 1800)
+    await nextTick()
+
     const doc = buildReportDoc({
       kind: currentKind.value,
       periodLabel: periodLabel.value,
@@ -170,15 +174,16 @@ async function downloadFromPreview() {
       incomes: Number(incomes.value || 0),
       expenses: Number(expenses.value || 0)
     })
+
     await saveNative(doc, makeFileName(currentKind.value))
 
-    // 1) Muestra el toast aquí
-    showToast('Reporte descargado correctamente', 'success')
+    // ✅ Confirmación
+    showToast('Reporte descargado correctamente', 'success', 1600)
 
-    // 2) Luego redirige a /reporte (pequeño delay para que se alcance a ver el toast)
+    // ⏳ Pequeño delay para que el toast se vea y para no chocar con intents nativos
     setTimeout(() => {
       router.replace('/reporte')
-    }, 900)
+    }, 650)
   } catch (e) {
     console.error(e)
     err.value = e?.message || 'No se pudo guardar/abrir el PDF.'
@@ -196,17 +201,15 @@ async function downloadFromPreview() {
 .screen {
   padding: 16px;
   display: grid;
-  /* Centra horizontalmente el contenido y mantiene el inicio arriba */
-  place-content: start center;
+  place-content: start center; /* centra horizontal */
   min-height: 100%;
   width: 100%;
 }
 
 .card {
   width: 100%;
-  /* Limita el ancho para que se vea centrado y bonito en móvil y desktop */
   max-width: clamp(320px, 92vw, 520px);
-  margin: 8px auto 0; /* centra horizontal con márgenes automáticos */
+  margin: 8px auto 0;
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 6px 18px rgba(0,0,0,.06);
