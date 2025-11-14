@@ -2,6 +2,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { MAIN_ROUTES } from '@/constants/routes'
 
+/** Handlers opcionales para ACEPTAR / VOLVER (sin eventos globales) */
+const acceptHandler = ref(null)
+const backHandler   = ref(null)
+
 export function useBottomBar() {
   const route  = useRoute()
   const router = useRouter()
@@ -17,9 +21,9 @@ export function useBottomBar() {
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
   // ===== Reportes
-  const isReportRootPage      = computed(() => route.path === '/reporte')
-  const isReportPreviewPage   = computed(() => route.path.startsWith('/reporte/previsualizacion'))
-  const isReportPage          = computed(() => isReportRootPage.value || isReportPreviewPage.value)
+  const isReportRootPage    = computed(() => route.path === '/reporte')
+  const isReportPreviewPage = computed(() => route.path.startsWith('/reporte/previsualizacion'))
+  const isReportPage        = computed(() => isReportRootPage.value || isReportPreviewPage.value)
 
   // Listas histórico
   const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
@@ -127,14 +131,38 @@ export function useBottomBar() {
     }
   }
 
+  /* ===== Handlers para aceptar/volver (sin eventos globales) ===== */
+  function setAcceptHandler(fn){
+    acceptHandler.value = typeof fn === 'function' ? fn : null
+  }
+  function setBackHandler(fn){
+    backHandler.value = typeof fn === 'function' ? fn : null
+  }
+
   /* ===== Helpers ===== */
   function go(path){ navigate(path, { replace:false }) }
-  function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
-  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
-  // PREVISUALIZAR (para /reporte)
-  function emitPreview(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview'))) }
 
-  // ✅ Volver: preview -> /reporte, /reporte -> /balance, otros casos como antes
+  // 👉 Primero intenta usar handler, si no, dispara evento global (para vistas viejas)
+  function emitAccept(){
+    if (acceptHandler.value) {
+      acceptHandler.value()
+      return
+    }
+    Promise.resolve().then(() =>
+      window.dispatchEvent(new CustomEvent('bottom-accept'))
+    )
+  }
+
+  function emitDownload(){
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download')))
+  }
+
+  // PREVISUALIZAR (para /reporte)
+  function emitPreview(){
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview')))
+  }
+
+  // ✅ Volver: preview -> /reporte, /reporte -> /balance, /recordatorios/nuevo -> /recordatorios, etc.
   function goDashboard(){
     let target = '/balance'
     if (isAddReminderPage.value || isEditReminderPage.value) {
@@ -144,8 +172,18 @@ export function useBottomBar() {
     } else if (isReportRootPage.value) {
       target = '/balance'
     }
+
+    // Handler de back primero (por si alguien quiere limpiar algo)
+    if (backHandler.value) {
+      backHandler.value()
+    }
+
     navigate(target, { replace:true })
-    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+
+    // Compatibilidad con vistas que aún escuchan bottom-back
+    Promise.resolve().then(() =>
+      window.dispatchEvent(new CustomEvent('bottom-back'))
+    )
   }
 
   function goAddReminder(){ navigate('/recordatorios/nuevo') }
@@ -182,9 +220,13 @@ export function useBottomBar() {
     historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
     // navegación/acciones
-    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
+    go, goDashboard, goAddReminder, goHistory, setHistoryTab,
+    emitAccept, emitDownload, emitPreview,
     goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
-    goAddGoal, goOrToggleIncome, goOrToggleExpense, emitPreview,
+    goAddGoal, goOrToggleIncome, goOrToggleExpense,
+
+    // registro de handlers
+    setAcceptHandler, setBackHandler,
 
     // feedback/ui
     toastOpen, toastMsg, isNavigating,
