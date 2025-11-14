@@ -53,27 +53,35 @@ function buildUrl (query) {
 }
 
 // 🔁 Navegación a la lista SOLO con vue-router (sin useIonRouter)
-async function goToReminders (query = undefined) {
+function goToReminders (query = undefined) {
   const q = query || {}
-  try {
-    await router.replace({ path: '/recordatorios', query: q })
-  } catch {
+  // intentamos replace, si falla probamos push, y si todo falla usamos location.href
+  router.replace({ path: '/recordatorios', query: q }).catch(async () => {
     try {
       await router.push({ path: '/recordatorios', query: q })
     } catch {
       const url = buildUrl(q)
       window.location.href = url
     }
-  }
+  })
 }
 
 async function handleSubmit (payload) {
   const res = await saveReminder(payload)
 
   if (res.ok) {
-    // Toast global + query para que la lista muestre su propio toast
+    // Aviso global
     showGlobalToast('Recordatorio creado', 'success', 'bottom')
-    await goToReminders({ toast: 'created' })
+
+    // Avisar a la lista que cambió algo (para recargar, si lo usas)
+    try {
+      window.dispatchEvent(
+        new CustomEvent('reminders:changed', { detail: { action: 'created' } })
+      )
+    } catch {}
+
+    // 🚀 Navegar sin await (deja que la navegación siga su curso en Android)
+    goToReminders({ toast: 'created' })
     return
   }
 
