@@ -17,6 +17,7 @@
         />
       </section>
 
+      <!-- Toast LOCAL solo para esta vista (errores) -->
       <ion-toast
         :is-open="toast.open"
         :message="toast.message"
@@ -31,35 +32,43 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { useAddReminder } from '@/composables/useAddReminder'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
 const router = useRouter()
+const ionRouter = useIonRouter()
+
 const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
 
 const { loading, saveReminder } = useAddReminder()
 const formRef = ref(null)
 
-// ✅ Toast SOLO local para esta vista
+// ✅ Toast SOLO local (errores)
 const toast = ref({ open: false, message: '', color: 'primary' })
-
 function showToast (message, color = 'primary') {
   toast.value = { open: true, message, color }
 }
 
+/* ===== Navegación a /recordatorios ===== */
 function buildUrl (query) {
   if (!query || Object.keys(query).length === 0) return '/recordatorios'
   const params = new URLSearchParams(query)
   return `/recordatorios?${params.toString()}`
 }
 
-// 🔁 Navegación a la lista SOLO con vue-router
 function goToReminders (query = undefined) {
   const q = query || {}
+  const url = buildUrl(q)
+
+  // 1) Intento con ionRouter (mejor en app móvil)
+  const navigated = ionRouter.navigate(url, 'back', 'replace')
+  if (navigated) return
+
+  // 2) Fallback a vue-router
   router.replace({ path: '/recordatorios', query: q }).catch(async () => {
     try {
       await router.push({ path: '/recordatorios', query: q })
@@ -70,25 +79,21 @@ function goToReminders (query = undefined) {
   })
 }
 
+/* ===== Guardar recordatorio ===== */
 async function handleSubmit (payload) {
   const res = await saveReminder(payload)
 
   if (res.ok) {
-    // 1️⃣ Avisar a la lista (para que recargue si escucha este evento)
     try {
+      // Avisar a la capa de notificaciones/refrescos
+      window.dispatchEvent(
       globalThis.dispatchEvent(
         new CustomEvent('reminders:changed', { detail: { action: 'created' } })
       )
     } catch {}
 
-    // 2️⃣ Mostrar toast LOCAL en esta vista
-    showToast('Recordatorio creado correctamente', 'success')
-
-    // 3️⃣ Navegar a /recordatorios un pelín después (Android se lleva bien con esto)
-    setTimeout(() => {
-      goToReminders()
-    }, 300)
-
+    // Ir a /recordatorios con bandera de creado
+    goToReminders({ toast: 'created' })
     return
   }
 
@@ -104,23 +109,18 @@ async function handleSubmit (payload) {
   showToast(message, 'danger')
 }
 
-// ==== Eventos bottom bar ====
-// ⛔ No aceptar si ya estamos guardando o si ya no estamos en /recordatorios/nuevo
+/* ===== Integración con bottom bar: evento global bottom-accept ===== */
 function onBottomAccept () {
-  if (route.path !== '/recordatorios/nuevo') return
   if (loading.value) return
+  // sin chequear route.path, como en reportes
   formRef.value?.submit?.()
-}
-
-function onBottomBack () {
-  if (route.path !== '/recordatorios/nuevo') return
-  formRef.value?.reset?.()
 }
 
 onMounted(() => {
   globalThis.addEventListener('bottom-accept', onBottomAccept)
   globalThis.addEventListener('bottom-back', onBottomBack)
 })
+
 onBeforeUnmount(() => {
   globalThis.removeEventListener('bottom-accept', onBottomAccept)
   globalThis.removeEventListener('bottom-back', onBottomBack)
