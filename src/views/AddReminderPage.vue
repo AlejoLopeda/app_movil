@@ -73,8 +73,8 @@ function goToReminders (query = undefined) {
     try {
       await router.push({ path: '/recordatorios', query: q })
     } catch {
-      // 3) Último recurso
-      window.location.href = url
+      const url = buildUrl(q)
+      globalThis.location.href = url
     }
   })
 }
@@ -87,6 +87,7 @@ async function handleSubmit (payload) {
     try {
       // Avisar a la capa de notificaciones/refrescos
       window.dispatchEvent(
+      globalThis.dispatchEvent(
         new CustomEvent('reminders:changed', { detail: { action: 'created' } })
       )
     } catch {}
@@ -116,11 +117,13 @@ function onBottomAccept () {
 }
 
 onMounted(() => {
-  window.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-back', onBottomBack)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-back', onBottomBack)
 })
 </script>
 

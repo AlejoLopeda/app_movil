@@ -177,8 +177,8 @@ function goPreviewBySelection () {
 }
 
 function onBottomPreview(){ goPreviewBySelection() }
-onMounted(() => { window.addEventListener('bottom-preview', onBottomPreview) })
-onUnmounted(() => { window.removeEventListener('bottom-preview', onBottomPreview) })
+onMounted(() => { globalThis.addEventListener('bottom-preview', onBottomPreview) })
+onUnmounted(() => { globalThis.removeEventListener('bottom-preview', onBottomPreview) })
 </script>
 
 <style scoped>

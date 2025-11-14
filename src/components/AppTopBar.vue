@@ -174,7 +174,7 @@ async function onLogout(){
   try{
     if (Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){ await CapApp.exitApp(); return }
     if (Capacitor.isNativePlatform() && Capacitor.getPlatform()==='ios'){ logoutMsg.value='En iOS no es posible cerrar la app automáticamente. Usa el gesto de Home.'; return (logoutErrorOpen.value=true) }
-    const closed = window.close()
+    const closed = globalThis.close()
     if(!closed){ logoutMsg.value='No es posible cerrar la ventana desde el navegador. Ciérrala manualmente.'; logoutErrorOpen.value=true }
   }catch(e){ console.error('close app error:', e); logoutMsg.value='No se pudo cerrar la app. Intenta de nuevo.'; logoutErrorOpen.value=true }
 }
@@ -198,8 +198,8 @@ function applyTopbarHeight(){
 }
 onMounted(async ()=>{
   await loadAvatar()
-  window.addEventListener('avatar-updated', onAvatarUpdated)
-  window.addEventListener('storage', onStorage)
+  globalThis.addEventListener('avatar-updated', onAvatarUpdated)
+  globalThis.addEventListener('storage', onStorage)
   wireGlobalEvents()
 
   await nextTick()
@@ -209,13 +209,13 @@ onMounted(async ()=>{
     const el = topbarRef.value?.$el || topbarRef.value
     if(el) resizeObs.observe(el)
   }catch{}
-  window.addEventListener('resize', applyTopbarHeight, { passive:true })
+  globalThis.addEventListener('resize', applyTopbarHeight, { passive:true })
 })
 onUnmounted(()=>{
-  window.removeEventListener('avatar-updated', onAvatarUpdated)
-  window.removeEventListener('storage', onStorage)
+  globalThis.removeEventListener('avatar-updated', onAvatarUpdated)
+  globalThis.removeEventListener('storage', onStorage)
   unwireGlobalEvents()
-  window.removeEventListener('resize', applyTopbarHeight)
+  globalThis.removeEventListener('resize', applyTopbarHeight)
   try{
     const el = topbarRef.value?.$el || topbarRef.value
     if(resizeObs && el) resizeObs.unobserve(el)

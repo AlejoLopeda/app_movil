@@ -1,86 +1,86 @@
 <template>
-  <ion-page class="monthly-page">
+  <ion-page class="expense-page goal-create-page">
     <app-top-bar title="METAS" />
-    <ion-content class="monthly-content ion-padding" fullscreen>
-      <section class="monthly-section">
-        <header class="monthly-header">
-          <div>
-            <h2 class="monthly-header__title">Crear Meta</h2>
-            <p class="monthly-header__subtitle">Define tu objetivo y comentario</p>
-          </div>
-        </header>
-
-        <div class="goals-form-card">
-          <ion-item class="goals-form-item" lines="full">
-            <ion-label position="stacked">Nombre</ion-label>
-            <ion-input v-model="name" placeholder="Ej: Ahorro viaje" />
-          </ion-item>
-
-          <ion-item class="goals-form-item" lines="full">
-            <ion-label position="stacked">Monto a alcanzar</ion-label>
-            <ion-input
-              :value="amount"
-              inputmode="decimal"
-              type="text"
-              placeholder="$"
-              @ionInput="onAmountInput"
-            />
-          </ion-item>
-
-          <ion-item class="goals-form-item" lines="full">
-            <ion-label position="stacked">Comentario</ion-label>
-            <ion-input v-model="comment" placeholder="Opcional" />
-          </ion-item>
-
-          <div class="goals-form__actions">
-            <ion-button expand="block" :disabled="!canSubmit || busy" @click="onCreate">CREAR</ion-button>
-          </div>
-        </div>
-
-        <ion-toast :is-open="toast.open" :message="toast.message" :color="toast.color" duration="2200" @didDismiss="toast.open=false" />
+    <ion-content
+      class="expense-content ion-padding"
+      fullscreen
+      style="--padding-top: var(--ion-safe-area-top);"
+    >
+      <section class="expense-section">
+        <goal-form
+          ref="goalFormRef"
+          class="goal-form"
+          :loading="busy"
+          :show-submit="false"
+          @submit="handleSubmit"
+        />
       </section>
+
+      <ion-toast
+        class="expense-toast"
+        :is-open="toast.open"
+        :message="toast.message"
+        :color="toast.color"
+        :duration="2200"
+        @didDismiss="toast.open=false"
+      />
     </ion-content>
   </ion-page>
-  
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { IonPage, IonContent, IonItem, IonLabel, IonInput, IonButton, IonToast } from '@ionic/vue'
 import AppTopBar from '@/components/AppTopBar.vue'
+import GoalForm from '@/components/GoalForm.vue'
+import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import { useGoals } from '@/composables/useGoals'
-import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
-import '@/theme/MonthlyPanel.css'
+import '@/theme/ExpensePage.css'
 import '@/theme/goals.css'
 
 const router = useRouter()
 const { create } = useGoals()
 
-const name = ref('')
-const amount = ref('')
-const comment = ref('')
+const goalFormRef = ref(null)
 const busy = ref(false)
 const toast = ref({ open: false, message: '', color: 'primary' })
 
-const amountValue = computed(() => parsePositiveNumber(amount.value))
-const canSubmit = computed(() => name.value.trim().length > 0 && amountValue.value !== null)
-
-function openToast(message, color='primary'){ toast.value = { open: true, message, color } }
-
-function onAmountInput(ev){
-  amount.value = sanitizePositiveDecimalInput(ev.detail?.value)
+function showToast(message, color = 'primary') {
+  toast.value = { open: true, message, color }
 }
 
-async function onCreate(){
-  if (!canSubmit.value) return
+function onBottomAccept() {
+  goalFormRef.value?.submit?.()
+}
+function onBottomBack() {
+  goalFormRef.value?.reset?.()
+}
+
+onMounted(() => {
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-back', onBottomBack)
+})
+onBeforeUnmount(() => {
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-back', onBottomBack)
+})
+
+async function handleSubmit(payload) {
+  if (busy.value) return
   busy.value = true
   try {
-    await create({ nombre: name.value.trim(), monto: amountValue.value, descripcion: comment.value || null })
-    openToast('Meta creada con éxito.', 'success')
-    router.replace('/metas')
+    await create({
+      nombre: payload.name,
+      monto: payload.amount,
+      descripcion: payload.comment,
+    })
+    showToast('Meta creada con éxito', 'success')
+    goalFormRef.value?.reset?.()
+    setTimeout(() => router.replace('/metas'), 450)
   } catch (e) {
-    openToast(e?.message || 'No se pudo crear la meta. Intenta de nuevo.', 'danger')
-  } finally { busy.value = false }
+    showToast(e?.message || 'No se pudo crear la meta. Intenta de nuevo.', 'danger')
+  } finally {
+    busy.value = false
+  }
 }
 </script>

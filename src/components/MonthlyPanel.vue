@@ -315,12 +315,12 @@ const handleGoalsChanged = () => { summary.load() }
 
 onMounted(() => {
   summary.load()
-  window.addEventListener('data:transactions-changed', handleTransactionsChanged)
-  window.addEventListener('data:goals-changed', handleGoalsChanged)
+  globalThis.addEventListener('data:transactions-changed', handleTransactionsChanged)
+  globalThis.addEventListener('data:goals-changed', handleGoalsChanged)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('data:transactions-changed', handleTransactionsChanged)
-  window.removeEventListener('data:goals-changed', handleGoalsChanged)
+  globalThis.removeEventListener('data:transactions-changed', handleTransactionsChanged)
+  globalThis.removeEventListener('data:goals-changed', handleGoalsChanged)
 })
 </script>

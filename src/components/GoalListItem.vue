@@ -1,32 +1,39 @@
 <template>
   <div class="goal-item">
-    <div class="goal-row">
-      <div class="goal-main">
-        <div class="goal-title">
-          <strong>{{ goal.nombre }}</strong>
+    <div
+      class="goal-summary-area"
+      role="button"
+      tabindex="0"
+      :aria-expanded="expanded ? 'true' : 'false'"
+      @click="toggleExpanded"
+      @keyup.enter.prevent="toggleExpanded"
+      @keyup.space.prevent="toggleExpanded"
+    >
+      <div class="goal-row">
+        <div class="goal-main">
+          <div class="goal-title">
+            <strong>{{ goal.nombre }}</strong>
+          </div>
+          <div class="goal-sub">
+            <span :class="{ 'is-complete': goal.cumplida }">
+              {{ format(goal.ahorrado) }} / {{ format(goal.objetivo) }}
+            </span>
+          </div>
+          <goal-progress-bar :pct="goal.progreso_pct" :complete="goal.cumplida">
+          </goal-progress-bar>
         </div>
-        <div class="goal-sub">
-          <span :class="{ 'is-complete': goal.cumplida }">
-            {{ format(goal.ahorrado) }} / {{ format(goal.objetivo) }}
-          </span>
+        <div class="goal-actions">
+          <ion-button class="action-btn action-btn--edit" size="small" fill="solid" @click.stop="emit('edit', goal.id)">
+            <ion-icon :icon="pencilOutline" />
+          </ion-button>
+          <ion-button class="action-btn action-btn--delete" size="small" fill="solid" @click.stop="emit('delete', goal.id)">
+            <ion-icon :icon="trashOutline" />
+          </ion-button>
         </div>
-        <goal-progress-bar :pct="goal.progreso_pct" :complete="goal.cumplida">
-        </goal-progress-bar>
       </div>
-      <div class="goal-actions">
-        <ion-button class="action-btn action-btn--edit" size="small" fill="solid" @click="emit('edit', goal.id)">
-          <ion-icon :icon="pencilOutline" />
-        </ion-button>
-        <ion-button class="action-btn action-btn--delete" size="small" fill="solid" color="danger" @click="emit('delete', goal.id)">
-          <ion-icon :icon="trashOutline" />
-        </ion-button>
-        <ion-button class="action-btn" size="small" fill="clear" @click="expanded = !expanded">
-          <ion-icon :icon="expanded ? chevronUpOutline : chevronDownOutline" />
-        </ion-button>
-      </div>
-    </div>
 
-  <div v-if="!expanded" class="goal-tap-hint">Toca para ver más detalles</div>
+      <div v-if="!expanded" class="goal-tap-hint">Toca para ver más detalles</div>
+    </div>
 
   <div v-if="expanded" class="goal-expand">
       <div class="goal-transfer">
@@ -98,6 +105,10 @@ const toast = ref({ open: false, message: '', color: 'primary' })
 
 const amountValue = computed(() => parsePositiveNumber(amount.value))
 const canSubmit = computed(() => amountValue.value !== null)
+
+function toggleExpanded() {
+  expanded.value = !expanded.value
+}
 
 function openToast(message, color='primary'){
   toast.value = { open: true, message, color }
