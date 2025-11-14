@@ -6,7 +6,7 @@ pdfMake.vfs = pdfFonts.vfs
 
 import { Capacitor } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
-import { Share } from '@capacitor/share'
+import { Share } from '@capacitor/share' // ← lo dejo, aunque ya no lo usamos aquí
 
 // Carga perezosa de File Opener (opcional)
 let fileOpenerCached = null
@@ -72,7 +72,7 @@ export function buildReportDoc ({ kind, periodLabel, from, to, incomes, expenses
           body: [
             [{ text: 'Concepto', style: 'th' }, { text: 'Valor', style: 'th', alignment: 'right' }],
             ['Ingresos', { text: nfCOP.format(incomes || 0), alignment: 'right' }],
-            ['Gastos', { text: nfCOP.format(expenses || 0), alignment: 'right' }],
+            ['Gastos',  { text: nfCOP.format(expenses || 0), alignment: 'right' }],
             [{ text: status, bold: true }, { text: nfCOP.format(balance), alignment: 'right', bold: true }]
           ]
         },
@@ -119,14 +119,20 @@ export function makeFileName (kind) {
   return `${slug}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.pdf`
 }
 
+/**
+ * Guarda el PDF.
+ * - En WEB: sigue descargando el archivo (comportamiento existente).
+ * - En ANDROID/iOS nativo: SOLO guarda en Documents/reports y NO abre/NO comparte.
+ *   Devuelve la URI para uso futuro si se desea abrir.
+ */
 export async function saveNative (doc, name) {
-  // WEB / PC: descarga directa con pdfMake (evita FileOpener en web)
+  // WEB / PC: descarga directa con pdfMake
   if (!Capacitor.isNativePlatform()) {
     pdfMake.createPdf(doc).download(name)
     return null
   }
 
-  // ANDROID nativo: guardar en Documents/reports y abrir/compartir
+  // ANDROID/iOS nativo: guardar en Documents/reports (sin abrir/compartir)
   const base64 = await new Promise((resolve, reject) => {
     try {
       pdfMake.createPdf(doc).getBase64(data => resolve(data))
@@ -146,16 +152,6 @@ export async function saveNative (doc, name) {
 
   const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path })
 
-  try {
-    const opener = await loadFileOpener()
-    if (opener) {
-      await opener.open({ filePath: uri, contentType: 'application/pdf' })
-    } else {
-      await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
-    }
-  } catch {
-    await Share.share({ title: name, text: 'Reporte PDF', url: uri, dialogTitle: 'Compartir reporte' })
-  }
-
+  // ❌ Sin abrir ni compartir para no perder foco en la app
   return uri
 }

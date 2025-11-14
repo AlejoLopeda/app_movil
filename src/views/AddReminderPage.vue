@@ -2,9 +2,19 @@
   <ion-page class="expense-page">
     <app-top-bar :title="pageTitle" />
 
-    <ion-content class="expense-content ion-padding" fullscreen style="--padding-top: var(--ion-safe-area-top);">
+    <ion-content
+      class="expense-content ion-padding"
+      fullscreen
+      style="--padding-top: var(--ion-safe-area-top);"
+    >
       <section class="expense-section">
-        <ReminderForm ref="formRef" class="expense-form" :loading="loading" :show-submit="false" @submit="handleSubmit" />
+        <ReminderForm
+          ref="formRef"
+          class="expense-form"
+          :loading="loading"
+          :show-submit="false"
+          @submit="handleSubmit"
+        />
       </section>
 
       <ion-toast
@@ -16,68 +26,94 @@
       />
     </ion-content>
   </ion-page>
-  </template>
+</template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
+import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { useAddReminder } from '@/composables/useAddReminder'
-import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
 const router = useRouter()
 const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
-const ionRouter = useIonRouter()
 
 const { loading, saveReminder } = useAddReminder()
 const formRef = ref(null)
+
+// ✅ Toast SOLO local para esta vista
 const toast = ref({ open: false, message: '', color: 'primary' })
 
-function buildUrl(query) {
+function showToast (message, color = 'primary') {
+  toast.value = { open: true, message, color }
+}
+
+function buildUrl (query) {
   if (!query || Object.keys(query).length === 0) return '/recordatorios'
   const params = new URLSearchParams(query)
   return `/recordatorios?${params.toString()}`
 }
 
-async function goToReminders(query = undefined) {
-  const url = buildUrl(query || {})
-  const navigated = ionRouter.navigate(url, 'back', 'replace')
-  if (navigated) return
-  try {
-    await router.replace({ path: '/recordatorios', query })
-  } catch {
-    try { await router.push({ path: '/recordatorios', query }) } catch {
+// 🔁 Navegación a la lista SOLO con vue-router
+function goToReminders (query = undefined) {
+  const q = query || {}
+  router.replace({ path: '/recordatorios', query: q }).catch(async () => {
+    try {
+      await router.push({ path: '/recordatorios', query: q })
+    } catch {
+      const url = buildUrl(q)
       window.location.href = url
     }
-  }
+  })
 }
 
-async function handleSubmit(payload) {
+async function handleSubmit (payload) {
   const res = await saveReminder(payload)
+
   if (res.ok) {
-    showGlobalToast('Recordatorio creado', 'success', 'bottom')
-    await goToReminders({ toast: 'created' })
+    // 1️⃣ Avisar a la lista (para que recargue si escucha este evento)
+    try {
+      window.dispatchEvent(
+        new CustomEvent('reminders:changed', { detail: { action: 'created' } })
+      )
+    } catch {}
+
+    // 2️⃣ Mostrar toast LOCAL en esta vista
+    showToast('Recordatorio creado correctamente', 'success')
+
+    // 3️⃣ Navegar a /recordatorios un pelín después (Android se lleva bien con esto)
+    setTimeout(() => {
+      goToReminders()
+    }, 300)
+
     return
   }
+
   if (res.reason === 'busy') return
+
   const message =
     res.reason === 'unauthorized'
       ? 'No autorizado. Inicia sesión e inténtalo de nuevo'
       : res.reason === 'rls'
         ? 'Tu usuario no tiene permiso para guardar recordatorios'
         : 'No se pudo crear el recordatorio. Intenta de nuevo'
-  showGlobalToast(message, 'danger', 'bottom')
+
+  showToast(message, 'danger')
 }
 
-// Bottom bar events (special mode): back and accept
-function onBottomAccept() {
+// ==== Eventos bottom bar ====
+// ⛔ No aceptar si ya estamos guardando o si ya no estamos en /recordatorios/nuevo
+function onBottomAccept () {
+  if (route.path !== '/recordatorios/nuevo') return
+  if (loading.value) return
   formRef.value?.submit?.()
 }
-function onBottomBack() {
+
+function onBottomBack () {
+  if (route.path !== '/recordatorios/nuevo') return
   formRef.value?.reset?.()
 }
 
@@ -90,3 +126,4 @@ onBeforeUnmount(() => {
   window.removeEventListener('bottom-back', onBottomBack)
 })
 </script>
+
