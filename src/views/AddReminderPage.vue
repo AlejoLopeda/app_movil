@@ -105,10 +105,15 @@ async function handleSubmit (payload) {
 }
 
 // ==== Eventos bottom bar ====
+// ⛔ No aceptar si ya estamos guardando o si ya no estamos en /recordatorios/nuevo
 function onBottomAccept () {
+  if (route.path !== '/recordatorios/nuevo') return
+  if (loading.value) return
   formRef.value?.submit?.()
 }
+
 function onBottomBack () {
+  if (route.path !== '/recordatorios/nuevo') return
   formRef.value?.reset?.()
 }
 
@@ -121,3 +126,4 @@ onBeforeUnmount(() => {
   window.removeEventListener('bottom-back', onBottomBack)
 })
 </script>
+
