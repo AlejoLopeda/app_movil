@@ -1,5 +1,5 @@
 ﻿<template>
-  <div v-show="isMainRoute" class="bottom-fixed">
+  <div v-show="isMainRoute" class="bottom-fixed" :class="{ 'report-active': isReportPage }">
     <ion-toolbar class="bottombar" :class="{ 'is-busy': isNavigating }">
       <!-- CTA: crear/editar -->
       <div v-if="isAddPage" class="nav-cta">
@@ -18,9 +18,10 @@
           type="button"
           class="cta-btn"
           @click="emitAccept"
-          :aria-disabled="isNavigating"
+          :disabled="isEditReminderPage && !canSaveEnabled"
+          :aria-disabled="isNavigating || (isEditReminderPage && !canSaveEnabled)"
           :data-busy="isNavigating"
-          :class="{ 'is-locked': isNavigating }"
+          :class="{ 'is-locked': isNavigating || (isEditReminderPage && !canSaveEnabled) }"
         >
           <ion-icon :icon="checkmarkOutline" />
           <span>ACEPTAR</span>
@@ -55,7 +56,7 @@
       </div>
 
       <!-- Recordatorios -->
-  <div v-else-if="isRemindersPage" class="nav-cta">
+      <div v-else-if="isRemindersPage" class="nav-cta">
         <button
           type="button"
           class="cta-btn"
@@ -105,13 +106,65 @@
         </button>
       </div>
 
-      <!-- HISTÓRICO (LISTAS): Back /balance + Ingreso + Gasto + Ambos (icon-only) -->
+      <!-- ✅ REPORTES (root): Regresar + PREVISUALIZAR -->
+      <div v-else-if="isReportRootPage" class="nav-cta">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          @click="emitPreview"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+          :aria-disabled="isNavigating"
+        >
+          <ion-icon :icon="eyeOutline" />
+          <span>PREVISUALIZAR</span>
+        </button>
+      </div>
+
+      <!-- ✅ REPORTES (previsualización): Regresar + DESCARGAR -->
+      <div v-else-if="isReportPreviewPage" class="nav-cta">
+        <button
+          type="button"
+          class="cta-btn"
+          @click="goDashboard"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="chevronBackOutline" />
+        </button>
+
+        <button
+          type="button"
+          class="cta-btn"
+          :disabled="!canDownloadEnabled"
+          @click="emitDownload"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+          :aria-disabled="!canDownloadEnabled || isNavigating"
+        >
+          <ion-icon :icon="downloadOutline" />
+          <span>DESCARGAR</span>
+        </button>
+      </div>
+
+      <!-- HISTÓRICO (LISTAS) -->
       <nav v-else-if="isHistoryListPage" class="nav nav--history">
-        <!-- Back a /balance -->
         <button
           type="button"
           class="nav-btn icon-only"
-          @click="goBalance"
+          @click="goDashboard"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           aria-label="Volver a Balance"
@@ -119,7 +172,6 @@
           <ion-icon :icon="chevronBackOutline" />
         </button>
 
-        <!-- Ingreso -->
         <button
           type="button"
           class="nav-btn"
@@ -132,7 +184,6 @@
           <span>INGRESO</span>
         </button>
 
-        <!-- Gasto -->
         <button
           type="button"
           class="nav-btn"
@@ -145,7 +196,6 @@
           <span>GASTO</span>
         </button>
 
-        <!-- Ambos (icon-only) -->
         <button
           type="button"
           class="nav-btn icon-only"
@@ -159,7 +209,7 @@
         </button>
       </nav>
 
-      <!-- BALANCE (/balance) + INGRESOS + GASTOS: misma nav + toggle -->
+      <!-- BALANCE (/balance) + INGRESOS + GASTOS -->
       <nav v-else-if="isMonthlyArea" class="nav nav--cta">
         <button
           type="button"
@@ -252,29 +302,21 @@
 import { IonToolbar, IonIcon, IonToast } from '@ionic/vue'
 import {
   cashOutline, cardOutline, timeOutline,
-  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add
+  chevronBackOutline, checkmarkOutline, swapHorizontalOutline, add,
+  downloadOutline, eyeOutline
 } from 'ionicons/icons'
 import { useBottomBar } from '@/composables/useBottomBar'
 
 const {
-  isMainRoute, isAddPage, isProfilePage, isRemindersPage,
+  isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage,
+  isReportPage, isReportRootPage, isReportPreviewPage,
   isHistoryListPage, isMonthlyArea, isGoalsPage,
-  historyTab, activeTab, canSaveEnabled,
-  goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept,
-  goAddGoal,
+  historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
+  goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
+  goAddGoal, emitPreview,
   goOrToggleIncome, goOrToggleExpense,
   toastOpen, toastMsg, isNavigating,
 } = useBottomBar()
 </script>
-
-<style scoped>
-/* Histórico: compactar icon-only */
-.nav--history .nav-btn.icon-only{
-  min-width: 48px;
-  width: 48px;
-  padding: 0;
-  justify-content: center;
-}
-</style>
 
 <style src="../theme/BottomBar.css"></style>

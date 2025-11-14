@@ -3,181 +3,190 @@ import { useRoute, useRouter } from 'vue-router'
 import { MAIN_ROUTES } from '@/constants/routes'
 
 export function useBottomBar() {
-    const route = useRoute()
-    const router = useRouter()
+  const route  = useRoute()
+  const router = useRouter()
 
-    /* ===== Qué mostrar ===== */
-    const isMainRoute = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p)))
-    const isAddIncomePage = computed(() => route.path === '/ingresos/nuevo')
-    const isAddExpensePage = computed(() => route.path === '/gastos/nuevo')
-    const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
-    const isEditReminderPage = computed(() => route.name === 'EditReminder')
-    const isRemindersPage = computed(() => route.path === '/recordatorios')
-    const isGoalsPage = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
-    const isProfilePage = computed(() => route.path.startsWith('/perfil'))
+  /* ===== Qué mostrar ===== */
+  const isMainRoute       = computed(() => MAIN_ROUTES.some(p => route.path.startsWith(p)))
+  const isAddIncomePage   = computed(() => route.path === '/ingresos/nuevo')
+  const isAddExpensePage  = computed(() => route.path === '/gastos/nuevo')
+  const isAddReminderPage = computed(() => route.path === '/recordatorios/nuevo')
+  const isEditReminderPage= computed(() => route.name === 'EditReminder')
+  const isRemindersPage   = computed(() => route.path === '/recordatorios')
+  const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
+  const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
-    // Listas del histórico
-    const isHistoryPage = computed(() => route.path.startsWith('/historico'))
-    const isHistoryListPage = computed(() => /\/historico\//.test(route.path))
+  // ===== Reportes
+  const isReportRootPage      = computed(() => route.path === '/reporte')
+  const isReportPreviewPage   = computed(() => route.path.startsWith('/reporte/previsualizacion'))
+  const isReportPage          = computed(() => isReportRootPage.value || isReportPreviewPage.value)
 
-    // Balance mensual ahora está en /balance
-    const isMonthlyBothPage = computed(() => route.path === '/balance')
-    const isMonthlyArea = computed(() =>
-        route.path.startsWith('/ingresos') ||
-        route.path.startsWith('/gastos') ||
-        route.path.startsWith('/balance')
-    )
-    const isBalancePage = computed(() => route.path === '/balance')
+  // Listas histórico
+  const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
+  const isHistoryListPage = computed(() => /\/historico\//.test(route.path))
 
-    const isAddPage = computed(() =>
-        isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value
-    )
+  // Balance mensual está en /balance
+  const isMonthlyBothPage = computed(() => route.path === '/balance')
+  const isMonthlyArea     = computed(() =>
+    route.path.startsWith('/ingresos') ||
+    route.path.startsWith('/gastos')   ||
+    route.path.startsWith('/balance')
+  )
+  const isBalancePage     = computed(() => route.path === '/balance')
 
-    const historyTab = computed(() => {
-        if (route.path.startsWith('/historico/ingresos')) return 'income'
-        if (route.path.startsWith('/historico/gastos')) return 'expense'
-        if (route.path.startsWith('/historico/ambos')) return 'both'
-        const q = String(route.query.tab || 'income')
-        return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
+  const isAddPage = computed(() =>
+    isAddIncomePage.value || isAddExpensePage.value || isAddReminderPage.value || isEditReminderPage.value
+  )
+
+  const historyTab = computed(() => {
+    if (route.path.startsWith('/historico/ingresos')) return 'income'
+    if (route.path.startsWith('/historico/gastos'))   return 'expense'
+    if (route.path.startsWith('/historico/ambos'))    return 'both'
+    const q = String(route.query.tab || 'income')
+    return q === 'expense' ? 'expense' : q === 'both' ? 'both' : 'income'
+  })
+
+  const activeTab = computed(() => {
+    if (route.path.startsWith('/ingresos'))  return 'ingresos'
+    if (route.path.startsWith('/gastos'))    return 'gastos'
+    if (route.path.startsWith('/historico')) return 'historico'
+    if (route.path === '/balance')           return 'balance'
+    return ''
+  })
+
+  /* ===== /perfil: habilitar acción ===== */
+  const canSaveEnabled = ref(false)
+  function handleCanSave(ev){ canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
+  onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
+  onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
+  watch([isProfilePage, isEditReminderPage], ([profile, edit]) => {
+    if (!profile && !edit) canSaveEnabled.value = false
+  })
+  watch(isEditReminderPage, now => {
+    if (now) canSaveEnabled.value = false
+  })
+
+  /* ===== /reporte/previsualizacion: habilitar DESCARGAR ===== */
+  const canDownloadEnabled = ref(false)
+  function handleCanDownload(ev){ canDownloadEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
+  onMounted(() => window.addEventListener('report-can-download', handleCanDownload))
+  onUnmounted(() => window.removeEventListener('report-can-download', handleCanDownload))
+  watch(isReportPreviewPage, now => { if (!now) canDownloadEnabled.value = false })
+
+  /* ===== Feedback ===== */
+  const toastOpen = ref(false)
+  const toastMsg  = ref('')
+  function fail(msg = 'No se pudo abrir la sección. Intenta de nuevo.'){
+    toastMsg.value  = msg
+    toastOpen.value = true
+  }
+
+  /* ===== Guard / navegación optimizada ===== */
+  const isNavigating = ref(false)
+  let lastTapTs = 0
+  let clearBusyTimer = 0
+  let removeAfterEach = null
+
+  function setBusy(v){
+    isNavigating.value = v
+    clearTimeout(clearBusyTimer)
+    if (!v) return
+    clearBusyTimer = setTimeout(() => { isNavigating.value = false }, 250)
+  }
+
+  onMounted(() => {
+    removeAfterEach = router.afterEach(() => {
+      isNavigating.value = false
+      clearTimeout(clearBusyTimer)
     })
+  })
+  onUnmounted(() => {
+    if (removeAfterEach) removeAfterEach()
+  })
 
-    const activeTab = computed(() => {
-        if (route.path.startsWith('/ingresos')) return 'ingresos'
-        if (route.path.startsWith('/gastos')) return 'gastos'
-        if (route.path.startsWith('/historico')) return 'historico' // listas
-        if (route.path === '/balance') return 'balance' // landing de balance
-        return ''
-    })
+  function throttled(){ 
+    const now = performance.now()
+    if (now - lastTapTs < 150) return true
+    lastTapTs = now
+    return false
+  }
 
-    /* ===== /perfil: habilitar acción ===== */
-    const canSaveEnabled = ref(false)
-
-    function handleCanSave(ev) { canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
-    onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
-    onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
-    watch(isProfilePage, now => { if (!now) canSaveEnabled.value = false })
-
-    /* ===== Feedback ===== */
-    const toastOpen = ref(false)
-    const toastMsg = ref('')
-
-    function fail(msg = 'No se pudo abrir la sección. Intenta de nuevo.') {
-        toastMsg.value = msg
-        toastOpen.value = true
+  async function navigate(target, { replace = false } = {}){
+    if (!target) return
+    if (throttled()) return
+    if (route.fullPath === target) return
+    if (isNavigating.value) return
+    setBusy(true)
+    try {
+      if (replace) await router.replace(target)
+      else         await router.push(target)
+    } catch (e) {
+      fail()
+    } finally {
+      setBusy(false)
     }
+  }
 
-    /* ===== Guard de navegación (optimizado) ===== */
-    const isNavigating = ref(false)
-    let navTimer = 0
+  /* ===== Helpers ===== */
+  function go(path){ navigate(path, { replace:false }) }
+  function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
+  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
+  // PREVISUALIZAR (para /reporte)
+  function emitPreview(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview'))) }
 
-    function withNavGuard(fn) {
-        if (isNavigating.value) return
-        isNavigating.value = true
-        clearTimeout(navTimer)
-        requestAnimationFrame(() => {
-            try { fn() } catch (e) { fail() } finally { navTimer = setTimeout(() => { isNavigating.value = false }, 220) } // un poco más ágil
-        })
+  // ✅ Volver: preview -> /reporte, /reporte -> /balance, otros casos como antes
+  function goDashboard(){
+    let target = '/balance'
+    if (isAddReminderPage.value || isEditReminderPage.value) {
+      target = '/recordatorios'
+    } else if (isReportPreviewPage.value) {
+      target = '/reporte'
+    } else if (isReportRootPage.value) {
+      target = '/balance'
     }
+    navigate(target, { replace:true })
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+  }
 
-    /* ===== Helpers navegación ===== */
-    function safeReplace(path) { if (route.path !== path) router.replace(path).catch(() => {}) }
+  function goAddReminder(){ navigate('/recordatorios/nuevo') }
+  function goAddGoal(){ navigate('/metas/nueva') }
+  function goHistory(){ navigate('/historico/ambos') }
 
-    function safePush(path) { if (route.path !== path) router.push(path).catch(() => {}) }
+  function goMonthlyIncome(){ navigate('/ingresos',  { replace:true }) }
+  function goMonthlyExpense(){ navigate('/gastos',   { replace:true }) }
+  function goMonthlyBoth(){ navigate('/balance',     { replace:true }) }
+  function goBalance(){ navigate('/balance', { replace:true }) }
 
-    function go(path) { withNavGuard(() => safePush(path)) }
+  function setHistoryTab(mode){
+    const target =
+      mode === 'income'  ? '/historico/ingresos' :
+      mode === 'expense' ? '/historico/gastos'   :
+                            '/historico/ambos'
+    if (route.fullPath !== target) navigate(target, { replace:true })
+  }
 
-    function emitAccept() { Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
+  function goOrToggleIncome(){
+    if (route.path.startsWith('/ingresos')) navigate('/balance', { replace:true })
+    else                                    navigate('/ingresos', { replace:true })
+  }
+  function goOrToggleExpense(){
+    if (route.path.startsWith('/gastos')) navigate('/balance', { replace:true })
+    else                                  navigate('/gastos', { replace:true })
+  }
 
-    function goDashboard() {
-        withNavGuard(() => {
-            Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
-            const target = (isAddReminderPage.value || isEditReminderPage.value) ? '/recordatorios' : '/balance'
-            safeReplace(target)
-        })
-    }
+  return {
+    // estado
+    isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage,
+    isReportPage, isReportRootPage, isReportPreviewPage,
+    historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
-    function goAddReminder() { withNavGuard(() => safePush('/recordatorios/nuevo')) }
+    // navegación/acciones
+    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
+    goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
+    goAddGoal, goOrToggleIncome, goOrToggleExpense, emitPreview,
 
-    function goAddGoal() { withNavGuard(() => safePush('/metas/nueva')) }
-
-    function goHistory() { withNavGuard(() => safePush('/historico/ambos')) }
-
-    // Balance mensual
-    function goMonthlyIncome() { withNavGuard(() => safeReplace('/ingresos')) }
-
-    function goMonthlyExpense() { withNavGuard(() => safeReplace('/gastos')) }
-
-    function goMonthlyBoth() { withNavGuard(() => safeReplace('/balance')) }
-
-    // Volver a /balance (desde histórico)
-    function goBalance() { withNavGuard(() => safeReplace('/balance')) }
-
-    // Cambiar pestaña histórico (listas)
-    function setHistoryTab(mode) {
-        withNavGuard(() => {
-            const target =
-                mode === 'income' ? '/historico/ingresos' :
-                mode === 'expense' ? '/historico/gastos' :
-                '/historico/ambos'
-            if (route.fullPath !== target) safeReplace(target)
-        })
-    }
-
-    /* ===== Toggle de botones ===== */
-    function goOrToggleIncome() {
-        withNavGuard(() => {
-            if (route.path.startsWith('/ingresos')) {
-                safeReplace('/balance') // estaba en ingresos → vuelve a balance
-            } else {
-                safeReplace('/ingresos') // ir a ingresos
-            }
-        })
-    }
-
-    function goOrToggleExpense() {
-        withNavGuard(() => {
-            if (route.path.startsWith('/gastos')) {
-                safeReplace('/balance') // estaba en gastos → vuelve a balance
-            } else {
-                safeReplace('/gastos') // ir a gastos
-            }
-        })
-    }
-
-    return {
-        // estado
-        isMainRoute,
-        isAddPage,
-        isProfilePage,
-        isRemindersPage,
-        isHistoryPage,
-        isHistoryListPage,
-        isMonthlyBothPage,
-        isMonthlyArea,
-        isBalancePage,
-        isGoalsPage,
-        historyTab,
-        activeTab,
-        canSaveEnabled,
-
-        // navegación/acciones
-        go,
-        goDashboard,
-        goAddReminder,
-        goHistory,
-        setHistoryTab,
-        emitAccept,
-        goMonthlyIncome,
-        goMonthlyExpense,
-        goMonthlyBoth,
-        goBalance,
-        goAddGoal,
-        goOrToggleIncome,
-        goOrToggleExpense,
-
-        // feedback/ui
-        toastOpen,
-        toastMsg,
-        isNavigating,
-    }
+    // feedback/ui
+    toastOpen, toastMsg, isNavigating,
+  }
 }

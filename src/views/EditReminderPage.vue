@@ -11,6 +11,7 @@
           :show-submit="false"
           :initial="initialValues"
           @submit="handleSubmit"
+          @dirty-change="onDirtyChange"
         />
       </section>
 
@@ -29,7 +30,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
-import { IonPage, IonContent, IonToast } from '@ionic/vue'
+import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { getReminder, updateReminder } from '@/services/reminderService'
 import { upsertSchedulesForReminder, cancelSchedulesForReminder, ensurePermission } from '@/lib/localNotifications'
@@ -37,11 +38,13 @@ import '@/theme/ExpensePage.css'
 
 const route = useRoute()
 const router = useRouter()
+const ionRouter = useIonRouter()
 const pageTitle = computed(() => route.meta?.title || 'Editar Recordatorio')
 
 const loading = ref(false)
 const formRef = ref(null)
 const initialValues = ref(null)
+const isDirty = ref(false)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -103,9 +106,21 @@ async function handleSubmit(payload) {
         await cancelSchedulesForReminder(id)
       }
     } catch {}
-    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
-    // Redirigir directamente al panel de recordatorios
-    router.replace({ name: 'Recordatorios' })
+	    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
+	    // Redirigir directamente al panel de recordatorios
+	    const query = { toast: 'updated' }
+	    const search = new URLSearchParams(query).toString()
+	    const url = search ? `/recordatorios?${search}` : '/recordatorios'
+	    const navigated = ionRouter.navigate(url, 'back', 'replace')
+	    if (!navigated) {
+	      try {
+	        await router.replace({ path: '/recordatorios', query })
+	      } catch {
+	        try { await router.push({ path: '/recordatorios', query }) } catch {
+	          window.location.href = url
+	        }
+	      }
+	    }
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
   } finally {
@@ -115,13 +130,28 @@ async function handleSubmit(payload) {
 
 // Bottom bar events
 function onBottomAccept() {
-  formRef.value?.submit?.()
+  if (isDirty.value) {
+    formRef.value?.submit?.()
+  }
 }
 function onBottomBack() {
   router.back()
 }
 
+function emitBottomCanSave(enabled) {
+  try {
+    window.dispatchEvent(new CustomEvent('bottom-can-save', { detail: { enabled } }))
+  } catch {}
+}
+
+function onDirtyChange(state) {
+  const enabled = !!state
+  isDirty.value = enabled
+  emitBottomCanSave(enabled)
+}
+
 onMounted(() => {
+  emitBottomCanSave(false)
   loadData()
   window.addEventListener('bottom-accept', onBottomAccept)
   window.addEventListener('bottom-back', onBottomBack)
@@ -129,6 +159,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('bottom-accept', onBottomAccept)
   window.removeEventListener('bottom-back', onBottomBack)
+  emitBottomCanSave(false)
 })
 </script>
 

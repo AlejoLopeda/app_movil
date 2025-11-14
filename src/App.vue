@@ -9,7 +9,7 @@
       :is-open="notification.open"
       :message="notification.message"
       :color="notification.color"
-      position="top"
+      :position="notification.position || 'top'"
       duration="2600"
       @didDismiss="notification.open=false"
     />
@@ -38,5 +38,9 @@ useReminderNotifications()
 /* Reserva espacio para TODO ion-content */
 .has-global-bottom-bar ion-content{
   --padding-bottom: var(--bottom-bar-offset);
+}
+
+.reminder-toast{
+  --margin-bottom: calc(var(--bottom-bar-offset, 0px) + 12px);
 }
 </style>

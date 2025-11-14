@@ -155,7 +155,26 @@ const dateError = ref('')
 const catError = ref('')
 
 const baseCategories = computed(() => (mode.value === 'income' ? preInc() : preExp()))
-const extendedCategories = computed(() => (mode.value === 'income' ? addInc() : addExp()))
+// Modal de categorías: mostrar el set completo para el modo actual
+// (base + adicionales, y para ingresos también 'saldo_inicial'),
+// de modo que el modal coincida con el panel de filtros.
+const extendedCategories = computed(() => {
+  const base = mode.value === 'income' ? preInc() : preExp()
+  const extra = mode.value === 'income' ? addInc() : addExp()
+  const list = [...base, ...extra]
+  if (mode.value === 'income') {
+    const special = resInc('saldo_inicial')
+    if (special) list.push(special)
+  }
+  // Unicidad por key para evitar duplicados accidentales
+  const seen = new Set()
+  return list.filter((c) => {
+    if (!c || !c.key) return false
+    if (seen.has(c.key)) return false
+    seen.add(c.key)
+    return true
+  })
+})
 const showMoreCategories = ref(false)
 
 const categories = computed(() => {

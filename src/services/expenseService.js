@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { EXPENSE_PRESET, EXPENSE_EXTRA, findExpenseCategory } from '@/constants/categories'
 
 // ======================
 // Categorías
@@ -20,17 +21,13 @@ const ADDITIONAL_CATEGORIES = Object.freeze([
 ])
 
 export function presetCategories() {
-    return DEFAULT_CATEGORIES.map((item) => ({...item }))
+    return EXPENSE_PRESET.map((item) => ({...item }))
 }
 export function additionalCategories() {
-    return ADDITIONAL_CATEGORIES.map((item) => ({...item }))
+    return EXPENSE_EXTRA.map((item) => ({...item }))
 }
 export function resolveCategory(key) {
-    return (
-        DEFAULT_CATEGORIES.find((i) => i.key === key) ??
-        ADDITIONAL_CATEGORIES.find((i) => i.key === key) ??
-        null
-    )
+    return findExpenseCategory(key)
 }
 
 // ======================
