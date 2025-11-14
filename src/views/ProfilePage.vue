@@ -409,8 +409,8 @@ const {
 } = useAvatar({ user, extras, toast, toastErr })
 
 /** reenviar click global del botón de la barra inferior */
-onMounted(() => window.addEventListener('bottom-accept', handleBottomAccept))
-onUnmounted(() => window.removeEventListener('bottom-accept', handleBottomAccept))
+onMounted(() => globalThis.addEventListener('bottom-accept', handleBottomAccept))
+onUnmounted(() => globalThis.removeEventListener('bottom-accept', handleBottomAccept))
 </script>
 
 <style scoped src="@/theme/profile.css"></style>

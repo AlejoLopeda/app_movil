@@ -70,7 +70,7 @@ import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
 
 function setDownloadEnabled(enabled) {
-  window.dispatchEvent(new CustomEvent('report-can-download', { detail: { enabled: !!enabled } }))
+  globalThis.dispatchEvent(new CustomEvent('report-can-download', { detail: { enabled: !!enabled } }))
 }
 async function onBottomDownload() { await downloadFromPreview() }
 
@@ -145,10 +145,10 @@ onMounted(async () => {
   try { document.activeElement?.blur?.() } catch (_) {}
   await loadTotals()
   setDownloadEnabled(true)
-  window.addEventListener('bottom-download', onBottomDownload)
+  globalThis.addEventListener('bottom-download', onBottomDownload)
 })
 onUnmounted(() => {
-  window.removeEventListener('bottom-download', onBottomDownload)
+  globalThis.removeEventListener('bottom-download', onBottomDownload)
   setDownloadEnabled(false)
 })
 watch(() => route.fullPath, async () => {

@@ -220,12 +220,12 @@ const { items, load } = useReminders()
 onMounted(() => {
   load()
   try {
-    window.addEventListener('reminders:changed', onRemindersChanged)
+    globalThis.addEventListener('reminders:changed', onRemindersChanged)
   } catch {}
 })
 onBeforeUnmount(() => {
   try {
-    window.removeEventListener('reminders:changed', onRemindersChanged)
+    globalThis.removeEventListener('reminders:changed', onRemindersChanged)
   } catch {}
 })
 onIonViewWillEnter(load)
@@ -282,7 +282,7 @@ async function onDeleteDo() {
     showToast('Recordatorio eliminado correctamente', 'success')
 
     try {
-      window.dispatchEvent(
+      globalThis.dispatchEvent(
         new CustomEvent('reminders:changed', {
           detail: { action: 'deleted', id: item.id }
         })
