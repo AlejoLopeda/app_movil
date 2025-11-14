@@ -14,6 +14,7 @@ export function useBottomBar() {
   const isEditReminderPage= computed(() => route.name === 'EditReminder')
   const isRemindersPage   = computed(() => route.path === '/recordatorios')
   const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
+  const isGoalCreatePage  = computed(() => route.path === '/metas/nueva')
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
   // ===== Reportes
@@ -150,6 +151,10 @@ export function useBottomBar() {
 
   function goAddReminder(){ navigate('/recordatorios/nuevo') }
   function goAddGoal(){ navigate('/metas/nueva') }
+  function goGoalsPanel(){
+    navigate('/metas', { replace:true })
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+  }
   function goHistory(){ navigate('/historico/ambos') }
 
   function goMonthlyIncome(){ navigate('/ingresos',  { replace:true }) }
@@ -177,14 +182,14 @@ export function useBottomBar() {
   return {
     // estado
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
-    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isGoalCreatePage,
     isReportPage, isReportRootPage, isReportPreviewPage,
     historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
     // navegación/acciones
     go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
     goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
-    goAddGoal, goOrToggleIncome, goOrToggleExpense, emitPreview,
+    goAddGoal, goGoalsPanel, goOrToggleIncome, goOrToggleExpense, emitPreview,
 
     // feedback/ui
     toastOpen, toastMsg, isNavigating,

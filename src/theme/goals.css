@@ -163,6 +163,21 @@
   height: 52px;
 }
 
+.goal-hero {
+  background: linear-gradient(160deg, rgba(13, 63, 72, 0.92), rgba(19, 128, 116, 0.8));
+  color: #f8ffff;
+}
+.goal-hero .expense-badge {
+  color: #f8ffff;
+  background: rgba(255,255,255,0.22);
+}
+.goal-hero .expense-copy {
+  color: rgba(248, 255, 255, 0.9);
+}
+.goal-hero .expense-heading {
+  color: #ffffff;
+}
+
 @media (prefers-color-scheme: dark) {
   .goals-form-card {
     background: rgba(4, 19, 24, 0.82);
@@ -173,6 +188,9 @@
     --background: rgba(4, 19, 24, 0.86);
     --color: rgba(224, 242, 249, 0.96);
     --placeholder-color: rgba(224, 242, 249, 0.6);
+  }
+  .goal-hero {
+    background: linear-gradient(160deg, rgba(4, 19, 24, 0.92), rgba(13, 63, 72, 0.86));
   }
 }
 

@@ -85,7 +85,7 @@
         <button
           type="button"
           class="cta-btn"
-          @click="goDashboard"
+          @click="isGoalCreatePage ? goGoalsPanel() : goDashboard()"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           :class="{ 'is-locked': isNavigating }"
@@ -96,7 +96,7 @@
         <button
           type="button"
           class="cta-btn"
-          @click="goAddGoal"
+          @click="isGoalCreatePage ? emitAccept() : goAddGoal()"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           :class="{ 'is-locked': isNavigating }"
@@ -310,10 +310,10 @@ import { useBottomBar } from '@/composables/useBottomBar'
 const {
   isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage,
   isReportPage, isReportRootPage, isReportPreviewPage,
-  isHistoryListPage, isMonthlyArea, isGoalsPage,
+  isHistoryListPage, isMonthlyArea, isGoalsPage, isGoalCreatePage,
   historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
   goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
-  goAddGoal, emitPreview,
+  goAddGoal, goGoalsPanel, emitPreview,
   goOrToggleIncome, goOrToggleExpense,
   toastOpen, toastMsg, isNavigating,
 } = useBottomBar()

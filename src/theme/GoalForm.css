@@ -1,0 +1,25 @@
+.goal-form-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(13, 63, 72, 0.1);
+  box-shadow: 0 26px 52px -32px rgba(13, 63, 72, 0.45);
+}
+
+.goal-form-card .expense-form__submit {
+  --background: linear-gradient(135deg, #138074, #0d3f48);
+  --background-activated: #0b2f37;
+  --background-focused: #0b2f37;
+  --color: #ffffff;
+}
+
+.goal-form-card .expense-form__note--hint {
+  margin-top: 4px;
+  color: #475569;
+}
+
+@media (prefers-color-scheme: dark) {
+  .goal-form-card {
+    background: #ffffff;
+    border: 1.5px solid rgba(13, 63, 72, 0.1);
+    box-shadow: 0 26px 52px -32px rgba(13, 63, 72, 0.45);
+  }
+}
