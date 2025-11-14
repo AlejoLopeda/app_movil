@@ -106,7 +106,7 @@ async function handleSubmit(payload) {
         await cancelSchedulesForReminder(id)
       }
     } catch {}
-	    try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
+	    try { globalThis.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
 	    // Redirigir directamente al panel de recordatorios
 	    const query = { toast: 'updated' }
 	    const search = new URLSearchParams(query).toString()
@@ -140,7 +140,7 @@ function onBottomBack() {
 
 function emitBottomCanSave(enabled) {
   try {
-    window.dispatchEvent(new CustomEvent('bottom-can-save', { detail: { enabled } }))
+    globalThis.dispatchEvent(new CustomEvent('bottom-can-save', { detail: { enabled } }))
   } catch {}
 }
 
@@ -153,12 +153,12 @@ function onDirtyChange(state) {
 onMounted(() => {
   emitBottomCanSave(false)
   loadData()
-  window.addEventListener('bottom-accept', onBottomAccept)
-  window.addEventListener('bottom-back', onBottomBack)
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-back', onBottomBack)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('bottom-accept', onBottomAccept)
-  window.removeEventListener('bottom-back', onBottomBack)
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-back', onBottomBack)
   emitBottomCanSave(false)
 })
 </script>

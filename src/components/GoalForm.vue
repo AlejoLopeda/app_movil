@@ -53,14 +53,14 @@
         :disabled="!canSubmit || loading"
         @click="emitSubmit"
       >
-        CREAR META
+        {{ submitLabel }}
       </ion-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { IonItem, IonLabel, IonInput, IonIcon, IonNote, IonButton } from '@ionic/vue'
 import { flagOutline, walletOutline, chatbubbleOutline } from 'ionicons/icons'
 import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
@@ -70,10 +70,15 @@ import '@/theme/GoalForm.css'
 const props = defineProps({
   loading: { type: Boolean, default: false },
   showSubmit: { type: Boolean, default: true },
+  submitLabel: { type: String, default: 'CREAR META' },
+  initialName: { type: String, default: '' },
+  initialAmount: { type: [String, Number], default: '' },
+  initialComment: { type: String, default: '' },
 })
 const loading = computed(() => props.loading)
 const showSubmit = computed(() => props.showSubmit)
-const emit = defineEmits(['submit'])
+const submitLabel = computed(() => props.submitLabel || 'CREAR META')
+const emit = defineEmits(['submit', 'change'])
 
 const name = ref('')
 const amount = ref('')
@@ -110,6 +115,45 @@ function emitSubmit() {
     comment: comment.value.trim() || null,
   })
 }
+
+watch(
+  [name, amount, comment, canSubmit],
+  () => {
+    emit('change', {
+      name: name.value,
+      amount: amount.value,
+      comment: comment.value,
+      canSubmit: canSubmit.value,
+    })
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.initialName,
+  value => {
+    name.value = value || ''
+    nameError.value = ''
+  },
+  { immediate: true }
+)
+watch(
+  () => props.initialAmount,
+  value => {
+    amount.value = sanitizePositiveDecimalInput(
+      value === null || value === undefined ? '' : String(value)
+    )
+    amountError.value = ''
+  },
+  { immediate: true }
+)
+watch(
+  () => props.initialComment,
+  value => {
+    comment.value = value || ''
+  },
+  { immediate: true }
+)
 
 defineExpose({
   submit: emitSubmit,

@@ -85,7 +85,7 @@
         <button
           type="button"
           class="cta-btn"
-          @click="isGoalCreatePage ? goGoalsPanel() : goDashboard()"
+          @click="(isGoalCreatePage || isGoalEditPage) ? goGoalsPanel() : goDashboard()"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           :class="{ 'is-locked': isNavigating }"
@@ -94,9 +94,37 @@
         </button>
 
         <button
+          v-if="isGoalEditPage"
           type="button"
           class="cta-btn"
-          @click="isGoalCreatePage ? emitAccept() : goAddGoal()"
+          @click="emitAccept"
+          :disabled="!canSaveEnabled || isNavigating"
+          :aria-disabled="isNavigating || !canSaveEnabled"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating || !canSaveEnabled }"
+        >
+          <ion-icon :icon="checkmarkOutline" />
+          <span>ACEPTAR</span>
+        </button>
+
+        <button
+          v-else-if="isGoalCreatePage"
+          type="button"
+          class="cta-btn"
+          @click="emitAccept"
+          :aria-disabled="isNavigating"
+          :data-busy="isNavigating"
+          :class="{ 'is-locked': isNavigating }"
+        >
+          <ion-icon :icon="add" />
+          <span>CREAR</span>
+        </button>
+
+        <button
+          v-else
+          type="button"
+          class="cta-btn"
+          @click="goAddGoal"
           :aria-disabled="isNavigating"
           :data-busy="isNavigating"
           :class="{ 'is-locked': isNavigating }"
@@ -310,7 +338,7 @@ import { useBottomBar } from '@/composables/useBottomBar'
 const {
   isMainRoute, isAddPage, isProfilePage, isRemindersPage, isEditReminderPage,
   isReportPage, isReportRootPage, isReportPreviewPage,
-  isHistoryListPage, isMonthlyArea, isGoalsPage, isGoalCreatePage,
+  isHistoryListPage, isMonthlyArea, isGoalsPage, isGoalCreatePage, isGoalEditPage,
   historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
   goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
   goAddGoal, goGoalsPanel, emitPreview,

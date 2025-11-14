@@ -15,6 +15,7 @@ export function useBottomBar() {
   const isRemindersPage   = computed(() => route.path === '/recordatorios')
   const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
   const isGoalCreatePage  = computed(() => route.path === '/metas/nueva')
+  const isGoalEditPage    = computed(() => route.name === 'GoalEdit')
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
   // ===== Reportes
@@ -60,11 +61,12 @@ export function useBottomBar() {
   function handleCanSave(ev){ canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
   onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
   onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
-  watch([isProfilePage, isEditReminderPage], ([profile, edit]) => {
-    if (!profile && !edit) canSaveEnabled.value = false
+  const canSaveContextActive = computed(() => isProfilePage.value || isEditReminderPage.value || isGoalEditPage.value)
+  watch(canSaveContextActive, active => {
+    if (!active) canSaveEnabled.value = false
   })
-  watch(isEditReminderPage, now => {
-    if (now) canSaveEnabled.value = false
+  watch([isEditReminderPage, isGoalEditPage], ([editReminder, editGoal]) => {
+    if (editReminder || editGoal) canSaveEnabled.value = false
   })
 
   /* ===== /reporte/previsualizacion: habilitar DESCARGAR ===== */
@@ -130,10 +132,10 @@ export function useBottomBar() {
 
   /* ===== Helpers ===== */
   function go(path){ navigate(path, { replace:false }) }
-  function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
-  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
+  function emitAccept(){ Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-accept'))) }
+  function emitDownload(){ Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-download'))) }
   // PREVISUALIZAR (para /reporte)
-  function emitPreview(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview'))) }
+  function emitPreview(){ Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-preview'))) }
 
   // ✅ Volver: preview -> /reporte, /reporte -> /balance, otros casos como antes
   function goDashboard(){
@@ -144,16 +146,18 @@ export function useBottomBar() {
       target = '/reporte'
     } else if (isReportRootPage.value) {
       target = '/balance'
+    } else if (isGoalEditPage.value) {
+      target = '/metas'
     }
     navigate(target, { replace:true })
-    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+    Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-back')))
   }
 
   function goAddReminder(){ navigate('/recordatorios/nuevo') }
   function goAddGoal(){ navigate('/metas/nueva') }
   function goGoalsPanel(){
     navigate('/metas', { replace:true })
-    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+    Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-back')))
   }
   function goHistory(){ navigate('/historico/ambos') }
 
@@ -182,7 +186,7 @@ export function useBottomBar() {
   return {
     // estado
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
-    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isGoalCreatePage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isGoalCreatePage, isGoalEditPage,
     isReportPage, isReportRootPage, isReportPreviewPage,
     historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 

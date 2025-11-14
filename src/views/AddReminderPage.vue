@@ -65,7 +65,7 @@ function goToReminders (query = undefined) {
       await router.push({ path: '/recordatorios', query: q })
     } catch {
       const url = buildUrl(q)
-      window.location.href = url
+      globalThis.location.href = url
     }
   })
 }
@@ -76,7 +76,7 @@ async function handleSubmit (payload) {
   if (res.ok) {
     // 1️⃣ Avisar a la lista (para que recargue si escucha este evento)
     try {
-      window.dispatchEvent(
+      globalThis.dispatchEvent(
         new CustomEvent('reminders:changed', { detail: { action: 'created' } })
       )
     } catch {}
@@ -118,12 +118,12 @@ function onBottomBack () {
 }
 
 onMounted(() => {
-  window.addEventListener('bottom-accept', onBottomAccept)
-  window.addEventListener('bottom-back', onBottomBack)
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-back', onBottomBack)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('bottom-accept', onBottomAccept)
-  window.removeEventListener('bottom-back', onBottomBack)
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-back', onBottomBack)
 })
 </script>
 

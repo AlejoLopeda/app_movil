@@ -64,12 +64,12 @@ function onBottomBack() {
 }
 
 onMounted(() => {
-  window.addEventListener('bottom-accept', onBottomAccept)
-  window.addEventListener('bottom-back', onBottomBack)
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
+  globalThis.addEventListener('bottom-back', onBottomBack)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('bottom-accept', onBottomAccept)
-  window.removeEventListener('bottom-back', onBottomBack)
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
+  globalThis.removeEventListener('bottom-back', onBottomBack)
 })
 
 async function handleSubmit(payload) {
