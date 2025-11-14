@@ -35,7 +35,6 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { useAddReminder } from '@/composables/useAddReminder'
-import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
@@ -44,7 +43,13 @@ const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
 
 const { loading, saveReminder } = useAddReminder()
 const formRef = ref(null)
+
+// ✅ Toast SOLO local para esta vista
 const toast = ref({ open: false, message: '', color: 'primary' })
+
+function showToast (message, color = 'primary') {
+  toast.value = { open: true, message, color }
+}
 
 function buildUrl (query) {
   if (!query || Object.keys(query).length === 0) return '/recordatorios'
@@ -52,10 +57,9 @@ function buildUrl (query) {
   return `/recordatorios?${params.toString()}`
 }
 
-// 🔁 Navegación a la lista SOLO con vue-router (sin useIonRouter)
+// 🔁 Navegación a la lista SOLO con vue-router
 function goToReminders (query = undefined) {
   const q = query || {}
-  // intentamos replace, si falla probamos push, y si todo falla usamos location.href
   router.replace({ path: '/recordatorios', query: q }).catch(async () => {
     try {
       await router.push({ path: '/recordatorios', query: q })
@@ -70,18 +74,21 @@ async function handleSubmit (payload) {
   const res = await saveReminder(payload)
 
   if (res.ok) {
-    // Aviso global
-    showGlobalToast('Recordatorio creado', 'success', 'bottom')
-
-    // Avisar a la lista que cambió algo (para recargar, si lo usas)
+    // 1️⃣ Avisar a la lista (para que recargue si escucha este evento)
     try {
       window.dispatchEvent(
         new CustomEvent('reminders:changed', { detail: { action: 'created' } })
       )
     } catch {}
 
-    // 🚀 Navegar sin await (deja que la navegación siga su curso en Android)
-    goToReminders({ toast: 'created' })
+    // 2️⃣ Mostrar toast LOCAL en esta vista
+    showToast('Recordatorio creado correctamente', 'success')
+
+    // 3️⃣ Navegar a /recordatorios un pelín después (Android se lleva bien con esto)
+    setTimeout(() => {
+      goToReminders()
+    }, 300)
+
     return
   }
 
@@ -94,7 +101,7 @@ async function handleSubmit (payload) {
         ? 'Tu usuario no tiene permiso para guardar recordatorios'
         : 'No se pudo crear el recordatorio. Intenta de nuevo'
 
-  showGlobalToast(message, 'danger', 'bottom')
+  showToast(message, 'danger')
 }
 
 // ==== Eventos bottom bar ====
