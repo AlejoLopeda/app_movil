@@ -73,7 +73,7 @@ function goToReminders (query = undefined) {
     try {
       await router.push({ path: '/recordatorios', query: q })
     } catch {
-      const url = buildUrl(q)
+      // 3) Último recurso
       globalThis.location.href = url
     }
   })
@@ -87,7 +87,6 @@ async function handleSubmit (payload) {
     try {
       // Avisar a la capa de notificaciones/refrescos
       window.dispatchEvent(
-      globalThis.dispatchEvent(
         new CustomEvent('reminders:changed', { detail: { action: 'created' } })
       )
     } catch {}
@@ -112,18 +111,15 @@ async function handleSubmit (payload) {
 /* ===== Integración con bottom bar: evento global bottom-accept ===== */
 function onBottomAccept () {
   if (loading.value) return
-  // sin chequear route.path, como en reportes
+  // Igual que en ReportePreview: solo dispara el submit
   formRef.value?.submit?.()
 }
 
 onMounted(() => {
   globalThis.addEventListener('bottom-accept', onBottomAccept)
-  globalThis.addEventListener('bottom-back', onBottomBack)
 })
 
 onBeforeUnmount(() => {
   globalThis.removeEventListener('bottom-accept', onBottomAccept)
-  globalThis.removeEventListener('bottom-back', onBottomBack)
 })
 </script>
-
