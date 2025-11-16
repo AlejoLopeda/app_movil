@@ -12,7 +12,7 @@
           :user-email="user.email || '—'"
           :pending-file="pendingFile"
           :is-saving-avatar="isSavingAvatar"
-          @open-avatar-modal="avatarModalOpen = true"
+          @open-avatar-modal="onOpenAvatarModal"
           @save-pending-avatar="savePendingAvatar"
           @discard-pending="discardPending"
         />
@@ -40,7 +40,7 @@
               size="small"
               fill="outline"
               class="mini"
-              @click="enterEditExtras"
+              @click="onEditExtrasClick"
             >
               Editar
             </ion-button>
@@ -133,7 +133,7 @@
               size="small"
               fill="outline"
               class="mini"
-              @click="enterEditPwd"
+              @click="onEditPwdClick"
             >
               Cambiar contraseña
             </ion-button>
@@ -286,7 +286,7 @@
 
       <!-- Botón de cerrar sesión -->
       <div class="logout-section">
-        <ion-button expand="block" class="btn logout-btn" @click="logout">
+        <ion-button expand="block" class="btn logout-btn" @click="onLogoutClick">
           CERRAR SESIÓN
         </ion-button>
       </div>
@@ -317,7 +317,7 @@
       <div class="avatar-modal">
         <img :src="avatarPreview || defaultImage" class="avatar-large" alt="Avatar grande" />
         <div class="avatar-actions">
-          <ion-button :disabled="uploading" class="btn" @click="openEditOptions">
+          <ion-button :disabled="uploading" class="btn" @click="onOpenAvatarEdit">
             {{ uploading ? 'SUBIENDO…' : 'EDITAR' }}
           </ion-button>
           <ion-button class="btn" @click="avatarModalOpen=false">Cerrar</ion-button>
@@ -394,9 +394,7 @@ const currTouched = ref(false)
 const newTouched  = ref(false)
 const confTouched = ref(false)
 
-/** ===== Avatar (permisos, crop, subir, cache/signed url) =====
- *  BLOQUES Y LÓGICA EXACTAMENTE IGUAL A TU VERSIÓN QUE FUNCIONA
- */
+/** ===== Avatar (permisos, crop, subir, cache/signed url) ===== */
 const {
   defaultImage, uploading, isSavingAvatar,
   avatarReady, avatarPreview, avatarModalOpen,
@@ -408,10 +406,123 @@ const {
   pendingFile,
 } = useAvatar({ user, extras, toast, toastErr })
 
-/** reenviar click global del botón de la barra inferior */
-onMounted(() => globalThis.addEventListener('bottom-accept', handleBottomAccept))
-onUnmounted(() => globalThis.removeEventListener('bottom-accept', handleBottomAccept))
+/** ===== Conectividad ===== */
+const isOnline = ref(true)
+
+function updateOnlineStatus () {
+  try {
+    if (typeof navigator !== 'undefined') {
+      isOnline.value = navigator.onLine !== false
+    } else {
+      isOnline.value = true
+    }
+  } catch {
+    isOnline.value = true
+  }
+}
+
+function showOfflineMessage () {
+  toastErr.value = {
+    open: true,
+    msg: 'Sin conexión. Revisa tu WiFi o datos móviles para poder editar tu perfil.',
+  }
+}
+
+/** Bloqueos combinados: edición activa + conexión */
+function showAvatarBlockedMessage () {
+  if (!isOnline.value) {
+    showOfflineMessage()
+  } else {
+    toastErr.value = {
+      open: true,
+      msg: 'Termina o cancela los cambios antes de editar tu avatar.',
+    }
+  }
+}
+
+/** Handlers con bloqueo */
+
+// Abrir modal grande de avatar
+function onOpenAvatarModal () {
+  if (!isOnline.value || editExtras.value || editPwd.value) {
+    showAvatarBlockedMessage()
+    return
+  }
+  avatarModalOpen.value = true
+}
+
+// Abrir hoja de acciones (EDITAR dentro del modal)
+function onOpenAvatarEdit () {
+  if (!isOnline.value || editExtras.value || editPwd.value) {
+    showAvatarBlockedMessage()
+    return
+  }
+  openEditOptions()
+}
+
+// Editar extras
+function onEditExtrasClick () {
+  if (!isOnline.value) {
+    showOfflineMessage()
+    return
+  }
+  if (editPwd.value) {
+    toastErr.value = {
+      open: true,
+      msg: 'Cierra primero la edición de contraseña antes de cambiar tu información adicional.',
+    }
+    return
+  }
+  enterEditExtras()
+}
+
+// Editar contraseña
+function onEditPwdClick () {
+  if (!isOnline.value) {
+    showOfflineMessage()
+    return
+  }
+  if (editExtras.value) {
+    toastErr.value = {
+      open: true,
+      msg: 'Cierra primero la edición de información adicional antes de cambiar tu contraseña.',
+    }
+    return
+  }
+  enterEditPwd()
+}
+
+// Logout
+function onLogoutClick () {
+  if (!isOnline.value) {
+    showOfflineMessage()
+    return
+  }
+  logout()
+}
+
+// bottom-accept desde barra inferior
+function onBottomAcceptGlobal () {
+  if (!isOnline.value) {
+    showOfflineMessage()
+    return
+  }
+  handleBottomAccept()
+}
+
+/** eventos globales */
+onMounted(() => {
+  updateOnlineStatus()
+  globalThis.addEventListener('bottom-accept', onBottomAcceptGlobal)
+  globalThis.addEventListener('online', updateOnlineStatus)
+  globalThis.addEventListener('offline', updateOnlineStatus)
+})
+
+onUnmounted(() => {
+  globalThis.removeEventListener('bottom-accept', onBottomAcceptGlobal)
+  globalThis.removeEventListener('online', updateOnlineStatus)
+  globalThis.removeEventListener('offline', updateOnlineStatus)
+})
 </script>
 
 <style scoped src="@/theme/profile.css"></style>
-

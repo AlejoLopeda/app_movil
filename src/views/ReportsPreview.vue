@@ -69,10 +69,12 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { getTotals } from '@/services/transactionsService'
 import { buildReportDoc, saveNative, makeFileName } from '@/services/reportPdfService'
 
-function setDownloadEnabled(enabled) {
-  globalThis.dispatchEvent(new CustomEvent('report-can-download', { detail: { enabled: !!enabled } }))
+function setDownloadEnabled (enabled) {
+  globalThis.dispatchEvent(
+    new CustomEvent('report-can-download', { detail: { enabled: !!enabled } })
+  )
 }
-async function onBottomDownload() { await downloadFromPreview() }
+async function onBottomDownload () { await downloadFromPreview() }
 
 const route = useRoute()
 const router = useRouter()
@@ -82,12 +84,27 @@ const toastType = ref('success')
 const loading = ref(false)
 const err = ref('')
 
+// 🌐 Estado de conexión
+const isOnline = ref(true)
+
+function updateOnlineStatus () {
+  try {
+    if (typeof navigator !== 'undefined') {
+      isOnline.value = navigator.onLine !== false
+    } else {
+      isOnline.value = true
+    }
+  } catch {
+    isOnline.value = true
+  }
+}
+
 const currentKind = ref('')
 const fromISO = ref('')
 const toISO = ref('')
 const periodLabel = ref('')
 
-function syncFromRoute() {
+function syncFromRoute () {
   const q = route.query || {}
   currentKind.value = String(q.kind ?? route.params.kind ?? '')
   fromISO.value = String(q.from ?? route.params.from ?? '')
@@ -99,12 +116,16 @@ syncFromRoute()
 const incomes = ref(0)
 const expenses = ref(0)
 const balance = computed(() => Number(incomes.value || 0) - Number(expenses.value || 0))
-const nf = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
+const nf = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  maximumFractionDigits: 0
+})
 const money = (v) => nf.format(Number(v ?? 0))
 const balanceStatus = computed(() =>
-  balance.value > 0 ? 'SALDO POSITIVO' :
-  balance.value < 0 ? 'SALDO NEGATIVO' :
-  'SALDO NEUTRO'
+  balance.value > 0 ? 'SALDO POSITIVO'
+    : balance.value < 0 ? 'SALDO NEGATIVO'
+      : 'SALDO NEUTRO'
 )
 const adviceText = computed(() =>
   balance.value > 0
@@ -114,18 +135,27 @@ const adviceText = computed(() =>
       : 'Vas justo. Un pequeño ajuste en gastos o un ingreso extra mejorará tu balance.'
 )
 
-function showToast(msg, type = 'success', autoCloseMs = 2200) {
+function showToast (msg, type = 'success', autoCloseMs = 2200) {
   toastType.value = type
   toast.value = { open: true, msg }
   if (autoCloseMs > 0) setTimeout(() => (toast.value.open = false), autoCloseMs)
 }
 
-async function loadTotals() {
+async function loadTotals () {
   if (!fromISO.value || !toISO.value) {
     incomes.value = 0
     expenses.value = 0
     return
   }
+
+  // 🚫 Bloqueo si no hay conexión
+  if (!isOnline.value) {
+    showToast('Sin conexión. No se puede actualizar la previsualización del reporte.', 'error')
+    incomes.value = 0
+    expenses.value = 0
+    return
+  }
+
   loading.value = true
   err.value = ''
   try {
@@ -143,20 +173,33 @@ async function loadTotals() {
 
 onMounted(async () => {
   try { document.activeElement?.blur?.() } catch (_) {}
+  updateOnlineStatus()
   await loadTotals()
   setDownloadEnabled(true)
   globalThis.addEventListener('bottom-download', onBottomDownload)
+  globalThis.addEventListener('online', updateOnlineStatus)
+  globalThis.addEventListener('offline', updateOnlineStatus)
 })
+
 onUnmounted(() => {
   globalThis.removeEventListener('bottom-download', onBottomDownload)
+  globalThis.removeEventListener('online', updateOnlineStatus)
+  globalThis.removeEventListener('offline', updateOnlineStatus)
   setDownloadEnabled(false)
 })
+
 watch(() => route.fullPath, async () => {
   syncFromRoute()
   await loadTotals()
 })
 
-async function downloadFromPreview() {
+async function downloadFromPreview () {
+  // 🚫 Bloqueo descarga sin conexión
+  if (!isOnline.value) {
+    showToast('Sin conexión. No se puede descargar el reporte.', 'error')
+    return
+  }
+
   try {
     showToast('Descargando reporte…', 'success', 1200)
     await nextTick()
@@ -182,4 +225,4 @@ async function downloadFromPreview() {
 }
 </script>
 
-<style scoped src="@/theme/Report.css"> </style>
+<style scoped src="@/theme/Report.css"></style>
