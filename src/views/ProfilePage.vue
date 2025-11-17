@@ -40,7 +40,7 @@
               size="small"
               fill="outline"
               class="mini"
-              @click="onEditExtrasClick"
+              @click="enterEditExtras"
             >
               Editar
             </ion-button>
@@ -133,7 +133,7 @@
               size="small"
               fill="outline"
               class="mini"
-              @click="onEditPwdClick"
+              @click="enterEditPwd"
             >
               Cambiar contraseña
             </ion-button>
@@ -286,7 +286,7 @@
 
       <!-- Botón de cerrar sesión -->
       <div class="logout-section">
-        <ion-button expand="block" class="btn logout-btn" @click="onLogoutClick">
+        <ion-button expand="block" class="btn logout-btn" @click="logout">
           CERRAR SESIÓN
         </ion-button>
       </div>
@@ -394,7 +394,9 @@ const currTouched = ref(false)
 const newTouched  = ref(false)
 const confTouched = ref(false)
 
-/** ===== Avatar (permisos, crop, subir, cache/signed url) ===== */
+/** ===== Avatar (permisos, crop, subir, cache/signed url) =====
+ *  BLOQUES Y LÓGICA EXACTAMENTE IGUAL A TU VERSIÓN QUE FUNCIONA
+ */
 const {
   defaultImage, uploading, isSavingAvatar,
   avatarReady, avatarPreview, avatarModalOpen,
@@ -406,123 +408,34 @@ const {
   pendingFile,
 } = useAvatar({ user, extras, toast, toastErr })
 
-/** ===== Conectividad ===== */
-const isOnline = ref(true)
-
-function updateOnlineStatus () {
-  try {
-    if (typeof navigator !== 'undefined') {
-      isOnline.value = navigator.onLine !== false
-    } else {
-      isOnline.value = true
-    }
-  } catch {
-    isOnline.value = true
-  }
-}
-
-function showOfflineMessage () {
+/** 🔐 Bloqueo: no dejar editar avatar mientras se edita extras o contraseña */
+function showAvatarBlockedMessage () {
+  // usamos el toast de error global del perfil
   toastErr.value = {
     open: true,
-    msg: 'Sin conexión. Revisa tu WiFi o datos móviles para poder editar tu perfil.',
+    msg: 'Termina o cancela los cambios antes de editar tu avatar.',
   }
 }
 
-/** Bloqueos combinados: edición activa + conexión */
-function showAvatarBlockedMessage () {
-  if (!isOnline.value) {
-    showOfflineMessage()
-  } else {
-    toastErr.value = {
-      open: true,
-      msg: 'Termina o cancela los cambios antes de editar tu avatar.',
-    }
-  }
-}
-
-/** Handlers con bloqueo */
-
-// Abrir modal grande de avatar
 function onOpenAvatarModal () {
-  if (!isOnline.value || editExtras.value || editPwd.value) {
+  if (editExtras.value || editPwd.value) {
     showAvatarBlockedMessage()
     return
   }
   avatarModalOpen.value = true
 }
 
-// Abrir hoja de acciones (EDITAR dentro del modal)
 function onOpenAvatarEdit () {
-  if (!isOnline.value || editExtras.value || editPwd.value) {
+  if (editExtras.value || editPwd.value) {
     showAvatarBlockedMessage()
     return
   }
   openEditOptions()
 }
 
-// Editar extras
-function onEditExtrasClick () {
-  if (!isOnline.value) {
-    showOfflineMessage()
-    return
-  }
-  if (editPwd.value) {
-    toastErr.value = {
-      open: true,
-      msg: 'Cierra primero la edición de contraseña antes de cambiar tu información adicional.',
-    }
-    return
-  }
-  enterEditExtras()
-}
-
-// Editar contraseña
-function onEditPwdClick () {
-  if (!isOnline.value) {
-    showOfflineMessage()
-    return
-  }
-  if (editExtras.value) {
-    toastErr.value = {
-      open: true,
-      msg: 'Cierra primero la edición de información adicional antes de cambiar tu contraseña.',
-    }
-    return
-  }
-  enterEditPwd()
-}
-
-// Logout
-function onLogoutClick () {
-  if (!isOnline.value) {
-    showOfflineMessage()
-    return
-  }
-  logout()
-}
-
-// bottom-accept desde barra inferior
-function onBottomAcceptGlobal () {
-  if (!isOnline.value) {
-    showOfflineMessage()
-    return
-  }
-  handleBottomAccept()
-}
-
-/** eventos globales */
-onMounted(() => {
-  updateOnlineStatus()
-  globalThis.addEventListener('bottom-accept', onBottomAcceptGlobal)
-  globalThis.addEventListener('online', updateOnlineStatus)
-  globalThis.addEventListener('offline', updateOnlineStatus)
-})
-
-onUnmounted(() => {
-  globalThis.removeEventListener('bottom-accept', onBottomAcceptGlobal)
-  globalThis.removeEventListener('online', updateOnlineStatus)
-  globalThis.removeEventListener('offline', updateOnlineStatus)
-})
+/** reenviar click global del botón de la barra inferior */
+onMounted(() => globalThis.addEventListener('bottom-accept', handleBottomAccept))
+onUnmounted(() => globalThis.removeEventListener('bottom-accept', handleBottomAccept))
 </script>
 
 <style scoped src="@/theme/profile.css"></style>

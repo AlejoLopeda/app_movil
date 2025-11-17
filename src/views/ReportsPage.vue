@@ -117,25 +117,6 @@ const noticeIcon = computed(() => (
     : informationCircleOutline
 ))
 
-// 🌐 Estado de conexión
-const isOnline = ref(true)
-
-function updateOnlineStatus () {
-  try {
-    if (typeof navigator !== 'undefined') {
-      isOnline.value = navigator.onLine !== false
-    } else {
-      isOnline.value = true
-    }
-  } catch {
-    isOnline.value = true
-  }
-}
-
-function showOfflineNotice () {
-  showNotice('Sin conexión. Revisa tu WiFi o datos móviles para generar el reporte.', 'error')
-}
-
 // Fechas
 const todayISO = new Date().toISOString().slice(0, 10)
 const day = ref(todayISO)
@@ -165,19 +146,13 @@ function monthBounds (ym) {
 /* ========= Selección + botón PREVISUALIZAR ========= */
 const selectedKind = ref('DIARIO')
 
-function select (kind) { selectedKind.value = kind }
+function select(kind){ selectedKind.value = kind }
 
-function goPreview ({ kind, from, to, label }) {
+function goPreview({ kind, from, to, label }) {
   router.push({ name: 'Reportpreview', query: { kind, from, to, label } })
 }
 
 function goPreviewBySelection () {
-  // 🚫 Bloqueo si no hay conexión
-  if (!isOnline.value) {
-    showOfflineNotice()
-    return
-  }
-
   const kind = selectedKind.value
   if (kind === 'DIARIO') {
     const from = day.value
@@ -201,20 +176,9 @@ function goPreviewBySelection () {
   }
 }
 
-function onBottomPreview () { goPreviewBySelection() }
-
-onMounted(() => {
-  updateOnlineStatus()
-  globalThis.addEventListener('bottom-preview', onBottomPreview)
-  globalThis.addEventListener('online', updateOnlineStatus)
-  globalThis.addEventListener('offline', updateOnlineStatus)
-})
-
-onUnmounted(() => {
-  globalThis.removeEventListener('bottom-preview', onBottomPreview)
-  globalThis.removeEventListener('online', updateOnlineStatus)
-  globalThis.removeEventListener('offline', updateOnlineStatus)
-})
+function onBottomPreview(){ goPreviewBySelection() }
+onMounted(() => { globalThis.addEventListener('bottom-preview', onBottomPreview) })
+onUnmounted(() => { globalThis.removeEventListener('bottom-preview', onBottomPreview) })
 </script>
 
 <style scoped>
