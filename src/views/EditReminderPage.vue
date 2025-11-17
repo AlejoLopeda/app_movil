@@ -33,7 +33,6 @@ import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { getReminder, updateReminder } from '@/services/reminderService'
-import { upsertSchedulesForReminder, cancelSchedulesForReminder, ensurePermission } from '@/lib/localNotifications'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
@@ -88,7 +87,7 @@ async function handleSubmit(payload) {
   if (loading.value) return
   loading.value = true
   try {
-    const res = await updateReminder(id, {
+    await updateReminder(id, {
       name: payload.nombre,
       frequency: payload.frecuencia,
       interval_days: payload.frecuencia === 'custom' ? Number(payload.intervaloDias) : null,
@@ -97,30 +96,19 @@ async function handleSubmit(payload) {
       comment: payload.comentario || null,
     })
     showToast('Recordatorio actualizado', 'success')
-    try {
-      await ensurePermission()
-      if (res?.row) {
-        await upsertSchedulesForReminder(res.row)
-      } else {
-        // fallback: cancelar y avisar cambios
-        await cancelSchedulesForReminder(id)
+    const query = { toast: 'updated' }
+    const search = new URLSearchParams(query).toString()
+    const url = search ? `/recordatorios?${search}` : '/recordatorios'
+    const navigated = ionRouter.navigate(url, 'back', 'replace')
+    if (!navigated) {
+      try {
+        await router.replace({ path: '/recordatorios', query })
+      } catch {
+        try { await router.push({ path: '/recordatorios', query }) } catch {
+          window.location.href = url
+        }
       }
-    } catch {}
-	    try { globalThis.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
-	    // Redirigir directamente al panel de recordatorios
-	    const query = { toast: 'updated' }
-	    const search = new URLSearchParams(query).toString()
-	    const url = search ? `/recordatorios?${search}` : '/recordatorios'
-	    const navigated = ionRouter.navigate(url, 'back', 'replace')
-	    if (!navigated) {
-	      try {
-	        await router.replace({ path: '/recordatorios', query })
-	      } catch {
-	        try { await router.push({ path: '/recordatorios', query }) } catch {
-	          window.location.href = url
-	        }
-	      }
-	    }
+    }
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
   } finally {
