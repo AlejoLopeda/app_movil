@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
@@ -44,6 +44,7 @@ const loading = ref(false)
 const formRef = ref(null)
 const initialValues = ref(null)
 const isDirty = ref(false)
+const canSubmit = computed(() => isDirty.value && !loading.value && !!initialValues.value)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -118,7 +119,7 @@ async function handleSubmit(payload) {
 
 // Bottom bar events
 function onBottomAccept() {
-  if (isDirty.value) {
+  if (canSubmit.value) {
     formRef.value?.submit?.()
   }
 }
@@ -132,10 +133,12 @@ function emitBottomCanSave(enabled) {
   } catch {}
 }
 
-function onDirtyChange(state) {
-  const enabled = !!state
-  isDirty.value = enabled
+watch(canSubmit, (enabled) => {
   emitBottomCanSave(enabled)
+}, { immediate: true })
+
+function onDirtyChange(state) {
+  isDirty.value = !!state
 }
 
 onMounted(() => {
