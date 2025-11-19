@@ -1,5 +1,5 @@
 <template>
-  <div class="goal-item">
+  <div class="goal-item expense-form__card reminder-card">
     <div
       class="goal-summary-area"
       role="button"
@@ -9,33 +9,48 @@
       @keyup.enter.prevent="toggleExpanded"
       @keyup.space.prevent="toggleExpanded"
     >
-      <div class="goal-row">
-        <div class="goal-main">
-          <div class="goal-title">
-            <strong>{{ goal.nombre }}</strong>
+      <div class="reminder-header goal-header">
+        <div class="reminder-title-wrap goal-title-wrap">
+          <div class="goal-title-row">
+            <h3 class="reminders-title goal-title">{{ goal.nombre }}</h3>
+            <span v-if="goal.cumplida" class="goal-chip">Completada</span>
           </div>
-          <div class="goal-sub">
+          <div class="goal-sub goal-progress-text">
             <span :class="{ 'is-complete': goal.cumplida }">
               {{ format(goal.ahorrado) }} / {{ format(goal.objetivo) }}
             </span>
           </div>
-          <goal-progress-bar :pct="goal.progreso_pct" :complete="goal.cumplida">
-          </goal-progress-bar>
         </div>
-        <div class="goal-actions">
-          <ion-button class="action-btn action-btn--edit" size="small" fill="solid" @click.stop="emit('edit', goal.id)">
+        <div class="reminder-actions goal-actions">
+          <ion-button
+            class="action-btn action-btn--edit"
+            size="small"
+            fill="solid"
+            @click.stop="emit('edit', goal.id)"
+            aria-label="Editar meta"
+          >
             <ion-icon :icon="pencilOutline" />
           </ion-button>
-          <ion-button class="action-btn action-btn--delete" size="small" fill="solid" @click.stop="emit('delete', goal.id)">
+          <ion-button
+            class="action-btn action-btn--delete"
+            size="small"
+            fill="solid"
+            @click.stop="emit('delete', goal.id)"
+            aria-label="Eliminar meta"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
         </div>
       </div>
 
-      <div v-if="!expanded" class="goal-tap-hint">Toca para ver más detalles</div>
+      <div class="goal-progress-wrapper">
+        <goal-progress-bar :pct="goal.progreso_pct" :complete="goal.cumplida" />
+      </div>
+
+      <div class="goal-tap-hint reminder-tap-hint">{{ hintText }}</div>
     </div>
 
-  <div v-if="expanded" class="goal-expand">
+    <div v-if="expanded" class="goal-expand">
       <div class="goal-transfer">
         <ion-item lines="none" class="goal-inputs">
           <ion-input
@@ -81,9 +96,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { IonButton, IonIcon, IonItem, IonInput, IonToast } from '@ionic/vue'
-import { pencilOutline, trashOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons'
+import { pencilOutline, trashOutline } from 'ionicons/icons'
 import GoalProgressBar from '@/components/GoalProgressBar.vue'
 import { sanitizePositiveDecimalInput, parsePositiveNumber } from '@/utils/numberUtils'
 import '@/theme/goals.css'
@@ -91,7 +106,8 @@ import '@/theme/goals.css'
 const props = defineProps({
   goal: { type: Object, required: true },
   format: { type: Function, required: true },
-  transactions: { type: Array, default: () => [] }
+  transactions: { type: Array, default: () => [] },
+  collapseKey: { type: [Number, String], default: 0 }
 })
 const emit = defineEmits(['edit','delete','deposit','withdraw','toggle-history'])
 
@@ -105,9 +121,18 @@ const toast = ref({ open: false, message: '', color: 'primary' })
 
 const amountValue = computed(() => parsePositiveNumber(amount.value))
 const canSubmit = computed(() => amountValue.value !== null)
+const hintText = computed(() => expanded.value ? 'Toca para ocultar detalles' : 'Toca para ver más detalles')
+
+function collapse() {
+  expanded.value = false
+  showHistory.value = false
+}
 
 function toggleExpanded() {
   expanded.value = !expanded.value
+  if (!expanded.value) {
+    showHistory.value = false
+  }
 }
 
 function openToast(message, color='primary'){
@@ -149,5 +174,14 @@ function toggleHistory(){
   showHistory.value = !showHistory.value
   if (showHistory.value) emit('toggle-history', props.goal.id)
 }
-</script>
 
+watch(() => props.goal?.id, () => {
+  collapse()
+  amount.value = ''
+  description.value = ''
+})
+
+watch(() => props.collapseKey, () => {
+  collapse()
+})
+</script>
