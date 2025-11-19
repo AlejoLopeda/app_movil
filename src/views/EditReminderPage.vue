@@ -27,13 +27,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { getReminder, updateReminder } from '@/services/reminderService'
-import { upsertSchedulesForReminder, cancelSchedulesForReminder, ensurePermission } from '@/lib/localNotifications'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
@@ -45,6 +44,7 @@ const loading = ref(false)
 const formRef = ref(null)
 const initialValues = ref(null)
 const isDirty = ref(false)
+const canSubmit = computed(() => isDirty.value && !loading.value && !!initialValues.value)
 
 const toast = ref({ open: false, message: '', color: 'primary' })
 function showToast(message, color = 'primary') {
@@ -88,7 +88,7 @@ async function handleSubmit(payload) {
   if (loading.value) return
   loading.value = true
   try {
-    const res = await updateReminder(id, {
+    await updateReminder(id, {
       name: payload.nombre,
       frequency: payload.frecuencia,
       interval_days: payload.frecuencia === 'custom' ? Number(payload.intervaloDias) : null,
@@ -97,30 +97,19 @@ async function handleSubmit(payload) {
       comment: payload.comentario || null,
     })
     showToast('Recordatorio actualizado', 'success')
-    try {
-      await ensurePermission()
-      if (res?.row) {
-        await upsertSchedulesForReminder(res.row)
-      } else {
-        // fallback: cancelar y avisar cambios
-        await cancelSchedulesForReminder(id)
+    const query = { toast: 'updated' }
+    const search = new URLSearchParams(query).toString()
+    const url = search ? `/recordatorios?${search}` : '/recordatorios'
+    const navigated = ionRouter.navigate(url, 'back', 'replace')
+    if (!navigated) {
+      try {
+        await router.replace({ path: '/recordatorios', query })
+      } catch {
+        try { await router.push({ path: '/recordatorios', query }) } catch {
+          window.location.href = url
+        }
       }
-    } catch {}
-	    try { globalThis.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'updated', id } })) } catch {}
-	    // Redirigir directamente al panel de recordatorios
-	    const query = { toast: 'updated' }
-	    const search = new URLSearchParams(query).toString()
-	    const url = search ? `/recordatorios?${search}` : '/recordatorios'
-	    const navigated = ionRouter.navigate(url, 'back', 'replace')
-	    if (!navigated) {
-	      try {
-	        await router.replace({ path: '/recordatorios', query })
-	      } catch {
-	        try { await router.push({ path: '/recordatorios', query }) } catch {
-	          window.location.href = url
-	        }
-	      }
-	    }
+    }
   } catch (e) {
     showToast('No se pudo actualizar', 'danger')
   } finally {
@@ -130,7 +119,7 @@ async function handleSubmit(payload) {
 
 // Bottom bar events
 function onBottomAccept() {
-  if (isDirty.value) {
+  if (canSubmit.value) {
     formRef.value?.submit?.()
   }
 }
@@ -144,10 +133,12 @@ function emitBottomCanSave(enabled) {
   } catch {}
 }
 
-function onDirtyChange(state) {
-  const enabled = !!state
-  isDirty.value = enabled
+watch(canSubmit, (enabled) => {
   emitBottomCanSave(enabled)
+}, { immediate: true })
+
+function onDirtyChange(state) {
+  isDirty.value = !!state
 }
 
 onMounted(() => {

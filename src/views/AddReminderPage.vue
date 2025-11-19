@@ -84,13 +84,6 @@ async function handleSubmit (payload) {
   const res = await saveReminder(payload)
 
   if (res.ok) {
-    try {
-      // Avisar a la capa de notificaciones/refrescos
-      window.dispatchEvent(
-        new CustomEvent('reminders:changed', { detail: { action: 'created' } })
-      )
-    } catch {}
-
     // Ir a /recordatorios con bandera de creado
     goToReminders({ toast: 'created' })
     return

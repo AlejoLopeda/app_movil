@@ -20,7 +20,6 @@ import ProfilePage from '../views/ProfilePage.vue'
 import GoalsPage from '@/views/GoalsPage.vue'
 import GoalCreatePage from '@/views/GoalCreatePage.vue'
 import GoalEditPage from '@/views/GoalEditPage.vue'
-import GoalDeleteConfirmPage from '@/views/GoalDeleteConfirmPage.vue'
 import ReportsPage from '../views/ReportsPage.vue'
 import ReportsPreview from '../views/ReportsPreview.vue'
 
@@ -33,7 +32,6 @@ const routes = [
   { path: '/metas', name: 'Goals', component: GoalsPage, meta: { requiresAuth: true, title: 'Metas' } },
   { path: '/metas/nueva', name: 'GoalCreate', component: GoalCreatePage, meta: { requiresAuth: true, title: 'Crear Meta' } },
   { path: '/metas/:id/editar', name: 'GoalEdit', component: GoalEditPage, meta: { requiresAuth: true, title: 'Editar Meta' } },
-  { path: '/metas/:id/eliminar', name: 'GoalDelete', component: GoalDeleteConfirmPage, meta: { requiresAuth: true, title: 'Eliminar Meta' } },
 
   { path: '/login', name: 'Login', component: AuthLoginPage, meta: { guestOnly: true } },
   { path: '/registro', name: 'Register', component: AuthEmailPage, meta: { guestOnly: true } },
