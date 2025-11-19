@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { onIonViewWillEnter } from '@ionic/vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopBar from '@/components/AppTopBar.vue'
@@ -207,7 +207,6 @@ import {
 } from 'ionicons/icons'
 import { useReminders } from '@/composables/useReminders'
 import { deactivateReminder } from '@/services/reminderService'
-import { cancelSchedulesForReminder } from '@/lib/localNotifications'
 import '@/theme/ExpenseForm.css'
 import '@/theme/RemindersPage.css'
 
@@ -219,14 +218,6 @@ const { items, load } = useReminders()
 
 onMounted(() => {
   load()
-  try {
-    globalThis.addEventListener('reminders:changed', onRemindersChanged)
-  } catch {}
-})
-onBeforeUnmount(() => {
-  try {
-    globalThis.removeEventListener('reminders:changed', onRemindersChanged)
-  } catch {}
 })
 onIonViewWillEnter(load)
 
@@ -273,21 +264,9 @@ async function onDeleteDo() {
     await deactivateReminder(item.id)
     await load()
 
-    // cancelar notificaciones en segundo plano (sin await)
-    try {
-      cancelSchedulesForReminder(item.id)
-    } catch {}
-
     // solo un toast (el local)
     showToast('Recordatorio eliminado correctamente', 'success')
 
-    try {
-      globalThis.dispatchEvent(
-        new CustomEvent('reminders:changed', {
-          detail: { action: 'deleted', id: item.id }
-        })
-      )
-    } catch {}
   } catch (e) {
     showToast('No se pudo eliminar', 'danger')
   }
@@ -313,12 +292,6 @@ watch(
   { immediate: true }
 )
 
-function onRemindersChanged(ev) {
-  load()
-  const action = ev?.detail?.action
-  if (action === 'created') showToast('Recordatorio creado', 'success')
-  else if (action === 'updated') showToast('Recordatorio actualizado', 'success')
-}
 </script>
 
 

@@ -16,9 +16,9 @@ export const INCOME_EXTRA = Object.freeze([
   { key: 'otros',       label: 'Otros' },
 ])
 
-export const INCOME_SPECIAL = Object.freeze([
-  { key: 'saldo_inicial', label: 'Saldo inicial' },
-])
+// Antes tenía { key: 'saldo_inicial', label: 'Saldo inicial' }
+// Se deja vacío para no romper imports existentes.
+export const INCOME_SPECIAL = Object.freeze([])
 
 export const EXPENSE_PRESET = Object.freeze([
   { key: 'transporte', label: 'Transporte' },
@@ -37,7 +37,8 @@ export const EXPENSE_EXTRA = Object.freeze([
 ])
 
 export function allIncomeCategories() {
-  return [...INCOME_PRESET, ...INCOME_EXTRA, ...INCOME_SPECIAL]
+  // Ya no incluye saldo inicial
+  return [...INCOME_PRESET, ...INCOME_EXTRA /*, ...INCOME_SPECIAL */]
 }
 
 export function allExpenseCategories() {
@@ -50,7 +51,7 @@ export function findIncomeCategory(key) {
   return (
     INCOME_PRESET.find(i => i.key === k) ||
     INCOME_EXTRA.find(i => i.key === k) ||
-    INCOME_SPECIAL.find(i => i.key === k) ||
+    INCOME_SPECIAL.find(i => i.key === k) || // no pasa nada, está vacío
     null
   )
 }
@@ -64,4 +65,5 @@ export function findExpenseCategory(key) {
     null
   )
 }
+
 

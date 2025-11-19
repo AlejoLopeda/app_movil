@@ -12,7 +12,7 @@
           :user-email="user.email || '—'"
           :pending-file="pendingFile"
           :is-saving-avatar="isSavingAvatar"
-          @open-avatar-modal="avatarModalOpen = true"
+          @open-avatar-modal="onOpenAvatarModal"
           @save-pending-avatar="savePendingAvatar"
           @discard-pending="discardPending"
         />
@@ -317,7 +317,7 @@
       <div class="avatar-modal">
         <img :src="avatarPreview || defaultImage" class="avatar-large" alt="Avatar grande" />
         <div class="avatar-actions">
-          <ion-button :disabled="uploading" class="btn" @click="openEditOptions">
+          <ion-button :disabled="uploading" class="btn" @click="onOpenAvatarEdit">
             {{ uploading ? 'SUBIENDO…' : 'EDITAR' }}
           </ion-button>
           <ion-button class="btn" @click="avatarModalOpen=false">Cerrar</ion-button>
@@ -408,10 +408,34 @@ const {
   pendingFile,
 } = useAvatar({ user, extras, toast, toastErr })
 
+/** 🔐 Bloqueo: no dejar editar avatar mientras se edita extras o contraseña */
+function showAvatarBlockedMessage () {
+  // usamos el toast de error global del perfil
+  toastErr.value = {
+    open: true,
+    msg: 'Termina o cancela los cambios antes de editar tu avatar.',
+  }
+}
+
+function onOpenAvatarModal () {
+  if (editExtras.value || editPwd.value) {
+    showAvatarBlockedMessage()
+    return
+  }
+  avatarModalOpen.value = true
+}
+
+function onOpenAvatarEdit () {
+  if (editExtras.value || editPwd.value) {
+    showAvatarBlockedMessage()
+    return
+  }
+  openEditOptions()
+}
+
 /** reenviar click global del botón de la barra inferior */
 onMounted(() => globalThis.addEventListener('bottom-accept', handleBottomAccept))
 onUnmounted(() => globalThis.removeEventListener('bottom-accept', handleBottomAccept))
 </script>
 
 <style scoped src="@/theme/profile.css"></style>
-

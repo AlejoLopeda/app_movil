@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import { getCurrentUserId, insertReminder } from '@/services/reminderService'
-import { upsertSchedulesForReminder, ensurePermission } from '@/lib/localNotifications'
 
 const BUSY_RESPONSE = Object.freeze({ ok: false, reason: 'busy' })
 
@@ -51,15 +50,6 @@ export function useAddReminder() {
         comment: comentario || null,
         user_id: userId,
       })
-
-      // Programar notificaciones locales nativas
-      try {
-        await ensurePermission()
-        if (res?.row) await upsertSchedulesForReminder(res.row)
-      } catch {}
-
-      // Notify reminder system to refresh immediately (in-app timers)
-      try { window.dispatchEvent(new CustomEvent('reminders:changed', { detail: { action: 'created', id: res?.row?.id } })) } catch {}
 
       return { ok: true }
     } catch (error) {

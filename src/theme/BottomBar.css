@@ -25,6 +25,16 @@
 .cta-btn ion-icon{ font-size:19px; }
 .cta-btn:hover{ background:rgba(255,255,255,.22); }
 .cta-btn[disabled]{ opacity:.45; cursor:not-allowed; filter:grayscale(30%); }
+.cta-btn--disabled{
+  opacity:.35;
+  cursor:not-allowed;
+  filter:grayscale(45%);
+  background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.65);
+}
+.cta-btn--disabled ion-icon{
+  opacity:.8;
+}
 
 /* ===== Navegación genérica (ingreso, gasto, historial; o balance) ===== */
 .nav{
