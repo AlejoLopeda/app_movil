@@ -18,8 +18,14 @@
         :style="{ '--chart-accent': barColor(item) }"
         @click="select(item.key)"
       >
+        <span class="monthly-chart__bar-percent">
+          {{ item.percentage.toFixed(1) }}%
+        </span>
         <span class="monthly-chart__bar-label">
           {{ item.label }}
+        </span>
+        <span class="monthly-chart__bar-value">
+          {{ formatter(item.amount) }}
         </span>
         <div class="monthly-chart__bar-track">
           <div
@@ -30,9 +36,6 @@
             }"
           />
         </div>
-        <span class="monthly-chart__bar-value">
-          {{ formatter(item.amount) }}
-        </span>
       </button>
     </div>
 
@@ -188,8 +191,8 @@ function select(key) {
 
 .monthly-chart__bar {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
   align-items: center;
   padding: 14px 16px;
   border-radius: 18px;
@@ -227,6 +230,11 @@ function select(key) {
   height: 100%;
   border-radius: 999px;
   transition: width 0.25s ease;
+}
+
+.monthly-chart__bar-percent {
+  font-weight: 700;
+  color: var(--chart-value);
 }
 
 .monthly-chart__bar-value {

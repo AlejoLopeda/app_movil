@@ -10,7 +10,8 @@
 
         <!-- Controles: Categorías (blanco y ancho) + Switch -->
         <div class="monthly-header__controls">
-          <button
+          <div class="monthly-controls-row">
+            <button
             type="button"
             class="monthly-filter-btn monthly-filter-btn--cats"
             @click="openCats = true"
@@ -20,14 +21,14 @@
             <span>{{ categoriesLabel }}</span>
           </button>
 
-          <div class="monthly-header__toggle">
-            <span>Pastel</span>
+          <div class="monthly-header__toggle" aria-label="Cambiar tipo de gr��fica">
             <ion-toggle
               mode="ios"
               :checked="chartMode === 'bar'"
               @ionChange="onModeChange"
             />
-            <span>Barras</span>
+          </div>
+
           </div>
 
           <button

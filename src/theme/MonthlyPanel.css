@@ -77,6 +77,11 @@ p.monthly-header__subtitle{
   box-shadow: 0 10px 24px -18px rgba(16,28,33,.18);
   width: 100%;
 }
+.monthly-controls-row{
+  display:flex; align-items:center; gap:10px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
 
 /* Botón Categorías largo y blanco */
 .monthly-filter-btn{
@@ -90,9 +95,12 @@ p.monthly-header__subtitle{
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .monthly-filter-btn--cats{
-  flex: 1 1 70%;        /* ocupa la mayor parte en móvil */
-  min-width: 220px;
-  justify-content: center;
+  flex: 1 1 0;        /* ocupa la mayor parte en movil */
+  min-width: 170px;
+  justify-content: space-between;
+  padding-left: 16px;
+  padding-right: 16px;
+  max-width: 100%;
 }
 .monthly-filter-btn--clear{ white-space: nowrap; }
 .monthly-filter-btn:hover{ transform: translateY(-1px); box-shadow:0 16px 30px -22px rgba(16,28,33,.26); }
@@ -100,10 +108,13 @@ p.monthly-header__subtitle{
 
 /* Toggle alineado a la derecha cuando hay salto de línea */
 .monthly-header__toggle{
-  display:flex; align-items:center; gap:10px;
-  font-weight:700; color:#0b2c33;
-  margin-left:auto;           /* empuja hacia la derecha */
-  flex: 1 1 auto;
+  display:flex; align-items:center; justify-content:center;
+  padding: 6px 8px;
+  background: #f5fbfc;
+  border: 1.5px solid rgba(13,63,72,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 18px -16px rgba(16,28,33,.2);
+  flex: 0 0 auto;
 }
 
 /* ===== Ajustes específicos móvil para que NO se corte nada ===== */
@@ -111,8 +122,8 @@ p.monthly-header__subtitle{
   .monthly-card{ border-radius:16px; padding:14px 12px; }
   .monthly-header__controls{ gap:8px; padding:8px; }
   .monthly-filter-btn{ padding:9px 14px; }
-  .monthly-filter-btn--cats{ min-width: 0; flex: 1 1 100%; } /* fila completa */
-  .monthly-header__toggle{ justify-content:flex-end; flex: 1 1 100%; }
+  .monthly-filter-btn--cats{ min-width: 0; flex: 1 1 auto; } /* comparte fila con toggle */
+  .monthly-header__toggle{ flex: 0 0 auto; }
 }
 
 /* ============ Chips bajo el header ============ */
