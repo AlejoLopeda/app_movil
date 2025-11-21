@@ -8,7 +8,6 @@ import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
 import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
 import AddReminderPage from '@/views/AddReminderPage.vue'
-import OfflinePage from '@/views/OfflinePage.vue'
 import TermsPage from '@/views/TermsPage.vue'
 import EditReminderPage from '@/views/EditReminderPage.vue'
 import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
@@ -65,7 +64,6 @@ const routes = [
   { path: '/terminos', name: 'Terms', component: TermsPage, meta: { title: 'Términos y Condiciones' } },
   { path: '/reporte', name: 'Report', component: ReportsPage, meta: { requiresAuth: true, title: 'Reportes' } },
   { path: '/reporte/previsualizacion', name: 'Reportpreview', component: ReportsPreview, meta: { requiresAuth: true, title: 'Previsualización' } },
-  { path: '/offline', name: 'Offline', component: OfflinePage, meta: { allowOffline: true, title: 'Sin conexión' } },
 ]
 
 const router = createRouter({
