@@ -8,6 +8,7 @@ import AddIncomePage from '@/views/AddIncomePage.vue'
 import AddExpensePage from '@/views/AddExpensePage.vue'
 import RecordatoriosPage from '@/views/RecordatoriosPage.vue'
 import AddReminderPage from '@/views/AddReminderPage.vue'
+import OfflinePage from '@/views/OfflinePage.vue'
 import TermsPage from '@/views/TermsPage.vue'
 import EditReminderPage from '@/views/EditReminderPage.vue'
 import MonthlyIncomesPage from '@/views/MonthlyIncomesPage.vue'
@@ -25,6 +26,12 @@ import ReportsPreview from '../views/ReportsPreview.vue'
 
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
+
+const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
+let pendingOfflineRedirect = null
+let initialAmountLoaded = false
+let initialAmountData = null
+let initialAmountUserId = null
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -58,6 +65,7 @@ const routes = [
   { path: '/terminos', name: 'Terms', component: TermsPage, meta: { title: 'Términos y Condiciones' } },
   { path: '/reporte', name: 'Report', component: ReportsPage, meta: { requiresAuth: true, title: 'Reportes' } },
   { path: '/reporte/previsualizacion', name: 'Reportpreview', component: ReportsPreview, meta: { requiresAuth: true, title: 'Previsualización' } },
+  { path: '/offline', name: 'Offline', component: OfflinePage, meta: { allowOffline: true, title: 'Sin conexión' } },
 ]
 
 const router = createRouter({
@@ -66,15 +74,34 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const { isAuthenticated, restoreSession } = useAuth()
-  let initialAmountLoaded = false
-  let initialAmountData
-
+  const { isAuthenticated, restoreSession, user } = useAuth()
   const loadInitialAmount = async () => {
+    const currentUserId = user?.value?.id
+    if (initialAmountUserId && currentUserId && currentUserId !== initialAmountUserId) {
+      initialAmountLoaded = false
+      initialAmountData = null
+    }
     if (initialAmountLoaded) return initialAmountData
     initialAmountLoaded = true
+    initialAmountUserId = currentUserId ?? initialAmountUserId
     initialAmountData = await fetchInitialAmount().catch(() => null)
     return initialAmountData
+  }
+
+  const offline = isOffline()
+
+  if (offline && !to.meta?.allowOffline) {
+    const redirect = to.fullPath && to.fullPath !== '/offline' ? to.fullPath : undefined
+    pendingOfflineRedirect = redirect
+    return { name: 'Offline', query: redirect ? { redirect } : undefined }
+  }
+
+  if (!offline && to.name === 'Offline') {
+    const redirect = typeof (to.query?.redirect) === 'string' ? to.query.redirect : pendingOfflineRedirect
+    pendingOfflineRedirect = null
+    if (redirect && redirect !== to.fullPath) {
+      return redirect
+    }
   }
 
   if (!isAuthenticated.value) {
