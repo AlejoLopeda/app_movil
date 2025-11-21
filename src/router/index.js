@@ -26,11 +26,11 @@ import ReportsPreview from '../views/ReportsPreview.vue'
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
 
-const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
+// 👉 helper para saber si está sin conexión
+const isOffline = () =>
+  typeof navigator !== 'undefined' && navigator.onLine === false
+
 let pendingOfflineRedirect = null
-let initialAmountLoaded = false
-let initialAmountData = null
-let initialAmountUserId = null
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -72,36 +72,40 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const { isAuthenticated, restoreSession, user } = useAuth()
+  const { isAuthenticated, restoreSession } = useAuth()
+
+  // 👉 cache SOLO por navegación (evita el bug del monto y sigue siendo eficiente)
+  let initialAmountLoaded = false
+  let initialAmountData = null
+
   const loadInitialAmount = async () => {
-    const currentUserId = user?.value?.id
-    if (initialAmountUserId && currentUserId && currentUserId !== initialAmountUserId) {
-      initialAmountLoaded = false
-      initialAmountData = null
-    }
     if (initialAmountLoaded) return initialAmountData
     initialAmountLoaded = true
-    initialAmountUserId = currentUserId ?? initialAmountUserId
     initialAmountData = await fetchInitialAmount().catch(() => null)
     return initialAmountData
   }
 
   const offline = isOffline()
 
+  // ⛔ sin conexión y la ruta no permite offline
   if (offline && !to.meta?.allowOffline) {
     const redirect = to.fullPath && to.fullPath !== '/offline' ? to.fullPath : undefined
     pendingOfflineRedirect = redirect
+    // aquí asumes que tienes una vista Offline registrada con name 'Offline'
     return { name: 'Offline', query: redirect ? { redirect } : undefined }
   }
 
+  // 🔁 vuelve de Offline cuando vuelve la conexión
   if (!offline && to.name === 'Offline') {
-    const redirect = typeof (to.query?.redirect) === 'string' ? to.query.redirect : pendingOfflineRedirect
+    const redirect =
+      typeof to.query?.redirect === 'string' ? to.query.redirect : pendingOfflineRedirect
     pendingOfflineRedirect = null
     if (redirect && redirect !== to.fullPath) {
       return redirect
     }
   }
 
+  // Restaurar sesión si aún no está autenticado
   if (!isAuthenticated.value) {
     await restoreSession()
   }
@@ -125,6 +129,7 @@ router.beforeEach(async (to) => {
     if (d?.initial_set_at) return { name: 'MonthlyBalance' }
   }
 
+  // Rutas que requieren monto inicial
   if (to.meta?.requiresInitialAmount) {
     const d = await loadInitialAmount()
     if (!d?.initial_set_at) {
