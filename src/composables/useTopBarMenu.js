@@ -20,7 +20,7 @@ export function useTopBarMenu (props) {
     try {
       await menuController.open('main-menu')
     } catch (e) {
-      window.dispatchEvent(new CustomEvent('menu-open-failed'))
+      globalThis.dispatchEvent(new CustomEvent('menu-open-failed'))
     }
   }
 
@@ -37,12 +37,12 @@ export function useTopBarMenu (props) {
   const handleLogoutFailed = () => { logoutErrorOpen.value = true }
 
   const wireGlobalEvents = () => {
-    window.addEventListener('close-user-speed', closeUserSpeed)
-    window.addEventListener('logout-failed', handleLogoutFailed)
+    globalThis.addEventListener('close-user-speed', closeUserSpeed)
+    globalThis.addEventListener('logout-failed', handleLogoutFailed)
   }
   const unwireGlobalEvents = () => {
-    window.removeEventListener('close-user-speed', closeUserSpeed)
-    window.removeEventListener('logout-failed', handleLogoutFailed)
+    globalThis.removeEventListener('close-user-speed', closeUserSpeed)
+    globalThis.removeEventListener('logout-failed', handleLogoutFailed)
   }
 
   return {

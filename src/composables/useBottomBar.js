@@ -2,6 +2,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { MAIN_ROUTES } from '@/constants/routes'
 
+/** Handlers opcionales para ACEPTAR / VOLVER (sin eventos globales) */
+const acceptHandler = ref(null)
+const backHandler   = ref(null)
+
 export function useBottomBar() {
   const route  = useRoute()
   const router = useRouter()
@@ -14,12 +18,14 @@ export function useBottomBar() {
   const isEditReminderPage= computed(() => route.name === 'EditReminder')
   const isRemindersPage   = computed(() => route.path === '/recordatorios')
   const isGoalsPage       = computed(() => route.path === '/metas' || route.path.startsWith('/metas/'))
+  const isGoalCreatePage  = computed(() => route.path === '/metas/nueva')
+  const isGoalEditPage    = computed(() => route.name === 'GoalEdit')
   const isProfilePage     = computed(() => route.path.startsWith('/perfil'))
 
   // ===== Reportes
-  const isReportRootPage      = computed(() => route.path === '/reporte')
-  const isReportPreviewPage   = computed(() => route.path.startsWith('/reporte/previsualizacion'))
-  const isReportPage          = computed(() => isReportRootPage.value || isReportPreviewPage.value)
+  const isReportRootPage    = computed(() => route.path === '/reporte')
+  const isReportPreviewPage = computed(() => route.path.startsWith('/reporte/previsualizacion'))
+  const isReportPage        = computed(() => isReportRootPage.value || isReportPreviewPage.value)
 
   // Listas histórico
   const isHistoryPage     = computed(() => route.path.startsWith('/historico'))
@@ -59,11 +65,12 @@ export function useBottomBar() {
   function handleCanSave(ev){ canSaveEnabled.value = !!(ev && ev.detail && ev.detail.enabled) }
   onMounted(() => window.addEventListener('bottom-can-save', handleCanSave))
   onUnmounted(() => window.removeEventListener('bottom-can-save', handleCanSave))
-  watch([isProfilePage, isEditReminderPage], ([profile, edit]) => {
-    if (!profile && !edit) canSaveEnabled.value = false
+  const canSaveContextActive = computed(() => isProfilePage.value || isEditReminderPage.value || isGoalEditPage.value)
+  watch(canSaveContextActive, active => {
+    if (!active) canSaveEnabled.value = false
   })
-  watch(isEditReminderPage, now => {
-    if (now) canSaveEnabled.value = false
+  watch([isEditReminderPage, isGoalEditPage], ([editReminder, editGoal]) => {
+    if (editReminder || editGoal) canSaveEnabled.value = false
   })
 
   /* ===== /reporte/previsualizacion: habilitar DESCARGAR ===== */
@@ -127,14 +134,38 @@ export function useBottomBar() {
     }
   }
 
+  /* ===== Handlers para aceptar/volver (sin eventos globales) ===== */
+  function setAcceptHandler(fn){
+    acceptHandler.value = typeof fn === 'function' ? fn : null
+  }
+  function setBackHandler(fn){
+    backHandler.value = typeof fn === 'function' ? fn : null
+  }
+
   /* ===== Helpers ===== */
   function go(path){ navigate(path, { replace:false }) }
-  function emitAccept(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-accept'))) }
-  function emitDownload(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download'))) }
-  // PREVISUALIZAR (para /reporte)
-  function emitPreview(){ Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview'))) }
 
-  // ✅ Volver: preview -> /reporte, /reporte -> /balance, otros casos como antes
+  // 👉 Primero intenta usar handler, si no, dispara evento global (para vistas viejas)
+  function emitAccept(){
+    if (acceptHandler.value) {
+      acceptHandler.value()
+      return
+    }
+    Promise.resolve().then(() =>
+      window.dispatchEvent(new CustomEvent('bottom-accept'))
+    )
+  }
+
+  function emitDownload(){
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-download')))
+  }
+
+  // PREVISUALIZAR (para /reporte)
+  function emitPreview(){
+    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-preview')))
+  }
+
+  // ✅ Volver: preview -> /reporte, /reporte -> /balance, /recordatorios/nuevo -> /recordatorios, etc.
   function goDashboard(){
     let target = '/balance'
     if (isAddReminderPage.value || isEditReminderPage.value) {
@@ -143,13 +174,25 @@ export function useBottomBar() {
       target = '/reporte'
     } else if (isReportRootPage.value) {
       target = '/balance'
+    } else if (isGoalEditPage.value) {
+      target = '/metas'
     }
+
+    // Handler de back primero (por si alguien quiere limpiar algo)
+    if (backHandler.value) {
+      backHandler.value()
+    }
+
     navigate(target, { replace:true })
-    Promise.resolve().then(() => window.dispatchEvent(new CustomEvent('bottom-back')))
+    Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-back')))
   }
 
   function goAddReminder(){ navigate('/recordatorios/nuevo') }
   function goAddGoal(){ navigate('/metas/nueva') }
+  function goGoalsPanel(){
+    navigate('/metas', { replace:true })
+    Promise.resolve().then(() => globalThis.dispatchEvent(new CustomEvent('bottom-back')))
+  }
   function goHistory(){ navigate('/historico/ambos') }
 
   function goMonthlyIncome(){ navigate('/ingresos',  { replace:true }) }
@@ -177,14 +220,15 @@ export function useBottomBar() {
   return {
     // estado
     isMainRoute, isAddPage, isProfilePage, isRemindersPage, isHistoryPage,
-    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage,
+    isHistoryListPage, isMonthlyBothPage, isMonthlyArea, isBalancePage, isGoalsPage, isGoalCreatePage, isGoalEditPage,
     isReportPage, isReportRootPage, isReportPreviewPage,
     historyTab, activeTab, canSaveEnabled, canDownloadEnabled,
 
     // navegación/acciones
-    go, goDashboard, goAddReminder, goHistory, setHistoryTab, emitAccept, emitDownload,
+    go, goDashboard, goAddReminder, goHistory, setHistoryTab,
+    emitAccept, emitDownload, emitPreview,
     goMonthlyIncome, goMonthlyExpense, goMonthlyBoth, goBalance,
-    goAddGoal, goOrToggleIncome, goOrToggleExpense, emitPreview,
+    goAddGoal, goGoalsPanel, goOrToggleIncome, goOrToggleExpense, emitPreview,
 
     // feedback/ui
     toastOpen, toastMsg, isNavigating,

@@ -20,12 +20,17 @@ import ProfilePage from '../views/ProfilePage.vue'
 import GoalsPage from '@/views/GoalsPage.vue'
 import GoalCreatePage from '@/views/GoalCreatePage.vue'
 import GoalEditPage from '@/views/GoalEditPage.vue'
-import GoalDeleteConfirmPage from '@/views/GoalDeleteConfirmPage.vue'
 import ReportsPage from '../views/ReportsPage.vue'
 import ReportsPreview from '../views/ReportsPreview.vue'
 
 import { fetchInitialAmount } from '@/services/initialAmountService.js'
 import { useAuth } from '@/composables/useAuth.js'
+
+// 👉 helper para saber si está sin conexión
+const isOffline = () =>
+  typeof navigator !== 'undefined' && navigator.onLine === false
+
+let pendingOfflineRedirect = null
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -33,7 +38,6 @@ const routes = [
   { path: '/metas', name: 'Goals', component: GoalsPage, meta: { requiresAuth: true, title: 'Metas' } },
   { path: '/metas/nueva', name: 'GoalCreate', component: GoalCreatePage, meta: { requiresAuth: true, title: 'Crear Meta' } },
   { path: '/metas/:id/editar', name: 'GoalEdit', component: GoalEditPage, meta: { requiresAuth: true, title: 'Editar Meta' } },
-  { path: '/metas/:id/eliminar', name: 'GoalDelete', component: GoalDeleteConfirmPage, meta: { requiresAuth: true, title: 'Eliminar Meta' } },
 
   { path: '/login', name: 'Login', component: AuthLoginPage, meta: { guestOnly: true } },
   { path: '/registro', name: 'Register', component: AuthEmailPage, meta: { guestOnly: true } },
@@ -69,8 +73,10 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const { isAuthenticated, restoreSession } = useAuth()
+
+  // 👉 cache SOLO por navegación (evita el bug del monto y sigue siendo eficiente)
   let initialAmountLoaded = false
-  let initialAmountData
+  let initialAmountData = null
 
   const loadInitialAmount = async () => {
     if (initialAmountLoaded) return initialAmountData
@@ -79,6 +85,27 @@ router.beforeEach(async (to) => {
     return initialAmountData
   }
 
+  const offline = isOffline()
+
+  // ⛔ sin conexión y la ruta no permite offline
+  if (offline && !to.meta?.allowOffline) {
+    const redirect = to.fullPath && to.fullPath !== '/offline' ? to.fullPath : undefined
+    pendingOfflineRedirect = redirect
+    // aquí asumes que tienes una vista Offline registrada con name 'Offline'
+    return { name: 'Offline', query: redirect ? { redirect } : undefined }
+  }
+
+  // 🔁 vuelve de Offline cuando vuelve la conexión
+  if (!offline && to.name === 'Offline') {
+    const redirect =
+      typeof to.query?.redirect === 'string' ? to.query.redirect : pendingOfflineRedirect
+    pendingOfflineRedirect = null
+    if (redirect && redirect !== to.fullPath) {
+      return redirect
+    }
+  }
+
+  // Restaurar sesión si aún no está autenticado
   if (!isAuthenticated.value) {
     await restoreSession()
   }
@@ -102,6 +129,7 @@ router.beforeEach(async (to) => {
     if (d?.initial_set_at) return { name: 'MonthlyBalance' }
   }
 
+  // Rutas que requieren monto inicial
   if (to.meta?.requiresInitialAmount) {
     const d = await loadInitialAmount()
     if (!d?.initial_set_at) {

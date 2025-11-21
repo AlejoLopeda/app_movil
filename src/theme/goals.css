@@ -3,9 +3,9 @@
 /* We reuse MonthlyPanel variables/colors via .monthly-page scope */
 
 .goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  gap: 14px;
+  width: 100%;
 }
 
 /* Force readable headings inside Monthly header for this module */
@@ -13,28 +13,57 @@
 .monthly-header__subtitle { color: var(--app-topbar-bg, #0d3f48) !important; opacity: .9; }
 
 .goal-item {
-  /* Match the reminder card exactly: padding, border, shadow, background */
+  /* Match reminder card look */
   padding: clamp(16px, 4vw, 22px);
   border-radius: 18px;
   background: #ffffff;
   border: 2px solid rgba(13,63,72,0.08);
   box-shadow: 0 18px 38px -26px rgba(13,63,72,0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.goal-summary-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   cursor: pointer;
 }
-
-.goal-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+.goal-summary-area:focus-visible {
+  outline: 2px solid rgba(13,63,72,0.25);
+  outline-offset: 4px;
 }
 
-.goal-main {
+.goal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.goal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
 }
-
-.goal-title { font-size: 1rem; font-weight: 800; letter-spacing: .02em; color: #0d3f48; }
-.goal-sub { font-size: .9rem; opacity: .9; margin-bottom: 8px; font-weight: 600; color: #334155; }
+.goal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.goal-title { margin: 0; font-weight: 800; letter-spacing: .02em; color: #0d3f48; }
+.goal-sub,
+.goal-progress-text {
+  font-size: .9rem;
+  font-weight: 600;
+  color: #334155;
+  opacity: .9;
+}
 .goal-sub .is-complete { color: var(--ion-color-success); font-weight: 600; }
+
+.goal-progress-wrapper { margin-top: 4px; }
 
 .goal-actions { display: flex; align-items: center; gap: 8px; }
 
@@ -48,16 +77,6 @@
   min-width: 36px;
 }
 .goal-actions .action-btn ion-icon { font-size: 18px; }
-
-/* Make action buttons visually identical to reminder actions: round, tactile */
-.goal-actions .action-btn {
-  --border-radius: 999px;
-  --padding-start: 10px;
-  --padding-end: 10px;
-  --box-shadow: none;
-  height: 36px;
-  min-width: 36px;
-}
 .goal-actions .action-btn:focus-visible{
   outline: 2px solid rgba(13,63,72,0.25);
   outline-offset: 2px;
@@ -79,11 +98,11 @@
 
 /* Small chip (e.g., complete status) following reminders style */
 .goal-chip {
-  align-self: flex-start;
+  align-self: center;
   background: #e6f4f1;
   color: #0d3f48;
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -91,7 +110,7 @@
 
 /* Small helper text like 'Toca para ver más detalles' */
 .goal-tap-hint {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 12px;
   color: #64748b; /* slate-500 */
   font-weight: 600;
@@ -115,15 +134,27 @@
 .goal-transfer-actions { display: flex; gap: 8px; }
 .goal-inputs .goal-amount-input, .goal-inputs .goal-desc-input { width: 100%; }
 .goal-inputs { 
-  --background: rgba(255,255,255,0.95);
+  --background: rgba(13,63,72,0.035);
   --color: #0b2c33;
+  --placeholder-color: rgba(11,44,51,0.65);
+  background: rgba(13,63,72,0.035);
   border-radius: 12px;
+  --padding-start: 14px;
+  --inner-padding-end: 14px;
+}
+.goal-inputs::part(native) {
+  background: rgba(13,63,72,0.035);
+  border-radius: 12px;
+}
+.goal-inputs ion-input {
+  --background: transparent;
+  --placeholder-color: rgba(11,44,51,0.65);
 }
 
 .goal-history { margin-top: 8px; }
 .goal-history__toggle { background: transparent; color: var(--monthly-accent); border: 0; font-weight: 700; }
 .goal-history__list { list-style: none; padding: 0; margin: 6px 0 0; }
-.goal-history__row { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; font-size: .85rem; align-items: center; padding: 6px 0; }
+.goal-history__row { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; font-size: .85rem; align-items: center; padding: 6px 0; background: rgba(13,63,72,0.05); }
 .goal-history__row--empty { opacity: .7; }
 .goal-history__amount { font-weight: 600; }
 .goal-history__amount.inc { color: var(--ion-color-success); }
@@ -133,6 +164,12 @@
 .goals-form__actions { margin-top: 16px; }
 
 .goals-delete { display: grid; gap: 10px; justify-items: center; text-align: center; margin-top: 24px; }
+
+.goal-edit__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
 
 /* Crear/Editar: card y items con look MonthlyPanel */
 .goals-form-card {
@@ -163,6 +200,21 @@
   height: 52px;
 }
 
+.goal-hero {
+  background: linear-gradient(160deg, rgba(13, 63, 72, 0.92), rgba(19, 128, 116, 0.8));
+  color: #f8ffff;
+}
+.goal-hero .expense-badge {
+  color: #f8ffff;
+  background: rgba(255,255,255,0.22);
+}
+.goal-hero .expense-copy {
+  color: rgba(248, 255, 255, 0.9);
+}
+.goal-hero .expense-heading {
+  color: #ffffff;
+}
+
 @media (prefers-color-scheme: dark) {
   .goals-form-card {
     background: rgba(4, 19, 24, 0.82);
@@ -174,22 +226,37 @@
     --color: rgba(224, 242, 249, 0.96);
     --placeholder-color: rgba(224, 242, 249, 0.6);
   }
+  .goal-hero {
+    background: linear-gradient(160deg, rgba(4, 19, 24, 0.92), rgba(13, 63, 72, 0.86));
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   .monthly-header__title { color: rgba(224,242,249,0.96) !important; }
   .monthly-header__subtitle { color: rgba(224,242,249,0.86) !important; }
   .goal-item {
-    background: rgba(4, 19, 24, 0.82);
-    border-color: rgba(224, 242, 249, 0.2);
-    box-shadow: 0 20px 38px -30px rgba(0, 0, 0, 0.72);
-    color: rgba(224, 242, 249, 0.96);
+    background: #ffffff;
+    border-color: rgba(13, 63, 72, 0.08);
+    box-shadow: 0 18px 38px -26px rgba(13, 63, 72, 0.45);
+    color: #0d3f48;
   }
-  .goal-title { color: rgba(224, 242, 249, 0.98); }
-  .goal-sub { color: rgba(224, 242, 249, 0.9); }
-  .goal-progress__track { background: rgba(224,242,249,.18); }
+  .goal-title { color: #0d3f48; }
+  .goal-sub { color: #334155; }
+  .goal-progress__track { background: rgba(13,63,72,.14); }
   .goal-inputs { 
-    --background: rgba(4, 19, 24, 0.86);
-    --color: rgba(224, 242, 249, 0.96);
+    --background: #ffffff;
+    --color: #0b2c33;
+  }
+  .goal-history__row {
+    background: rgba(13, 63, 72, 0.05);
+  }
+  .goal-history__desc {
+    color: #0f172a;
+  }
+  .goal-history__date {
+    color: #94a3b8;
+  }
+  .goal-history__toggle {
+    color: var(--monthly-accent, #0d3f48);
   }
 }

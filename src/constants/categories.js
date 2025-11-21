@@ -16,8 +16,12 @@ export const INCOME_EXTRA = Object.freeze([
   { key: 'otros',       label: 'Otros' },
 ])
 
+// Categorías especiales que no deben aparecer en selectores normales.
+// Incluimos `saldo_inicial` para poder mostrarla en transacciones creadas
+// por el flujo de "monto inicial" pero NO la añadimos a las listas
+// seleccionables (ver `allIncomeCategories`).
 export const INCOME_SPECIAL = Object.freeze([
-  { key: 'saldo_inicial', label: 'Saldo inicial' },
+  { key: 'saldo_inicial', label: 'Saldo inicial' }
 ])
 
 export const EXPENSE_PRESET = Object.freeze([
@@ -37,7 +41,8 @@ export const EXPENSE_EXTRA = Object.freeze([
 ])
 
 export function allIncomeCategories() {
-  return [...INCOME_PRESET, ...INCOME_EXTRA, ...INCOME_SPECIAL]
+  // Ya no incluye saldo inicial
+  return [...INCOME_PRESET, ...INCOME_EXTRA /*, ...INCOME_SPECIAL */]
 }
 
 export function allExpenseCategories() {
@@ -50,7 +55,7 @@ export function findIncomeCategory(key) {
   return (
     INCOME_PRESET.find(i => i.key === k) ||
     INCOME_EXTRA.find(i => i.key === k) ||
-    INCOME_SPECIAL.find(i => i.key === k) ||
+    INCOME_SPECIAL.find(i => i.key === k) || // no pasa nada, está vacío
     null
   )
 }
@@ -64,4 +69,5 @@ export function findExpenseCategory(key) {
     null
   )
 }
+
 

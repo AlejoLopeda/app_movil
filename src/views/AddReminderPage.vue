@@ -2,11 +2,22 @@
   <ion-page class="expense-page">
     <app-top-bar :title="pageTitle" />
 
-    <ion-content class="expense-content ion-padding" fullscreen style="--padding-top: var(--ion-safe-area-top);">
+    <ion-content
+      class="expense-content ion-padding"
+      fullscreen
+      style="--padding-top: var(--ion-safe-area-top);"
+    >
       <section class="expense-section">
-        <ReminderForm ref="formRef" class="expense-form" :loading="loading" :show-submit="false" @submit="handleSubmit" />
+        <ReminderForm
+          ref="formRef"
+          class="expense-form"
+          :loading="loading"
+          :show-submit="false"
+          @submit="handleSubmit"
+        />
       </section>
 
+      <!-- Toast LOCAL solo para esta vista (errores) -->
       <ion-toast
         :is-open="toast.open"
         :message="toast.message"
@@ -16,77 +27,92 @@
       />
     </ion-content>
   </ion-page>
-  </template>
+</template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AppTopBar from '@/components/AppTopBar.vue'
 import { IonPage, IonContent, IonToast, useIonRouter } from '@ionic/vue'
+import AppTopBar from '@/components/AppTopBar.vue'
 import ReminderForm from '@/components/ReminderForm.vue'
 import { useAddReminder } from '@/composables/useAddReminder'
-import { showToast as showGlobalToast } from '@/stores/notify'
 import '@/theme/ExpensePage.css'
 
 const route = useRoute()
 const router = useRouter()
-const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
 const ionRouter = useIonRouter()
+
+const pageTitle = computed(() => route.meta?.title || 'Añadir Recordatorio')
 
 const { loading, saveReminder } = useAddReminder()
 const formRef = ref(null)
-const toast = ref({ open: false, message: '', color: 'primary' })
 
-function buildUrl(query) {
+// ✅ Toast SOLO local (errores)
+const toast = ref({ open: false, message: '', color: 'primary' })
+function showToast (message, color = 'primary') {
+  toast.value = { open: true, message, color }
+}
+
+/* ===== Navegación a /recordatorios ===== */
+function buildUrl (query) {
   if (!query || Object.keys(query).length === 0) return '/recordatorios'
   const params = new URLSearchParams(query)
   return `/recordatorios?${params.toString()}`
 }
 
-async function goToReminders(query = undefined) {
-  const url = buildUrl(query || {})
+function goToReminders (query = undefined) {
+  const q = query || {}
+  const url = buildUrl(q)
+
+  // 1) Intento con ionRouter (mejor en app móvil)
   const navigated = ionRouter.navigate(url, 'back', 'replace')
   if (navigated) return
-  try {
-    await router.replace({ path: '/recordatorios', query })
-  } catch {
-    try { await router.push({ path: '/recordatorios', query }) } catch {
-      window.location.href = url
+
+  // 2) Fallback a vue-router
+  router.replace({ path: '/recordatorios', query: q }).catch(async () => {
+    try {
+      await router.push({ path: '/recordatorios', query: q })
+    } catch {
+      // 3) Último recurso
+      globalThis.location.href = url
     }
-  }
+  })
 }
 
-async function handleSubmit(payload) {
+/* ===== Guardar recordatorio ===== */
+async function handleSubmit (payload) {
   const res = await saveReminder(payload)
+
   if (res.ok) {
-    showGlobalToast('Recordatorio creado', 'success', 'bottom')
-    await goToReminders({ toast: 'created' })
+    // Ir a /recordatorios con bandera de creado
+    goToReminders({ toast: 'created' })
     return
   }
+
   if (res.reason === 'busy') return
+
   const message =
     res.reason === 'unauthorized'
       ? 'No autorizado. Inicia sesión e inténtalo de nuevo'
       : res.reason === 'rls'
         ? 'Tu usuario no tiene permiso para guardar recordatorios'
         : 'No se pudo crear el recordatorio. Intenta de nuevo'
-  showGlobalToast(message, 'danger', 'bottom')
+
+  showToast(message, 'danger')
 }
 
-// Bottom bar events (special mode): back and accept
-function onBottomAccept() {
+/* ===== Integración con bottom bar: evento global bottom-accept ===== */
+function onBottomAccept () {
+  if (loading.value) return
+  // Igual que en ReportePreview: solo dispara el submit
   formRef.value?.submit?.()
-}
-function onBottomBack() {
-  formRef.value?.reset?.()
 }
 
 onMounted(() => {
-  window.addEventListener('bottom-accept', onBottomAccept)
-  window.addEventListener('bottom-back', onBottomBack)
+  globalThis.addEventListener('bottom-accept', onBottomAccept)
 })
+
 onBeforeUnmount(() => {
-  window.removeEventListener('bottom-accept', onBottomAccept)
-  window.removeEventListener('bottom-back', onBottomBack)
+  globalThis.removeEventListener('bottom-accept', onBottomAccept)
 })
 </script>

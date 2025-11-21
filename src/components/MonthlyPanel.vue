@@ -10,7 +10,8 @@
 
         <!-- Controles: Categorías (blanco y ancho) + Switch -->
         <div class="monthly-header__controls">
-          <button
+          <div class="monthly-controls-row">
+            <button
             type="button"
             class="monthly-filter-btn monthly-filter-btn--cats"
             @click="openCats = true"
@@ -20,14 +21,14 @@
             <span>{{ categoriesLabel }}</span>
           </button>
 
-          <div class="monthly-header__toggle">
-            <span>Pastel</span>
+          <div class="monthly-header__toggle" aria-label="Cambiar tipo de gr��fica">
             <ion-toggle
               mode="ios"
               :checked="chartMode === 'bar'"
               @ionChange="onModeChange"
             />
-            <span>Barras</span>
+          </div>
+
           </div>
 
           <button
@@ -119,6 +120,7 @@
         :items="chartItems"
         :active-key="activeKey"
         :formatter="formatCurrency"
+        :theme="chartTheme"
         @select="setActiveKey"
         class="monthly-chart"
       />
@@ -229,7 +231,44 @@ const summary = useMonthlySummary({
 const openCats = ref(false)
 
 const activeKey           = ref(null)
-const chartItems          = computed(() => summary.categoryTotals.value)
+const INCOME_BASE_COLOR = '#0f8b74'
+const EXPENSE_BASE_COLOR = '#c62828'
+const INCOME_HIGHLIGHT_COLOR = '#046654'
+const EXPENSE_HIGHLIGHT_COLOR = '#8e0000'
+
+const chartTheme          = computed(() => {
+  if (props.panelType === 'expense') return 'expense'
+  if (props.panelType === 'income') return 'income'
+  return 'default'
+})
+
+const chartItems = computed(() => {
+  const items = summary.categoryTotals.value || []
+  if (!items.length) return items
+
+  const colorized = (list) =>
+    list.map((item) => {
+      const isIncome = item.type === 'income'
+      const baseColor = isIncome ? INCOME_BASE_COLOR : EXPENSE_BASE_COLOR
+      const highlight = isIncome ? INCOME_HIGHLIGHT_COLOR : EXPENSE_HIGHLIGHT_COLOR
+      const color = activeKey.value && activeKey.value === item.key ? highlight : baseColor
+      return { ...item, color }
+    })
+
+  const theme = chartTheme.value
+  if (theme === 'income' || theme === 'expense') {
+    return colorized(items)
+  }
+
+  // balance: agrupar ingresos y gastos para que cada bloque quede junto en el pastel
+  const incomes = []
+  const expenses = []
+  for (const item of items) {
+    if (item.type === 'income') incomes.push(item)
+    else expenses.push(item)
+  }
+  return [...colorized(incomes), ...colorized(expenses)]
+})
 const hasData             = computed(() => summary.hasData.value)
 const isFilteredEmpty     = computed(() => summary.isFilteredEmpty.value)
 const hasSelection        = computed(() => summary.hasSelection.value)
@@ -315,12 +354,12 @@ const handleGoalsChanged = () => { summary.load() }
 
 onMounted(() => {
   summary.load()
-  window.addEventListener('data:transactions-changed', handleTransactionsChanged)
-  window.addEventListener('data:goals-changed', handleGoalsChanged)
+  globalThis.addEventListener('data:transactions-changed', handleTransactionsChanged)
+  globalThis.addEventListener('data:goals-changed', handleGoalsChanged)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('data:transactions-changed', handleTransactionsChanged)
-  window.removeEventListener('data:goals-changed', handleGoalsChanged)
+  globalThis.removeEventListener('data:transactions-changed', handleTransactionsChanged)
+  globalThis.removeEventListener('data:goals-changed', handleGoalsChanged)
 })
 </script>

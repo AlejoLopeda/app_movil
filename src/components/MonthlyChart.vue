@@ -1,5 +1,5 @@
 <template>
-  <div class="monthly-chart">
+  <div :class="['monthly-chart', themeClass]">
     <div v-if="mode === 'pie'" class="monthly-chart__pie-wrapper">
       <div
         class="monthly-chart__pie"
@@ -15,24 +15,27 @@
         type="button"
         class="monthly-chart__bar"
         :class="{ active: item.key === activeKey }"
-        :style="{ '--chart-border': item.color }"
+        :style="{ '--chart-accent': barColor(item) }"
         @click="select(item.key)"
       >
+        <span class="monthly-chart__bar-percent">
+          {{ item.percentage.toFixed(1) }}%
+        </span>
         <span class="monthly-chart__bar-label">
           {{ item.label }}
+        </span>
+        <span class="monthly-chart__bar-value">
+          {{ formatter(item.amount) }}
         </span>
         <div class="monthly-chart__bar-track">
           <div
             class="monthly-chart__bar-fill"
             :style="{
               width: barWidth(item),
-              backgroundColor: item.color
+              backgroundColor: barColor(item)
             }"
           />
         </div>
-        <span class="monthly-chart__bar-value">
-          {{ formatter(item.amount) }}
-        </span>
       </button>
     </div>
 
@@ -69,6 +72,11 @@ const props = defineProps({
   mode: { type: String, default: 'pie' },
   items: { type: Array, default: () => [] },
   activeKey: { type: String, default: null },
+  theme: {
+    type: String,
+    default: 'default',
+    validator: (v) => ['default', 'income', 'expense'].includes(v),
+  },
   formatter: {
     type: Function,
     default: (value) => new Intl.NumberFormat('es-CO', {
@@ -81,6 +89,18 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select'])
+
+const THEME_ACCENTS = Object.freeze({
+  income: '#2a9d8f',
+  expense: '#d1495b',
+})
+
+const themeClass = computed(() => {
+  if (!props.theme || props.theme === 'default') return null
+  return `monthly-chart--${props.theme}`
+})
+
+const themeAccent = computed(() => THEME_ACCENTS[props.theme] || null)
 
 const pieStyle = computed(() => {
   if (!props.items.length) {
@@ -102,6 +122,11 @@ const maxAmount = computed(() => {
   return props.items.reduce((max, item) => Math.max(max, item.amount), 0)
 })
 
+function barColor(item) {
+  if (themeAccent.value) return themeAccent.value
+  return item?.color || '#0d3f48'
+}
+
 function barWidth(item) {
   if (!maxAmount.value) return '0%'
   const width = (item.amount / maxAmount.value) * 100
@@ -117,6 +142,27 @@ function select(key) {
 .monthly-chart {
   display: grid;
   gap: 18px;
+  --chart-border: rgba(13, 63, 72, 0.1);
+  --chart-bg: linear-gradient(180deg, #ffffff, #f7fbfc);
+  --chart-shadow: 0 18px 32px -28px rgba(13, 63, 72, 0.4);
+  --chart-track: rgba(13, 63, 72, 0.08);
+  --chart-value: rgba(13, 63, 72, 0.72);
+  --chart-active-bg: #f1f7f9;
+}
+
+.monthly-chart--income {
+  --chart-border: rgba(42, 157, 143, 0.35);
+  --chart-shadow: 0 20px 36px -30px rgba(42, 157, 143, 0.4);
+  --chart-track: rgba(42, 157, 143, 0.18);
+  --chart-active-bg: rgba(42, 157, 143, 0.08);
+}
+
+.monthly-chart--expense {
+  --chart-border: rgba(209, 73, 91, 0.35);
+  --chart-shadow: 0 20px 36px -30px rgba(209, 73, 91, 0.35);
+  --chart-track: rgba(209, 73, 91, 0.2);
+  --chart-active-bg: rgba(209, 73, 91, 0.08);
+  --chart-value: rgba(96, 20, 30, 0.86);
 }
 
 .monthly-chart__pie-wrapper {
@@ -144,17 +190,16 @@ function select(key) {
 }
 
 .monthly-chart__bar {
-  --chart-border: rgba(13, 63, 72, 0.24);
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
   align-items: center;
   padding: 14px 16px;
   border-radius: 18px;
-  border: 2px solid var(--chart-border);
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--chart-border);
+  background: var(--chart-bg);
   color: #0b2c33;
-  box-shadow: 0 14px 32px -26px rgba(13, 63, 72, 0.6);
+  box-shadow: var(--chart-shadow);
   text-align: left;
   transition: background 0.2s ease, box-shadow 0.2s ease,
     transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -177,7 +222,7 @@ function select(key) {
   grid-column: 1 / -1;
   height: 8px;
   border-radius: 999px;
-  background: rgba(13, 63, 72, 0.1);
+  background: var(--chart-track);
   overflow: hidden;
 }
 
@@ -187,17 +232,22 @@ function select(key) {
   transition: width 0.25s ease;
 }
 
+.monthly-chart__bar-percent {
+  font-weight: 700;
+  color: var(--chart-value);
+}
+
 .monthly-chart__bar-value {
   justify-self: end;
   font-weight: 600;
-  color: rgba(13, 63, 72, 0.76);
+  color: var(--chart-value);
 }
 
 .monthly-chart__bar.active {
-  background: rgba(13, 63, 72, 0.08);
-  border-color: var(--chart-border);
+  background: var(--chart-active-bg);
+  border-color: var(--chart-accent, var(--chart-border));
   color: #0b2c33;
-  box-shadow: 0 26px 42px -28px rgba(13, 63, 72, 0.6);
+  box-shadow: 0 26px 42px -30px rgba(13, 63, 72, 0.5);
   transform: translateY(-2px);
 }
 
@@ -206,7 +256,7 @@ function select(key) {
 }
 
 .monthly-chart__bar.active .monthly-chart__bar-track {
-  background: rgba(13, 63, 72, 0.14);
+  background: var(--chart-track);
 }
 
 .monthly-chart__legend {
@@ -267,76 +317,4 @@ function select(key) {
   color: currentColor;
 }
 
-@media (prefers-color-scheme: dark) {
-  .monthly-chart__pie {
-    box-shadow: 0 4px 18px rgba(4, 23, 26, 0.45);
-  }
-
-  .monthly-chart__pie--empty {
-    background: radial-gradient(circle at center, #1a2a2f, #0f1a1d);
-    box-shadow: inset 0 0 0 2px rgba(190, 220, 224, 0.06);
-  }
-
-  .monthly-chart__bar {
-    background: rgba(4, 19, 24, 0.82);
-    border-color: rgba(224, 242, 249, 0.22);
-    color: rgba(224, 242, 249, 0.9);
-    box-shadow: 0 18px 34px -26px rgba(0, 0, 0, 0.72);
-  }
-
-  .monthly-chart__bar:hover,
-  .monthly-chart__bar:focus-visible {
-    background: rgba(4, 19, 24, 0.92);
-    box-shadow: 0 24px 40px -26px rgba(0, 0, 0, 0.74);
-  }
-
-  .monthly-chart__bar-track {
-    background: rgba(224, 242, 249, 0.18);
-  }
-
-  .monthly-chart__bar-value {
-    color: rgba(224, 242, 249, 0.82);
-  }
-
-  .monthly-chart__bar.active {
-    background: rgba(4, 19, 24, 0.62);
-    border-color: rgba(224, 242, 249, 0.35);
-    color: rgba(224, 242, 249, 0.96);
-    box-shadow: 0 24px 40px -26px rgba(0, 0, 0, 0.7);
-  }
-
-  .monthly-chart__bar.active .monthly-chart__bar-value {
-    color: rgba(224, 242, 249, 0.96);
-  }
-
-  .monthly-chart__bar.active .monthly-chart__bar-track {
-    background: rgba(224, 242, 249, 0.28);
-  }
-
-  .monthly-chart__legend-item {
-    background: rgba(4, 19, 24, 0.78);
-    color: rgba(224, 242, 249, 0.92);
-    border-color: rgba(224, 242, 249, 0.32);
-    box-shadow: 0 14px 30px -26px rgba(0, 0, 0, 0.65);
-  }
-
-  .monthly-chart__legend-item:hover,
-  .monthly-chart__legend-item:focus-visible {
-    background: rgba(4, 19, 24, 0.92);
-  }
-
-  .monthly-chart__legend-value {
-    color: rgba(224, 242, 249, 0.72);
-  }
-
-  .monthly-chart__legend-item.active {
-    background: rgba(224, 242, 249, 0.92);
-    color: #0d3f48;
-    border-color: rgba(224, 242, 249, 0.92);
-  }
-
-  .monthly-chart__legend-item.active .monthly-chart__legend-value {
-    color: currentColor;
-  }
-}
 </style>
