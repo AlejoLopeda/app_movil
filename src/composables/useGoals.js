@@ -40,6 +40,9 @@ const findById = async(id) => {
 
 const create = async(payload) => {
     error.value = null
+    if (!payload || payload.monto == null || Number(payload.monto) <= 0) {
+        throw new Error('El objetivo debe ser mayor a 0.')
+    }
     const res = await createGoal(payload)
     await refresh().catch(() => {})
     emitGoalsChanged()
@@ -48,6 +51,27 @@ const create = async(payload) => {
 
 const update = async(payload) => {
     error.value = null
+    if (!payload || !payload.id) {
+        throw new Error('Meta inválida.')
+    }
+    if (payload.monto == null || Number(payload.monto) <= 0) {
+        throw new Error('El objetivo debe ser mayor a 0.')
+    }
+
+    // Validación: no permitir reducir el objetivo por debajo de lo ya ahorrado
+    try {
+        const goal = await getGoalById(payload.id)
+        if (goal) {
+            const ahorrado = Number(goal.ahorrado) || 0
+            if (Number(payload.monto) < ahorrado) {
+                throw new Error('El nuevo objetivo no puede ser menor al monto ya ahorrado.')
+            }
+        }
+    } catch (e) {
+        if (e.message === 'El nuevo objetivo no puede ser menor al monto ya ahorrado.') throw e
+        // si fallo al obtener la meta, dejamos que el RPC maneje la validación en backend
+    }
+
     const res = await updateGoal(payload)
     await refresh().catch(() => {})
     emitGoalsChanged()

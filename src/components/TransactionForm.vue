@@ -162,10 +162,9 @@ const extendedCategories = computed(() => {
   const base = mode.value === 'income' ? preInc() : preExp()
   const extra = mode.value === 'income' ? addInc() : addExp()
   const list = [...base, ...extra]
-  if (mode.value === 'income') {
-    const special = resInc('saldo_inicial')
-    if (special) list.push(special)
-  }
+  // Nota: No añadimos aquí la categoría `saldo_inicial` para evitar que
+  // sea seleccionable desde el formulario de ingresos. `saldo_inicial`
+  // debe generarse únicamente desde el flujo de "monto inicial".
   // Unicidad por key para evitar duplicados accidentales
   const seen = new Set()
   return list.filter((c) => {
